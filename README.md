@@ -7,7 +7,7 @@
 ✅ **开发完成** - 8个开发阶段全部完成  
 ✅ **测试通过** - 65个单元测试全部通过  
 ✅ **生产就绪** - 包含完整的部署方案  
-🚀 **立即可部署** - 一键部署到Firebase  
+🚀 **立即可部署** - 生产环境部署就绪  
 
 ## 🌟 功能特色
 
@@ -41,10 +41,10 @@
 
 ### 后端技术
 - **Node.js 18** + **Express.js** - 服务端框架
-- **Firebase Functions** - 无服务器云函数
-- **Firebase Firestore** - NoSQL实时数据库
-- **Firebase Storage** - 文件存储服务
-- **Firebase Auth** - 用户认证服务
+- **MongoDB** - NoSQL数据库
+- **JWT认证** - 安全的用户认证
+- **文件上传** - 支持多媒体证据上传
+- **PM2** - 进程管理和监控
 
 ### 开发工具
 - **TypeScript** - 类型安全
@@ -70,25 +70,31 @@
 ### 前提条件
 - Node.js 18+
 - npm
-- Firebase账户
+- MongoDB数据库
+- 服务器环境
 
-### 一键部署
+### 部署步骤
 ```bash
-# 1. 环境变量配置向导
-./setup-env.sh
+# 1. 安装依赖
+cd frontend && npm install
+cd ../backend && npm install
 
-# 2. 部署前检查
-./pre-deploy-check.sh  
+# 2. 构建前端
+cd frontend && npm run build
 
-# 3. 执行部署
-./deploy.sh
+# 3. 配置环境变量
+cp backend/.env.example backend/.env
+# 编辑 .env 文件配置 MongoDB 连接
+
+# 4. 启动服务
+cd backend && npm run build && npm start
 ```
 
-### 详细部署指南
-1. 📖 [Firebase项目设置](./FIREBASE_SETUP_GUIDE.md)
-2. ⚙️ [环境变量配置](./ENV_SETUP_GUIDE.md)  
-3. 🚀 [部署执行指南](./DEPLOYMENT_GUIDE.md)
-4. 🔧 [部署后配置](./POST_DEPLOYMENT_GUIDE.md)
+### 生产环境部署
+1. 📖 [详细部署指南](./DeploymentChatgpt.md)
+2. ⚙️ [环境变量配置](./backend/.env.example)  
+3. 🚀 [Nginx配置](./deployment/nginx.conf)
+4. 🔧 [PM2进程管理](./deployment/ecosystem.config.js)
 
 ## 📁 项目结构
 
@@ -108,12 +114,15 @@ SummerVacationPlanning/
 │   │   ├── controllers/       # 控制器
 │   │   ├── middleware/        # 中间件
 │   │   ├── routes/            # API路由
-│   │   └── services/          # 业务逻辑
+│   │   ├── config/            # 数据库配置
+│   │   └── utils/             # 工具函数
 │   └── dist/                  # 编译输出
-├── ☁️ functions/               # Firebase Functions
-├── 🔥 firebase.json           # Firebase配置
-├── 🛡️ firestore.rules         # 数据库安全规则
-├── 🗂️ storage.rules           # 存储安全规则
+├── 🐳 deployment/              # 部署配置
+│   ├── nginx.conf             # Nginx配置
+│   └── ecosystem.config.js    # PM2配置
+├── 🗄️ mongodb/                # MongoDB相关
+│   ├── init.js                # 初始化脚本
+│   └── indexes.js             # 索引配置
 ├── 📋 *.md                    # 详细文档
 └── 🔧 *.sh                    # 部署脚本
 ```
@@ -142,19 +151,21 @@ SummerVacationPlanning/
 
 ## 🔒 安全特性
 
-- 🔐 **Firebase认证** - 企业级用户认证
-- 🛡️ **数据库安全规则** - 严格的权限控制
+- 🔐 **JWT认证** - 安全的用户认证和授权
+- 🛡️ **角色权限控制** - 学生/家长角色隔离
 - 🔒 **文件上传安全** - 类型和大小限制
 - 🚫 **注入攻击防护** - 输入验证和过滤
-- 🔑 **JWT令牌** - 安全的会话管理
+- 🔑 **密码加密** - bcrypt安全哈希
+- 🌐 **CORS配置** - 跨域请求安全控制
 
 ## 📈 性能优化
 
 - ⚡ **代码分割** - 按需加载减少首屏时间
 - 🗜️ **图片压缩** - 自动压缩上传的图片
 - 💾 **智能缓存** - 缓存策略优化加载速度
-- 🚀 **CDN加速** - Firebase全球CDN部署
-- 📊 **性能监控** - 实时性能指标跟踪
+- 🚀 **Nginx反向代理** - 高性能静态文件服务
+- 📊 **PM2监控** - 实时性能指标跟踪
+- 🔧 **MongoDB索引** - 数据库查询优化
 
 ## 🤝 贡献指南
 
