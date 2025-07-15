@@ -11,6 +11,10 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface UserDocument extends Omit<User, 'id'> {
+  password: string;
+}
+
 export interface Task {
   id: string;
   title: string;

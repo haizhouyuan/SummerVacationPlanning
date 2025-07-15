@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        input { padding: 5px; margin: 5px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    
+    <div>
+        <h2>Health Check</h2>
+        <button onclick="testHealth()">Test Health Endpoint</button>
+        <div id="health-result"></div>
+    </div>
+
+    <div>
+        <h2>Registration Test</h2>
+        <input type="email" id="email" placeholder="Email" value="test@example.com">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <input type="text" id="displayName" placeholder="Display Name" value="Test User">
+        <select id="role">
+            <option value="parent">Parent</option>
+            <option value="student">Student</option>
+        </select>
+        <button onclick="testRegister()">Test Registration</button>
+        <div id="register-result"></div>
+    </div>
+
+    <div>
+        <h2>Login Test</h2>
+        <input type="email" id="login-email" placeholder="Email" value="test@example.com">
+        <input type="password" id="login-password" placeholder="Password" value="password123">
+        <button onclick="testLogin()">Test Login</button>
+        <div id="login-result"></div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://47.120.74.212/api';
+
+        function showResult(elementId, success, message) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${success ? 'success' : 'error'}">${message}</div>`;
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/../health`);
+                const data = await response.json();
+                showResult('health-result', true, `Health check passed: ${JSON.stringify(data)}`);
+            } catch (error) {
+                showResult('health-result', false, `Health check failed: ${error.message}`);
+            }
+        }
+
+        async function testRegister() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const displayName = document.getElementById('displayName').value;
+                const role = document.getElementById('role').value;
+
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password,
+                        displayName,
+                        role
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showResult('register-result', true, `Registration successful: ${data.message}`);
+                } else {
+                    showResult('register-result', false, `Registration failed: ${data.error}`);
+                }
+            } catch (error) {
+                showResult('register-result', false, `Registration failed: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            try {
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showResult('login-result', true, `Login successful: ${data.message}`);
+                } else {
+                    showResult('login-result', false, `Login failed: ${data.error}`);
+                }
+            } catch (error) {
+                showResult('login-result', false, `Login failed: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

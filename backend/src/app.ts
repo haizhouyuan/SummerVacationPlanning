@@ -11,6 +11,10 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  credentials: true,
+}));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -18,20 +22,16 @@ const limiter = rateLimit({
   max: 100, // limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
 });
-app.use(limiter);
+app.use('/api/', limiter);
 
-// CORS
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,
-}));
+// Logging
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('combined'));
+}
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Logging
-app.use(morgan('combined'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -42,18 +42,20 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
-import authRoutes from './routes/authRoutes';
-import taskRoutes from './routes/taskRoutes';
-import dailyTaskRoutes from './routes/dailyTaskRoutes';
-import redemptionRoutes from './routes/redemptionRoutes';
-import rewardsRoutes from './routes/rewardsRoutes';
+// MongoDB connection handled in server.ts
 
-app.use('/api/auth', authRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/daily-tasks', dailyTaskRoutes);
-app.use('/api/redemptions', redemptionRoutes);
-app.use('/api/rewards', rewardsRoutes);
+// API routes
+import mongoAuthRoutes from './routes/mongoAuthRoutes';
+// import taskRoutes from './routes/taskRoutes';
+// import dailyTaskRoutes from './routes/dailyTaskRoutes';
+// import redemptionRoutes from './routes/redemptionRoutes';
+// import rewardsRoutes from './routes/rewardsRoutes';
+
+app.use('/api/auth', mongoAuthRoutes);
+// app.use('/api/tasks', taskRoutes);
+// app.use('/api/daily-tasks', dailyTaskRoutes);
+// app.use('/api/redemptions', redemptionRoutes);
+// app.use('/api/rewards', rewardsRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -65,7 +67,7 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: 'The requested resource was not found.',

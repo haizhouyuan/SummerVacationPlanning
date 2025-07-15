@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as FirebaseUser } from 'firebase/auth';
 import { User, AuthContextType } from '../types';
-import { authService } from '../services/auth';
+import { mongoAuthService } from '../services/mongoAuth';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -22,28 +21,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged(async (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        try {
-          const userProfile = await authService.getProfile();
+    const initializeAuth = async () => {
+      try {
+        if (mongoAuthService.isAuthenticated()) {
+          const userProfile = await mongoAuthService.getProfile();
           setUser(userProfile);
-        } catch (error) {
-          console.error('Error getting user profile:', error);
+        } else {
           setUser(null);
         }
-      } else {
+      } catch (error) {
+        console.error('Error initializing auth:', error);
         setUser(null);
+        // Remove invalid token
+        localStorage.removeItem('auth_token');
       }
       setLoading(false);
-    });
+    };
 
-    return unsubscribe;
+    initializeAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
     try {
-      const userProfile = await authService.login(email, password);
-      setUser(userProfile);
+      const result = await mongoAuthService.login(email, password);
+      setUser(result.user);
     } catch (error) {
       throw error;
     }
@@ -57,8 +58,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     parentEmail?: string
   ) => {
     try {
-      const userProfile = await authService.register(email, password, displayName, role, parentEmail);
-      setUser(userProfile);
+      const result = await mongoAuthService.register(email, password, displayName, role, parentEmail);
+      setUser(result.user);
     } catch (error) {
       throw error;
     }
@@ -66,7 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await authService.logout();
+      await mongoAuthService.logout();
       setUser(null);
     } catch (error) {
       throw error;
@@ -75,7 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (displayName?: string, avatar?: string) => {
     try {
-      const updatedUser = await authService.updateProfile(displayName, avatar);
+      const updatedUser = await mongoAuthService.updateProfile(displayName, avatar);
       setUser(updatedUser);
     } catch (error) {
       throw error;

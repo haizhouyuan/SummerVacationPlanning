@@ -1,4 +1,4 @@
-import { collections } from '../config/firebase';
+import { collections } from '../config/mongodb';
 import { Task } from '../types';
 
 export const defaultTasks: Omit<Task, 'id' | 'createdBy' | 'createdAt' | 'updatedAt'>[] = [

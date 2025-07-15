@@ -1,0 +1,327 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getSpecialRewards = exports.useGameTime = exports.getTodayGameTime = exports.calculateGameTime = void 0;
+const mongodb_1 = require("../config/mongodb");
+// Gaming time exchange rates (from EarnPoints.md)
+const EXCHANGE_RATES = {
+    normal_games: 5, // 1 point = 5 minutes
+    educational_games: 10, // 1 point = 10 minutes (programming/English games)
+    free_educational_time: 20, // First 20 minutes free daily for educational games
+};
+const BASE_GAMING_TIME = 30; // 30 minutes base gaming time daily
+const calculateGameTime = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated',
+            });
+        }
+        const { pointsToSpend, gameType = 'normal', date } = req.body;
+        const currentDate = date || new Date().toISOString().split('T')[0];
+        // Check if user has enough points
+        if (req.user.points < pointsToSpend) {
+            return res.status(400).json({
+                success: false,
+                error: 'Insufficient points',
+            });
+        }
+        // Calculate gaming time based on type and exchange rate
+        let minutesGranted = 0;
+        const exchangeRate = gameType === 'educational' ? EXCHANGE_RATES.educational_games : EXCHANGE_RATES.normal_games;
+        // Check if educational games get free time today
+        if (gameType === 'educational') {
+            const todayExchanges = await mongodb_1.collections.gameTimeExchanges
+                .where('userId', '==', req.user.id)
+                .where('date', '==', currentDate)
+                .where('gameType', '==', 'educational')
+                .get();
+            const totalEducationalTimeUsed = todayExchanges.docs.reduce((sum, doc) => {
+                const exchange = doc.data();
+                return sum + exchange.minutesGranted;
+            }, 0);
+            // First 20 minutes are free for educational games
+            if (totalEducationalTimeUsed < EXCHANGE_RATES.free_educational_time) {
+                const freeMinutesAvailable = EXCHANGE_RATES.free_educational_time - totalEducationalTimeUsed;
+                const requestedMinutes = pointsToSpend * exchangeRate;
+                if (requestedMinutes <= freeMinutesAvailable) {
+                    minutesGranted = requestedMinutes;
+                    // Don't deduct points for free time
+                    const freeExchange = {
+                        userId: req.user.id,
+                        date: currentDate,
+                        pointsSpent: 0,
+                        gameType: 'educational',
+                        minutesGranted,
+                        minutesUsed: 0,
+                        createdAt: new Date(),
+                    };
+                    await mongodb_1.collections.gameTimeExchanges.add(freeExchange);
+                    return res.status(200).json({
+                        success: true,
+                        data: {
+                            minutesGranted,
+                            pointsSpent: 0,
+                            isFreeTime: true,
+                            baseGameTime: BASE_GAMING_TIME,
+                            totalAvailableToday: BASE_GAMING_TIME + minutesGranted,
+                        },
+                        message: 'Free educational gaming time granted!',
+                    });
+                }
+            }
+        }
+        minutesGranted = pointsToSpend * exchangeRate;
+        // Create exchange record
+        const exchange = {
+            userId: req.user.id,
+            date: currentDate,
+            pointsSpent: pointsToSpend,
+            gameType,
+            minutesGranted,
+            minutesUsed: 0,
+            createdAt: new Date(),
+        };
+        await mongodb_1.collections.gameTimeExchanges.add(exchange);
+        // Deduct points from user
+        await mongodb_1.collections.users.doc(req.user.id).update({
+            points: req.user.points - pointsToSpend,
+            updatedAt: new Date(),
+        });
+        res.status(200).json({
+            success: true,
+            data: {
+                minutesGranted,
+                pointsSpent: pointsToSpend,
+                remainingPoints: req.user.points - pointsToSpend,
+                isFreeTime: false,
+                baseGameTime: BASE_GAMING_TIME,
+                totalAvailableToday: BASE_GAMING_TIME + minutesGranted,
+            },
+            message: 'Gaming time purchased successfully!',
+        });
+    }
+    catch (error) {
+        console.error('Calculate game time error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to calculate game time',
+        });
+    }
+};
+exports.calculateGameTime = calculateGameTime;
+const getTodayGameTime = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated',
+            });
+        }
+        const { userId, date } = req.query;
+        const targetUserId = userId || req.user.id;
+        const currentDate = date || new Date().toISOString().split('T')[0];
+        // Check access permissions
+        if (targetUserId !== req.user.id) {
+            if (req.user.role !== 'parent' || !req.user.children?.includes(targetUserId)) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Access denied',
+                });
+            }
+        }
+        // Get today's exchanges
+        const exchangesSnapshot = await mongodb_1.collections.gameTimeExchanges
+            .where('userId', '==', targetUserId)
+            .where('date', '==', currentDate)
+            .get();
+        const exchanges = exchangesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+        const totalMinutesGranted = exchanges.reduce((sum, exchange) => sum + exchange.minutesGranted, 0);
+        const totalMinutesUsed = exchanges.reduce((sum, exchange) => sum + exchange.minutesUsed, 0);
+        const totalPointsSpent = exchanges.reduce((sum, exchange) => sum + exchange.pointsSpent, 0);
+        const gameTimeStats = {
+            baseGameTime: BASE_GAMING_TIME,
+            bonusTimeEarned: totalMinutesGranted,
+            totalAvailable: BASE_GAMING_TIME + totalMinutesGranted,
+            totalUsed: totalMinutesUsed,
+            remainingTime: BASE_GAMING_TIME + totalMinutesGranted - totalMinutesUsed,
+            pointsSpentToday: totalPointsSpent,
+            exchanges,
+        };
+        res.status(200).json({
+            success: true,
+            data: { gameTimeStats },
+        });
+    }
+    catch (error) {
+        console.error('Get today game time error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to get game time stats',
+        });
+    }
+};
+exports.getTodayGameTime = getTodayGameTime;
+const useGameTime = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated',
+            });
+        }
+        const { minutesToUse, gameSession } = req.body;
+        const currentDate = new Date().toISOString().split('T')[0];
+        if (!minutesToUse || minutesToUse <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid minutes to use',
+            });
+        }
+        // Get today's available time
+        const exchangesSnapshot = await mongodb_1.collections.gameTimeExchanges
+            .where('userId', '==', req.user.id)
+            .where('date', '==', currentDate)
+            .get();
+        const exchanges = exchangesSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+        const totalMinutesGranted = exchanges.reduce((sum, exchange) => sum + exchange.minutesGranted, 0);
+        const totalMinutesUsed = exchanges.reduce((sum, exchange) => sum + exchange.minutesUsed, 0);
+        const availableTime = BASE_GAMING_TIME + totalMinutesGranted - totalMinutesUsed;
+        if (minutesToUse > availableTime) {
+            return res.status(400).json({
+                success: false,
+                error: 'Insufficient gaming time available',
+                data: {
+                    requested: minutesToUse,
+                    available: availableTime,
+                },
+            });
+        }
+        // Record game session
+        const gameSessionData = {
+            userId: req.user.id,
+            date: currentDate,
+            minutesUsed: minutesToUse,
+            gameSession: gameSession || 'General gaming',
+            startTime: new Date(),
+            endTime: new Date(Date.now() + minutesToUse * 60000),
+        };
+        await mongodb_1.collections.gameSessions.add(gameSessionData);
+        // Update exchange records (mark minutes as used)
+        let remainingToUse = minutesToUse;
+        // First use base time, then bonus time
+        if (remainingToUse > 0) {
+            const baseTimeUsed = Math.min(remainingToUse, BASE_GAMING_TIME - Math.min(totalMinutesUsed, BASE_GAMING_TIME));
+            remainingToUse -= baseTimeUsed;
+        }
+        // Use bonus time from exchanges
+        for (const exchange of exchanges) {
+            if (remainingToUse <= 0)
+                break;
+            const exchangeDoc = exchangesSnapshot.docs.find(doc => doc.id === exchange.id);
+            if (exchangeDoc) {
+                const unusedInExchange = exchange.minutesGranted - exchange.minutesUsed;
+                const toUseFromExchange = Math.min(remainingToUse, unusedInExchange);
+                if (toUseFromExchange > 0) {
+                    await exchangeDoc.ref.update({
+                        minutesUsed: exchange.minutesUsed + toUseFromExchange,
+                    });
+                    remainingToUse -= toUseFromExchange;
+                }
+            }
+        }
+        res.status(200).json({
+            success: true,
+            data: {
+                minutesUsed: minutesToUse,
+                remainingTime: availableTime - minutesToUse,
+                sessionStart: gameSessionData.startTime,
+                sessionEnd: gameSessionData.endTime,
+            },
+            message: 'Game session started successfully!',
+        });
+    }
+    catch (error) {
+        console.error('Use game time error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to use game time',
+        });
+    }
+};
+exports.useGameTime = useGameTime;
+const getSpecialRewards = async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                error: 'User not authenticated',
+            });
+        }
+        // Define special rewards based on accumulated points
+        const specialRewards = [
+            {
+                id: 'new_game',
+                title: '购买新游戏',
+                description: '选择一款心仪的新游戏',
+                pointsCost: 100,
+                category: 'game',
+                available: req.user.points >= 100,
+            },
+            {
+                id: 'racing_experience',
+                title: '赛车馆体验',
+                description: '真实赛车馆驾驶体验一次',
+                pointsCost: 150,
+                category: 'experience',
+                available: req.user.points >= 150,
+            },
+            {
+                id: 'family_trip',
+                title: '全家短途游',
+                description: '全家一起的短途旅行',
+                pointsCost: 200,
+                category: 'family',
+                available: req.user.points >= 200,
+            },
+            {
+                id: 'diy_kit',
+                title: '高级DIY套件',
+                description: '更复杂的遥控车或机器人套件',
+                pointsCost: 80,
+                category: 'education',
+                available: req.user.points >= 80,
+            },
+            {
+                id: 'gaming_setup',
+                title: '游戏设备升级',
+                description: '新手柄、键盘或其他游戏配件',
+                pointsCost: 120,
+                category: 'game',
+                available: req.user.points >= 120,
+            },
+        ];
+        res.status(200).json({
+            success: true,
+            data: {
+                specialRewards,
+                userPoints: req.user.points,
+            },
+        });
+    }
+    catch (error) {
+        console.error('Get special rewards error:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to get special rewards',
+        });
+    }
+};
+exports.getSpecialRewards = getSpecialRewards;
+//# sourceMappingURL=rewardsController.js.map
