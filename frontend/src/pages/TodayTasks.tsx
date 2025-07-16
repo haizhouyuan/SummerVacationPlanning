@@ -3,13 +3,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { DailyTask } from '../types';
 import { apiService } from '../services/api';
 import DailyTaskCard from '../components/DailyTaskCard';
+import PointsDisplay from '../components/PointsDisplay';
+import AchievementBadge from '../components/AchievementBadge';
+import GameTimeExchange from '../components/GameTimeExchange';
 
 const TodayTasks: React.FC = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
   const [gameTimeStats, setGameTimeStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [todayDate] = useState(new Date().toISOString().split('T')[0]);
+  const [previousPoints, setPreviousPoints] = useState(0);
 
   useEffect(() => {
     loadTodayTasks();
@@ -39,6 +43,9 @@ const TodayTasks: React.FC = () => {
 
   const handleStatusUpdate = async (dailyTaskId: string, status: string, evidence?: any[], notes?: string) => {
     try {
+      // Store previous points before update
+      setPreviousPoints(user?.points || 0);
+      
       await apiService.updateDailyTaskStatus(dailyTaskId, {
         status,
         evidence,
@@ -49,11 +56,14 @@ const TodayTasks: React.FC = () => {
       await loadTodayTasks();
       await loadGameTimeStats();
       
+      // Refresh user data to get updated points and medals
+      await refreshUser();
+      
       // Show success message
       if (status === 'completed') {
         const task = dailyTasks.find(dt => dt.id === dailyTaskId);
         if (task) {
-          alert(`🎉 任务完成！获得 ${task.task?.points || 0} 积分！`);
+          alert(`🎉 任务完成！获得 ${task.pointsEarned || task.task?.points || 0} 积分！`);
         }
       }
     } catch (error) {
@@ -117,7 +127,17 @@ const TodayTasks: React.FC = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-                <p className="text-xs text-gray-500">{user.points} 积分</p>
+                <div className="flex items-center space-x-2">
+                  <PointsDisplay
+                    points={user.points}
+                    previousPoints={previousPoints}
+                    size="sm"
+                    currentStreak={user.currentStreak}
+                    medals={user.medals}
+                    showMedalMultiplier={true}
+                    showStreak={true}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -191,6 +211,66 @@ const TodayTasks: React.FC = () => {
                 </div>
               )}
 
+              {/* Medals Section */}
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">🏆 成就勋章</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <AchievementBadge
+                    type="medal"
+                    level={1}
+                    title="青铜勋章"
+                    description="连续7天完成"
+                    isUnlocked={user.medals?.bronze || false}
+                    progress={user.currentStreak}
+                    maxProgress={7}
+                    size="sm"
+                    medalType="bronze"
+                    multiplier={user.medals?.bronze ? 1.1 : undefined}
+                  />
+                  <AchievementBadge
+                    type="medal"
+                    level={2}
+                    title="白银勋章"
+                    description="连续14天完成"
+                    isUnlocked={user.medals?.silver || false}
+                    progress={user.currentStreak}
+                    maxProgress={14}
+                    size="sm"
+                    medalType="silver"
+                    multiplier={user.medals?.silver ? 1.2 : undefined}
+                  />
+                  <AchievementBadge
+                    type="medal"
+                    level={3}
+                    title="黄金勋章"
+                    description="连续30天完成"
+                    isUnlocked={user.medals?.gold || false}
+                    progress={user.currentStreak}
+                    maxProgress={30}
+                    size="sm"
+                    medalType="gold"
+                    multiplier={user.medals?.gold ? 1.3 : undefined}
+                  />
+                  <AchievementBadge
+                    type="medal"
+                    level={4}
+                    title="钻石勋章"
+                    description="连续60天完成"
+                    isUnlocked={user.medals?.diamond || false}
+                    progress={user.currentStreak}
+                    maxProgress={60}
+                    size="sm"
+                    medalType="diamond"
+                    multiplier={user.medals?.diamond ? 1.4 : undefined}
+                  />
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-600">
+                    🔥 连续完成 {user.currentStreak} 天
+                  </p>
+                </div>
+              </div>
+
               {/* Quick Actions */}
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">⚡ 快速操作</h3>
@@ -215,6 +295,13 @@ const TodayTasks: React.FC = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Game Time Exchange */}
+              <GameTimeExchange 
+                onExchangeSuccess={() => {
+                  loadGameTimeStats();
+                }}
+              />
             </div>
           </div>
 

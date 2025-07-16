@@ -66,6 +66,9 @@ const TaskPlanning: React.FC = () => {
     try {
       setPlanningTask(true);
       
+      // Save the count before clearing the array
+      const count = selectedTasks.length;
+      
       for (const task of selectedTasks) {
         // Check if task is already planned for this date
         const existingTask = dailyTasks.find(dt => dt.taskId === task.id);
@@ -81,8 +84,8 @@ const TaskPlanning: React.FC = () => {
       setSelectedTasks([]);
       await loadDailyTasks();
       
-      // Show success message
-      alert(`成功规划了 ${selectedTasks.length} 个任务！`);
+      // Show success message with correct count
+      alert(`成功规划了 ${count} 个任务！`);
     } catch (error) {
       console.error('Error planning tasks:', error);
       alert('规划任务时出现错误，请重试');

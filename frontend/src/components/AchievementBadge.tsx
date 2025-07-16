@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface AchievementBadgeProps {
-  type: 'streak' | 'points' | 'tasks' | 'category' | 'special';
+  type: 'streak' | 'points' | 'tasks' | 'category' | 'special' | 'medal';
   level: number;
   title: string;
   description: string;
@@ -11,6 +11,8 @@ interface AchievementBadgeProps {
   size?: 'sm' | 'md' | 'lg';
   showProgress?: boolean;
   className?: string;
+  medalType?: 'bronze' | 'silver' | 'gold' | 'diamond';
+  multiplier?: number;
 }
 
 const AchievementBadge: React.FC<AchievementBadgeProps> = ({
@@ -24,6 +26,8 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
   size = 'md',
   showProgress = true,
   className = '',
+  medalType,
+  multiplier,
 }) => {
   const getBadgeData = () => {
     const badgeMap: { [key: string]: { emoji: string; color: string; bgColor: string } } = {
@@ -32,8 +36,19 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
       tasks: { emoji: '✅', color: 'text-cartoon-green', bgColor: 'bg-gradient-to-br from-cartoon-green to-success-400' },
       category: { emoji: '🎯', color: 'text-cartoon-purple', bgColor: 'bg-gradient-to-br from-cartoon-purple to-primary-400' },
       special: { emoji: '🏆', color: 'text-cartoon-pink', bgColor: 'bg-gradient-to-br from-cartoon-pink to-cartoon-purple' },
+      medal: getMedalData(),
     };
     return badgeMap[type];
+  };
+
+  const getMedalData = () => {
+    const medalMap: { [key: string]: { emoji: string; color: string; bgColor: string } } = {
+      bronze: { emoji: '🥉', color: 'text-orange-400', bgColor: 'bg-gradient-to-br from-orange-400 to-orange-600' },
+      silver: { emoji: '🥈', color: 'text-gray-400', bgColor: 'bg-gradient-to-br from-gray-400 to-gray-600' },
+      gold: { emoji: '🥇', color: 'text-yellow-400', bgColor: 'bg-gradient-to-br from-yellow-400 to-yellow-600' },
+      diamond: { emoji: '💎', color: 'text-purple-400', bgColor: 'bg-gradient-to-br from-purple-400 to-purple-600' },
+    };
+    return medalMap[medalType || 'bronze'];
   };
 
   const getSizeClasses = () => {
@@ -94,10 +109,17 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
           </div>
         )}
 
-        {/* Level indicator */}
-        {level > 1 && isUnlocked && (
+        {/* Level indicator or multiplier */}
+        {level > 1 && isUnlocked && !multiplier && (
           <div className="absolute -top-2 -right-2 bg-cartoon-purple text-white text-xs font-bold px-2 py-1 rounded-full">
             Lv.{level}
+          </div>
+        )}
+        
+        {/* Medal multiplier */}
+        {multiplier && isUnlocked && (
+          <div className="absolute -top-2 -right-2 bg-cartoon-green text-white text-xs font-bold px-2 py-1 rounded-full">
+            {multiplier.toFixed(1)}x
           </div>
         )}
 

@@ -74,6 +74,13 @@ export const register = async (req: Request, res: Response) => {
       parentId,
       children: role === 'parent' ? [] : undefined,
       points: 0,
+      currentStreak: 0,
+      medals: {
+        bronze: false,
+        silver: false,
+        gold: false,
+        diamond: false,
+      },
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -105,6 +112,13 @@ export const register = async (req: Request, res: Response) => {
       parentId,
       children: role === 'parent' ? [] : undefined,
       points: 0,
+      currentStreak: 0,
+      medals: {
+        bronze: false,
+        silver: false,
+        gold: false,
+        diamond: false,
+      },
       createdAt: userData.createdAt,
       updatedAt: userData.updatedAt,
     };
@@ -170,6 +184,13 @@ export const login = async (req: Request, res: Response) => {
       children: user.children,
       points: user.points,
       avatar: user.avatar,
+      currentStreak: user.currentStreak || 0,
+      medals: user.medals || {
+        bronze: false,
+        silver: false,
+        gold: false,
+        diamond: false,
+      },
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -257,6 +278,13 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       children: updatedUser.children,
       points: updatedUser.points,
       avatar: updatedUser.avatar,
+      currentStreak: updatedUser.currentStreak || 0,
+      medals: updatedUser.medals || {
+        bronze: false,
+        silver: false,
+        gold: false,
+        diamond: false,
+      },
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
     };

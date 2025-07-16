@@ -83,6 +83,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      if (mongoAuthService.isAuthenticated()) {
+        const userProfile = await mongoAuthService.getProfile();
+        setUser(userProfile);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -90,6 +101,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     updateProfile,
+    refreshUser,
   };
 
   return (

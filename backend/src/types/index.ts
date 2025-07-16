@@ -7,6 +7,13 @@ export interface User {
   children?: string[]; // For parents, array of child IDs
   points: number;
   avatar?: string;
+  currentStreak: number; // Consecutive days of full task completion
+  medals: {
+    bronze: boolean;   // 7 days consecutive - 1.1x multiplier
+    silver: boolean;   // 14 days consecutive - 1.2x multiplier
+    gold: boolean;     // 30 days consecutive - 1.3x multiplier
+    diamond: boolean;  // 60 days consecutive - 1.4x multiplier
+  };
   createdAt: Date;
   updatedAt: Date;
 }

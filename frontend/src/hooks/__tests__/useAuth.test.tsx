@@ -21,6 +21,15 @@ const mockUser = {
   displayName: 'Test User',
   role: 'student' as const,
   points: 100,
+  currentStreak: 5,
+  medals: {
+    bronze: true,
+    silver: false,
+    gold: false,
+    diamond: false,
+  },
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 const createWrapper = (user: any = null, loading = false) => {
@@ -30,7 +39,8 @@ const createWrapper = (user: any = null, loading = false) => {
     login: jest.fn(),
     register: jest.fn(),
     logout: jest.fn(),
-    updateUser: jest.fn(),
+    updateProfile: jest.fn(),
+    refreshUser: jest.fn(),
   };
 
   return ({ children }: { children: React.ReactNode }) => (
@@ -72,7 +82,8 @@ describe('useAuth', () => {
     expect(typeof result.current.login).toBe('function');
     expect(typeof result.current.register).toBe('function');
     expect(typeof result.current.logout).toBe('function');
-    expect(typeof result.current.updateUser).toBe('function');
+    expect(typeof result.current.updateProfile).toBe('function');
+    expect(typeof result.current.refreshUser).toBe('function');
   });
 
   test('login function can be called', async () => {
@@ -83,7 +94,8 @@ describe('useAuth', () => {
       login: mockLogin,
       register: jest.fn(),
       logout: jest.fn(),
-      updateUser: jest.fn(),
+      updateProfile: jest.fn(),
+      refreshUser: jest.fn(),
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -109,7 +121,8 @@ describe('useAuth', () => {
       login: jest.fn(),
       register: mockRegister,
       logout: jest.fn(),
-      updateUser: jest.fn(),
+      updateProfile: jest.fn(),
+      refreshUser: jest.fn(),
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -145,7 +158,8 @@ describe('useAuth', () => {
       login: jest.fn(),
       register: jest.fn(),
       logout: mockLogout,
-      updateUser: jest.fn(),
+      updateProfile: jest.fn(),
+      refreshUser: jest.fn(),
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (

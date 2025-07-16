@@ -6,6 +6,13 @@ export interface User {
   parentId?: string;
   children?: string[];
   points: number;
+  currentStreak: number;
+  medals: {
+    bronze: boolean;   // 7 days consecutive - 1.1x multiplier
+    silver: boolean;   // 14 days consecutive - 1.2x multiplier
+    gold: boolean;     // 30 days consecutive - 1.3x multiplier
+    diamond: boolean;  // 60 days consecutive - 1.4x multiplier
+  };
   avatar?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -63,6 +70,17 @@ export interface Redemption {
   notes?: string;
 }
 
+export interface GameTimeExchange {
+  id: string;
+  userId: string;
+  date: string;
+  pointsSpent: number;
+  gameType: 'normal' | 'educational';
+  minutesGranted: number;
+  minutesUsed: number;
+  createdAt: Date;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -77,4 +95,5 @@ export interface AuthContextType {
   register: (email: string, password: string, displayName: string, role: 'student' | 'parent', parentEmail?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (displayName?: string, avatar?: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
 }

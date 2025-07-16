@@ -1,21 +1,15 @@
-import { auth } from '../config/firebase';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3000/api';
 
 class ApiService {
-  private async getAuthToken(): Promise<string | null> {
-    const user = auth.currentUser;
-    if (user) {
-      return await user.getIdToken();
-    }
-    return null;
+  private getAuthToken(): string | null {
+    return localStorage.getItem('auth_token');
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = await this.getAuthToken();
+    const token = this.getAuthToken();
     
     const config: RequestInit = {
       headers: {
@@ -115,6 +109,19 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  // Game time exchange
+  async exchangeGameTime(data: { gameType: 'normal' | 'educational'; points: number }) {
+    return this.request('/rewards/game-time/exchange', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getGameTimeExchanges(filters?: any) {
+    const queryParams = new URLSearchParams(filters).toString();
+    return this.request(`/rewards/game-time/exchanges${queryParams ? `?${queryParams}` : ''}`);
   }
 
   async getSpecialRewards() {

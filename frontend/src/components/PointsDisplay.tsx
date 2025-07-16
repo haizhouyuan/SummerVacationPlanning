@@ -7,6 +7,15 @@ interface PointsDisplayProps {
   size?: 'sm' | 'md' | 'lg';
   showLabel?: boolean;
   className?: string;
+  currentStreak?: number;
+  medals?: {
+    bronze: boolean;
+    silver: boolean;
+    gold: boolean;
+    diamond: boolean;
+  };
+  showMedalMultiplier?: boolean;
+  showStreak?: boolean;
 }
 
 const PointsDisplay: React.FC<PointsDisplayProps> = ({
@@ -16,6 +25,10 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
   size = 'md',
   showLabel = true,
   className = '',
+  currentStreak = 0,
+  medals = { bronze: false, silver: false, gold: false, diamond: false },
+  showMedalMultiplier = false,
+  showStreak = false,
 }) => {
   const [displayPoints, setDisplayPoints] = useState(previousPoints);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -77,6 +90,29 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
 
   const pointsIncrease = points - previousPoints;
 
+  // Calculate medal multiplier
+  const calculateMedalMultiplier = () => {
+    let multiplier = 1;
+    if (medals.bronze) multiplier *= 1.1;
+    if (medals.silver) multiplier *= 1.2;
+    if (medals.gold) multiplier *= 1.3;
+    if (medals.diamond) multiplier *= 1.4;
+    return multiplier;
+  };
+
+  const medalMultiplier = calculateMedalMultiplier();
+
+  // Get highest medal
+  const getHighestMedal = () => {
+    if (medals.diamond) return { name: '💎 钻石', color: 'text-purple-400' };
+    if (medals.gold) return { name: '🥇 黄金', color: 'text-yellow-400' };
+    if (medals.silver) return { name: '🥈 白银', color: 'text-gray-400' };
+    if (medals.bronze) return { name: '🥉 青铜', color: 'text-orange-400' };
+    return null;
+  };
+
+  const highestMedal = getHighestMedal();
+
   return (
     <div className={`relative inline-flex items-center ${className}`}>
       {/* Main points display */}
@@ -133,6 +169,26 @@ const PointsDisplay: React.FC<PointsDisplayProps> = ({
         <div className="absolute -top-3 -right-3">
           <div className="bg-cartoon-purple text-white text-xs font-bold px-2 py-1 rounded-full animate-float">
             Lv.{Math.floor(points / 100)}
+          </div>
+        </div>
+      )}
+
+      {/* Medal multiplier display */}
+      {showMedalMultiplier && medalMultiplier > 1 && (
+        <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
+          <div className="bg-gradient-to-r from-cartoon-purple to-cartoon-pink text-white text-xs font-bold px-2 py-1 rounded-cartoon flex items-center space-x-1">
+            {highestMedal && <span className={highestMedal.color}>{highestMedal.name.split(' ')[0]}</span>}
+            <span>{medalMultiplier.toFixed(1)}x</span>
+          </div>
+        </div>
+      )}
+
+      {/* Streak display */}
+      {showStreak && currentStreak > 0 && (
+        <div className="absolute -bottom-8 -right-8">
+          <div className="bg-cartoon-orange text-white text-xs font-bold px-2 py-1 rounded-cartoon flex items-center space-x-1">
+            <span>🔥</span>
+            <span>{currentStreak}天</span>
           </div>
         </div>
       )}

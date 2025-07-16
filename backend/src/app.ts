@@ -46,16 +46,22 @@ app.get('/health', (req, res) => {
 
 // API routes
 import mongoAuthRoutes from './routes/mongoAuthRoutes';
-// import taskRoutes from './routes/taskRoutes';
-// import dailyTaskRoutes from './routes/dailyTaskRoutes';
+import taskRoutes from './routes/taskRoutes';
+import dailyTaskRoutes from './routes/dailyTaskRoutes';
 // import redemptionRoutes from './routes/redemptionRoutes';
-// import rewardsRoutes from './routes/rewardsRoutes';
+import rewardsRoutes from './routes/rewardsRoutes';
+
+// Debug middleware for all API routes
+app.use('/api', (req, res, next) => {
+  console.log(`🔍 API Request: ${req.method} ${req.originalUrl}`);
+  next();
+});
 
 app.use('/api/auth', mongoAuthRoutes);
-// app.use('/api/tasks', taskRoutes);
-// app.use('/api/daily-tasks', dailyTaskRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/daily-tasks', dailyTaskRoutes);
 // app.use('/api/redemptions', redemptionRoutes);
-// app.use('/api/rewards', rewardsRoutes);
+app.use('/api/rewards', rewardsRoutes);
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
