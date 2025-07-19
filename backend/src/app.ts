@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -48,7 +49,7 @@ app.get('/health', (req, res) => {
 import mongoAuthRoutes from './routes/mongoAuthRoutes';
 import taskRoutes from './routes/taskRoutes';
 import dailyTaskRoutes from './routes/dailyTaskRoutes';
-// import redemptionRoutes from './routes/redemptionRoutes';
+import redemptionRoutes from './routes/redemptionRoutes';
 import rewardsRoutes from './routes/rewardsRoutes';
 
 // Debug middleware for all API routes
@@ -60,8 +61,11 @@ app.use('/api', (req, res, next) => {
 app.use('/api/auth', mongoAuthRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/daily-tasks', dailyTaskRoutes);
-// app.use('/api/redemptions', redemptionRoutes);
+app.use('/api/redemptions', redemptionRoutes);
 app.use('/api/rewards', rewardsRoutes);
+
+// 静态资源服务，开放 /uploads 目录
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

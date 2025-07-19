@@ -7,7 +7,7 @@ import {
   deleteRedemption,
   getRedemptionStats,
 } from '../controllers/redemptionController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken } from '../middleware/mongoAuth';
 import { validateRequest } from '../middleware/validation';
 
 const router = Router();

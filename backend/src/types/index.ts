@@ -39,6 +39,14 @@ export interface Task {
   updatedAt: Date;
 }
 
+export interface EvidenceMediaItem {
+  type: 'image' | 'video';
+  filename: string;
+  url: string;
+  size: number;
+  mimetype: string;
+}
+
 export interface DailyTask {
   id: string;
   userId: string;
@@ -47,6 +55,9 @@ export interface DailyTask {
   status: 'planned' | 'in_progress' | 'completed' | 'skipped';
   plannedTime?: string; // HH:MM format
   completedAt?: Date;
+  evidenceText?: string; // 文本心得
+  evidenceMedia?: EvidenceMediaItem[]; // 多媒体证据
+  isPublic?: boolean; // 是否公开
   evidence?: {
     type: 'text' | 'photo' | 'video';
     content: string; // Text content or file URL

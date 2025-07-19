@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { collections } from '../config/mongodb';
 import { Redemption } from '../types';
-import { AuthRequest } from '../middleware/auth';
+import { AuthRequest } from '../middleware/mongoAuth';
+import { ObjectId } from 'mongodb';
 
 export const createRedemption = async (req: AuthRequest, res: Response) => {
   try {
@@ -40,8 +41,8 @@ export const createRedemption = async (req: AuthRequest, res: Response) => {
       notes,
     };
 
-    const redemptionRef = await collections.redemptions.add(redemptionData);
-    const redemption = { ...redemptionData, id: redemptionRef.id };
+    const result = await collections.redemptions.insertOne(redemptionData);
+    const redemption = { ...redemptionData, id: result.insertedId.toString() };
 
     res.status(201).json({
       success: true,
@@ -79,23 +80,21 @@ export const getRedemptions = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    let query = collections.redemptions
-      .where('userId', '==', targetUserId)
-      .orderBy('requestedAt', 'desc');
-
+    let filter: any = { userId: targetUserId };
+    
     if (status) {
-      query = query.where('status', '==', status);
+      filter.status = status;
     }
 
-    const snapshot = await query.get();
-    const redemptions = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Redemption[];
+    const redemptions = await collections.redemptions.find(filter).toArray();
+    const mappedRedemptions = redemptions.map((redemption: any) => ({
+      ...redemption,
+      id: redemption._id.toString(),
+    }));
 
     res.status(200).json({
       success: true,
-      data: { redemptions },
+      data: { redemptions: mappedRedemptions },
     });
   } catch (error: any) {
     console.error('Get redemptions error:', error);
@@ -118,32 +117,19 @@ export const updateRedemptionStatus = async (req: AuthRequest, res: Response) =>
     const { redemptionId } = req.params;
     const { status, notes } = req.body;
 
-    const redemptionDoc = await collections.redemptions.doc(redemptionId).get();
-    if (!redemptionDoc.exists) {
+    const redemption = await collections.redemptions.findOne({ _id: new ObjectId(redemptionId) });
+    if (!redemption) {
       return res.status(404).json({
         success: false,
         error: 'Redemption not found',
       });
     }
 
-    const redemption = redemptionDoc.data() as Redemption;
-
     // Check if user can update this redemption
-    // Only the user who created it or their parent can update
-    if (redemption.userId !== req.user.id) {
-      if (req.user.role !== 'parent' || !req.user.children?.includes(redemption.userId)) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied',
-        });
-      }
-    }
-
-    // Only parents can approve/reject redemptions
-    if ((status === 'approved' || status === 'rejected') && req.user.role !== 'parent') {
+    if (req.user.role !== 'parent') {
       return res.status(403).json({
         success: false,
-        error: 'Only parents can approve or reject redemptions',
+        error: 'Only parents can update redemption status',
       });
     }
 
@@ -151,36 +137,51 @@ export const updateRedemptionStatus = async (req: AuthRequest, res: Response) =>
       status,
       processedAt: new Date(),
       processedBy: req.user.id,
+      updatedAt: new Date(),
     };
 
     if (notes) {
       updates.notes = notes;
     }
 
-    // If approving, deduct points from user
-    if (status === 'approved') {
-      const userDoc = await collections.users.doc(redemption.userId).get();
-      if (userDoc.exists) {
-        const userData = userDoc.data();
-        const newPoints = Math.max(0, userData!.points - redemption.pointsCost);
-        
-        await collections.users.doc(redemption.userId).update({
-          points: newPoints,
-          updatedAt: new Date(),
-        });
-      }
+    // If approving redemption, deduct points from user
+    if (status === 'approved' && redemption.status === 'pending') {
+      await collections.users.updateOne(
+        { _id: new ObjectId(redemption.userId) },
+        { 
+          $inc: { points: -redemption.pointsCost },
+          $set: { updatedAt: new Date() }
+        }
+      );
+    }
+    // If rejecting after approval, refund points
+    else if (status === 'rejected' && redemption.status === 'approved') {
+      await collections.users.updateOne(
+        { _id: new ObjectId(redemption.userId) },
+        { 
+          $inc: { points: redemption.pointsCost },
+          $set: { updatedAt: new Date() }
+        }
+      );
     }
 
-    await collections.redemptions.doc(redemptionId).update(updates);
+    await collections.redemptions.updateOne(
+      { _id: new ObjectId(redemptionId) },
+      { $set: updates }
+    );
 
     // Get updated redemption
-    const updatedRedemptionDoc = await collections.redemptions.doc(redemptionId).get();
-    const updatedRedemption = { id: updatedRedemptionDoc.id, ...updatedRedemptionDoc.data() } as Redemption;
+    const updatedRedemption = await collections.redemptions.findOne({ _id: new ObjectId(redemptionId) });
 
     res.status(200).json({
       success: true,
-      data: { redemption: updatedRedemption },
-      message: 'Redemption updated successfully',
+      data: { 
+        redemption: { 
+          ...updatedRedemption, 
+          id: updatedRedemption._id.toString() 
+        } 
+      },
+      message: 'Redemption status updated successfully',
     });
   } catch (error: any) {
     console.error('Update redemption status error:', error);
@@ -201,33 +202,35 @@ export const deleteRedemption = async (req: AuthRequest, res: Response) => {
     }
 
     const { redemptionId } = req.params;
-    const redemptionDoc = await collections.redemptions.doc(redemptionId).get();
+    const redemption = await collections.redemptions.findOne({ _id: new ObjectId(redemptionId) });
 
-    if (!redemptionDoc.exists) {
+    if (!redemption) {
       return res.status(404).json({
         success: false,
         error: 'Redemption not found',
       });
     }
 
-    const redemption = redemptionDoc.data() as Redemption;
-
-    // Only allow deletion by the user who created it and only if it's still pending
-    if (redemption.userId !== req.user.id) {
+    // Check if user can delete this redemption
+    if (redemption.userId !== req.user.id && req.user.role !== 'parent') {
       return res.status(403).json({
         success: false,
         error: 'You can only delete your own redemption requests',
       });
     }
 
-    if (redemption.status !== 'pending') {
-      return res.status(400).json({
-        success: false,
-        error: 'Only pending redemptions can be deleted',
-      });
+    // If redemption was approved, refund points
+    if (redemption.status === 'approved') {
+      await collections.users.updateOne(
+        { _id: new ObjectId(redemption.userId) },
+        { 
+          $inc: { points: redemption.pointsCost },
+          $set: { updatedAt: new Date() }
+        }
+      );
     }
 
-    await collections.redemptions.doc(redemptionId).delete();
+    await collections.redemptions.deleteOne({ _id: new ObjectId(redemptionId) });
 
     res.status(200).json({
       success: true,
@@ -264,23 +267,16 @@ export const getRedemptionStats = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    const snapshot = await collections.redemptions
-      .where('userId', '==', targetUserId)
-      .get();
-
-    const redemptions = snapshot.docs.map(doc => doc.data()) as Redemption[];
+    const redemptions = await collections.redemptions.find({ userId: targetUserId }).toArray();
 
     const stats = {
       totalRedemptions: redemptions.length,
-      pendingRedemptions: redemptions.filter(r => r.status === 'pending').length,
-      approvedRedemptions: redemptions.filter(r => r.status === 'approved').length,
-      rejectedRedemptions: redemptions.filter(r => r.status === 'rejected').length,
-      totalPointsRedeemed: redemptions
-        .filter(r => r.status === 'approved')
-        .reduce((sum, r) => sum + r.pointsCost, 0),
-      totalPointsPending: redemptions
-        .filter(r => r.status === 'pending')
-        .reduce((sum, r) => sum + r.pointsCost, 0),
+      pendingRedemptions: redemptions.filter((r: any) => r.status === 'pending').length,
+      approvedRedemptions: redemptions.filter((r: any) => r.status === 'approved').length,
+      rejectedRedemptions: redemptions.filter((r: any) => r.status === 'rejected').length,
+      totalPointsSpent: redemptions
+        .filter((r: any) => r.status === 'approved')
+        .reduce((sum: number, r: any) => sum + r.pointsCost, 0),
     };
 
     res.status(200).json({

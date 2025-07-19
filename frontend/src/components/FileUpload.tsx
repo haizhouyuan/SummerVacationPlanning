@@ -43,10 +43,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setUploading(true);
       setUploadProgress({});
 
-      const results = await uploadService.uploadMultipleFiles(
+      const results = await uploadService.uploadMultipleFilesToBackend(
         fileArray,
-        userId,
-        taskId,
         (fileIndex, progress) => {
           setUploadProgress(prev => ({
             ...prev,
@@ -54,7 +52,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
           }));
         }
       );
-
       onUploadComplete(results);
       setUploadProgress({});
     } catch (error: any) {

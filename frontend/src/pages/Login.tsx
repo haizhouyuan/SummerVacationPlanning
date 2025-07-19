@@ -25,6 +25,29 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleDemoLogin = async (userType: 'student' | 'parent') => {
+    setError('');
+    setLoading(true);
+
+    const demoCredentials = {
+      student: { email: 'student@demo.com', password: 'demo123' },
+      parent: { email: 'parent@demo.com', password: 'demo123' }
+    };
+
+    const credentials = demoCredentials[userType];
+    
+    try {
+      setEmail(credentials.email);
+      setPassword(credentials.password);
+      await login(credentials.email, credentials.password);
+      navigate('/dashboard');
+    } catch (error: any) {
+      setError(error.message || 'Demo login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -109,6 +132,31 @@ const Login: React.FC = () => {
                 立即注册
               </Link>
             </span>
+          </div>
+
+          {/* Demo Login Buttons */}
+          <div className="mt-6 border-t border-gray-200 pt-6">
+            <p className="text-center text-sm text-gray-600 mb-4">
+              快速体验演示账号
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('student')}
+                disabled={loading}
+                className="inline-flex justify-center py-2 px-4 border border-primary-300 rounded-md shadow-sm bg-white text-sm font-medium text-primary-700 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                👨‍🎓 学生演示
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('parent')}
+                disabled={loading}
+                className="inline-flex justify-center py-2 px-4 border border-secondary-300 rounded-md shadow-sm bg-white text-sm font-medium text-secondary-700 hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                👨‍👩‍👧‍👦 家长演示
+              </button>
+            </div>
           </div>
         </form>
       </div>

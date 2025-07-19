@@ -6,7 +6,14 @@ import TaskCategoryIcon from './TaskCategoryIcon';
 
 interface DailyTaskCardProps {
   dailyTask: DailyTask & { task?: any };
-  onStatusUpdate?: (dailyTaskId: string, status: string, evidence?: any[], notes?: string) => void;
+  onStatusUpdate?: (
+    dailyTaskId: string,
+    status: string,
+    evidenceText?: string,
+    evidenceMedia?: any[],
+    isPublic?: boolean,
+    notes?: string
+  ) => void;
   onDelete?: (dailyTaskId: string) => void;
   showActions?: boolean;
 }
@@ -53,12 +60,17 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
     if (newStatus === 'completed' && dailyTask.task?.requiresEvidence) {
       setShowEvidenceModal(true);
     } else {
-      onStatusUpdate?.(dailyTask.id, newStatus, [], '');
+      onStatusUpdate?.(dailyTask.id, newStatus, '', [], false, '');
     }
   };
 
-  const handleSubmitEvidence = (evidence: any[], notes: string) => {
-    onStatusUpdate?.(dailyTask.id, 'completed', evidence, notes);
+  const handleSubmitEvidence = (
+    evidenceText: string,
+    evidenceMedia: any[],
+    isPublic: boolean,
+    notes: string
+  ) => {
+    onStatusUpdate?.(dailyTask.id, 'completed', evidenceText, evidenceMedia, isPublic, notes);
     setShowEvidenceModal(false);
   };
 

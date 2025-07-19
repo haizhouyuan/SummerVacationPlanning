@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 interface EvidenceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (evidence: any[], notes: string) => void;
+  onSubmit: (evidenceText: string, evidenceMedia: any[], isPublic: boolean, notes: string) => void;
   task: Task;
   dailyTaskId: string;
 }
@@ -26,6 +26,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({
   const [uploadedFiles, setUploadedFiles] = useState<UploadResult[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
 
   const handleFileUploadComplete = (files: UploadResult[]) => {
     setUploadedFiles(prev => [...prev, ...files]);
@@ -41,39 +42,11 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({
   };
 
   const handleSubmit = () => {
-    const evidence: any[] = [];
-
-    // Add text evidence
-    if (textEvidence.trim()) {
-      evidence.push({
-        type: 'text',
-        content: textEvidence.trim(),
-        timestamp: new Date(),
-      });
-    }
-
-    // Add file evidence
-    uploadedFiles.forEach(file => {
-      let type: 'photo' | 'video' | 'audio' = 'photo';
-      if (file.type.startsWith('video/')) type = 'video';
-      else if (file.type.startsWith('audio/')) type = 'audio';
-
-      evidence.push({
-        type,
-        content: file.url,
-        fileName: file.name,
-        fileSize: file.size,
-        filePath: file.path,
-        timestamp: new Date(),
-      });
-    });
-
-    if (evidence.length === 0) {
+    if (!textEvidence.trim() && uploadedFiles.length === 0) {
       setUploadError('请至少提供一种证据');
       return;
     }
-
-    onSubmit(evidence, notes);
+    onSubmit(textEvidence.trim(), uploadedFiles, isPublic, notes);
     handleClose();
   };
 
@@ -202,6 +175,20 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({
               placeholder="可选的额外说明..."
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
+          </div>
+
+          {/* Public Toggle */}
+          <div className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              id="isPublic"
+              checked={isPublic}
+              onChange={e => setIsPublic(e.target.checked)}
+              className="mr-2"
+            />
+            <label htmlFor="isPublic" className="text-sm text-gray-600 cursor-pointer">
+              公开本次打卡内容（可展示在成就页/排行榜/家庭圈）
+            </label>
           </div>
 
           {/* Task Completion Tips */}

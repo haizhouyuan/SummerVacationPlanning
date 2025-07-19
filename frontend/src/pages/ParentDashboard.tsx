@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../services/api';
 import PointsDisplay from '../components/PointsDisplay';
 import ProgressBar from '../components/ProgressBar';
 import CelebrationModal from '../components/CelebrationModal';
@@ -43,62 +44,69 @@ const ParentDashboard: React.FC = () => {
   const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month'>('week');
   const [showFamilyManagement, setShowFamilyManagement] = useState(false);
   const [showTaskApproval, setShowTaskApproval] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
 
-  // Mock data for demonstration
-  const mockChildren: Child[] = [
-    {
-      id: '1',
-      name: '小明',
-      email: 'xiaoming@example.com',
-      points: 250,
-      level: 3,
-      streakDays: 5,
-      tasksCompleted: 23,
-      weeklyGoal: 7,
-      weeklyProgress: 5,
-    },
-    {
-      id: '2', 
-      name: '小红',
-      email: 'xiaohong@example.com',
-      points: 180,
-      level: 2,
-      streakDays: 3,
-      tasksCompleted: 15,
-      weeklyGoal: 5,
-      weeklyProgress: 3,
-    },
-  ];
 
-  const mockChildStats: { [key: string]: ChildStats } = {
-    '1': {
-      dailyTasks: [
-        { id: '1', task: { title: '读书30分钟', category: 'reading', points: 10 }, status: 'completed', pointsEarned: 10 },
-        { id: '2', task: { title: '户外运动', category: 'exercise', points: 15 }, status: 'in_progress', pointsEarned: 0 },
-        { id: '3', task: { title: '练习书法', category: 'art', points: 12 }, status: 'planned', pointsEarned: 0 },
-      ],
-      weeklyStats: { completed: 12, planned: 3, skipped: 1 },
-      categoryBreakdown: { study: 8, exercise: 4, art: 3, other: 2 },
-      achievements: [
-        { type: 'streak', level: 2, title: '连续达人', description: '连续5天完成任务', isUnlocked: true },
-        { type: 'points', level: 3, title: '积分大师', description: '获得250积分', isUnlocked: true },
-      ],
-    },
-    '2': {
-      dailyTasks: [
-        { id: '4', task: { title: '数学练习', category: 'math', points: 8 }, status: 'completed', pointsEarned: 8 },
-        { id: '5', task: { title: '帮助做家务', category: 'cleaning', points: 10 }, status: 'completed', pointsEarned: 10 },
-      ],
-      weeklyStats: { completed: 8, planned: 2, skipped: 1 },
-      categoryBreakdown: { study: 5, exercise: 2, art: 1, other: 3 },
-      achievements: [
-        { type: 'tasks', level: 1, title: '任务完成者', description: '完成15个任务', isUnlocked: true },
-      ],
-    },
-  };
+  const [children, setChildren] = useState<Child[]>([]);
+  const [childStats, setChildStats] = useState<{ [key: string]: ChildStats }>({});
 
-  const [children] = useState<Child[]>(mockChildren);
-  const [childStats] = useState<{ [key: string]: ChildStats }>(mockChildStats);
+  // Load children data from API
+  useEffect(() => {
+    const loadChildrenData = async () => {
+      if (!user || user.role !== 'parent') return;
+      
+      try {
+        setLoading(true);
+        setError('');
+        
+        // Get children list
+        const childrenResponse = await apiService.getChildren() as any;
+        if (childrenResponse.success) {
+          const childrenData = childrenResponse.data.children;
+          setChildren(childrenData);
+          
+          // Set first child as selected if none selected
+          if (childrenData.length > 0 && !selectedChild) {
+            setSelectedChild(childrenData[0].id);
+          }
+          
+          // Load stats for each child
+          const statsPromises = childrenData.map(async (child: Child) => {
+            try {
+              const statsResponse = await apiService.getChildStats(child.id) as any;
+              if (statsResponse.success) {
+                return { childId: child.id, stats: statsResponse.data.stats };
+              }
+            } catch (error) {
+              console.error(`Failed to load stats for child ${child.id}:`, error);
+            }
+            return null;
+          });
+          
+          const allStats = await Promise.all(statsPromises);
+          const statsMap: { [key: string]: ChildStats } = {};
+          
+          allStats.forEach((result: any) => {
+            if (result) {
+              statsMap[result.childId] = result.stats;
+            }
+          });
+          
+          setChildStats(statsMap);
+        } else {
+          setError('加载孩子数据失败');
+        }
+      } catch (error: any) {
+        console.error('Error loading children data:', error);
+        setError(error.message || '网络错误，请重试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadChildrenData();
+  }, [user, selectedChild]);
 
   useEffect(() => {
     if (children.length > 0 && !selectedChild) {
@@ -195,40 +203,73 @@ const ParentDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Child Selector */}
-        <div className="mb-6">
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
-            <h2 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">👶 选择孩子</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {children.map((child) => (
-                <button
-                  key={child.id}
-                  onClick={() => setSelectedChild(child.id)}
-                  className={`
-                    p-4 rounded-cartoon-lg border-2 transition-all duration-200 text-left
-                    ${selectedChild === child.id 
-                      ? 'border-cartoon-green bg-cartoon-green/10 shadow-success' 
-                      : 'border-cartoon-light bg-cartoon-light hover:border-cartoon-green/50 hover:shadow-cartoon'
-                    }
-                  `}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-cartoon-blue to-primary-400 rounded-cartoon flex items-center justify-center">
-                      <span className="text-white text-xl">👦</span>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-cartoon-dark">{child.name}</h3>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <PointsDisplay points={child.points} size="sm" showLabel={false} />
-                        <span className="text-xs text-cartoon-gray">等级 {child.level}</span>
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))}
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 bg-danger-50 border border-danger-200 rounded-cartoon-lg p-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-danger-600">⚠️</span>
+              <p className="text-danger-800">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="ml-auto bg-danger-600 hover:bg-danger-700 text-white px-3 py-1 rounded-cartoon text-sm"
+              >
+                重试
+              </button>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && children.length === 0 && !error && (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">👨‍👩‍👧‍👦</div>
+            <h3 className="text-xl font-semibold text-cartoon-dark mb-2">还没有孩子账户</h3>
+            <p className="text-cartoon-gray mb-4">请先为您的孩子创建学生账户</p>
+            <button
+              onClick={() => navigate('/register')}
+              className="bg-gradient-to-r from-cartoon-green to-success-400 hover:from-success-500 hover:to-success-600 text-white py-3 px-6 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
+            >
+              创建学生账户
+            </button>
+          </div>
+        )}
+
+        {/* Child Selector */}
+        {children.length > 0 && (
+          <div className="mb-6">
+            <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
+              <h2 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">👶 选择孩子</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {children.map((child) => (
+                  <button
+                    key={child.id}
+                    onClick={() => setSelectedChild(child.id)}
+                    className={`
+                      p-4 rounded-cartoon-lg border-2 transition-all duration-200 text-left
+                      ${selectedChild === child.id 
+                        ? 'border-cartoon-green bg-cartoon-green/10 shadow-success' 
+                        : 'border-cartoon-light bg-cartoon-light hover:border-cartoon-green/50 hover:shadow-cartoon'
+                      }
+                    `}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-cartoon-blue to-primary-400 rounded-cartoon flex items-center justify-center">
+                        <span className="text-white text-xl">👦</span>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-cartoon-dark">{child.name}</h3>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <PointsDisplay points={child.points} size="sm" showLabel={false} />
+                          <span className="text-xs text-cartoon-gray">等级 {child.level}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {currentChild && (
           <>

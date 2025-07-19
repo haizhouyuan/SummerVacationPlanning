@@ -1,13 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './components/NotificationSystem';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import ParentDashboard from './pages/ParentDashboard';
 import TaskPlanning from './pages/TaskPlanning';
 import TodayTasks from './pages/TodayTasks';
 import Rewards from './pages/Rewards';
+import AchievementSquare from './pages/AchievementSquare';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -27,21 +30,29 @@ const AppContent: React.FC = () => {
     <Routes>
       <Route 
         path="/" 
-        element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
+        element={user ? <Navigate to={user.role === 'parent' ? '/parent-dashboard' : '/dashboard'} replace /> : <Navigate to="/login" replace />} 
       />
       <Route 
         path="/login" 
-        element={user ? <Navigate to="/dashboard" replace /> : <Login />} 
+        element={user ? <Navigate to={user.role === 'parent' ? '/parent-dashboard' : '/dashboard'} replace /> : <Login />} 
       />
       <Route 
         path="/register" 
-        element={user ? <Navigate to="/dashboard" replace /> : <Register />} 
+        element={user ? <Navigate to={user.role === 'parent' ? '/parent-dashboard' : '/dashboard'} replace /> : <Register />} 
       />
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parent-dashboard"
+        element={
+          <ProtectedRoute>
+            <ParentDashboard />
           </ProtectedRoute>
         }
       />
@@ -69,6 +80,12 @@ const AppContent: React.FC = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/achievements"
+        element={
+          <AchievementSquare />
+        }
+      />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
@@ -78,7 +95,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   );

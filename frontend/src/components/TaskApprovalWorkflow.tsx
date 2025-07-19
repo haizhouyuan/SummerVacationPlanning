@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import MediaPreview from './MediaPreview';
 import TaskCategoryIcon from './TaskCategoryIcon';
 import PointsDisplay from './PointsDisplay';
@@ -15,16 +16,17 @@ interface PendingTask {
     category: string;
     points: number;
   };
-  evidence: Array<{
-    type: 'text' | 'photo' | 'video' | 'audio';
-    content: string;
+  evidenceText?: string;
+  evidenceMedia?: Array<{
+    type: string;
+    url: string;
     fileName?: string;
     fileSize?: number;
-    timestamp: Date;
   }>;
   notes: string;
   submittedAt: Date;
   status: 'pending' | 'approved' | 'rejected';
+  pointsEarned: number;
 }
 
 interface TaskApprovalWorkflowProps {
@@ -38,116 +40,104 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
   const [selectedTask, setSelectedTask] = useState<PendingTask | null>(null);
   const [approvalNotes, setApprovalNotes] = useState('');
   const [bonusPoints, setBonusPoints] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [pendingTasks, setPendingTasks] = useState<PendingTask[]>([]);
+  const [approvedTasks, setApprovedTasks] = useState<PendingTask[]>([]);
+  const [rejectedTasks, setRejectedTasks] = useState<PendingTask[]>([]);
 
-  // Mock pending tasks data
-  const [pendingTasks, setPendingTasks] = useState<PendingTask[]>([
-    {
-      id: '1',
-      studentId: '1',
-      studentName: '小明',
-      task: {
-        id: 't1',
-        title: '读书30分钟',
-        description: '阅读课外书籍并写读后感',
-        category: 'reading',
-        points: 10,
-      },
-      evidence: [
-        {
-          type: 'text',
-          content: '今天我读了《小王子》的第一章，很有趣！小王子来自一个很小的星球，他遇到了很多奇怪的大人。我学到了要保持童心，用心去看世界。',
-          timestamp: new Date(),
-        },
-        {
-          type: 'photo',
-          content: 'https://example.com/book-photo.jpg',
-          fileName: 'reading-photo.jpg',
-          fileSize: 1024000,
-          timestamp: new Date(),
-        },
-      ],
-      notes: '读得很认真，还做了笔记！',
-      submittedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      status: 'pending',
-    },
-    {
-      id: '2',
-      studentId: '2',
-      studentName: '小红',
-      task: {
-        id: 't2',
-        title: '户外运动30分钟',
-        description: '进行户外体育活动',
-        category: 'exercise',
-        points: 15,
-      },
-      evidence: [
-        {
-          type: 'text',
-          content: '今天和爸爸一起去公园跑步了，跑了3圈，大概30分钟。还做了一些拉伸运动。',
-          timestamp: new Date(),
-        },
-        {
-          type: 'video',
-          content: 'https://example.com/exercise-video.mp4',
-          fileName: 'running-video.mp4',
-          fileSize: 5120000,
-          timestamp: new Date(),
-        },
-      ],
-      notes: '今天天气很好，运动完感觉很舒服！',
-      submittedAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-      status: 'pending',
-    },
-  ]);
+  // Load pending approval tasks
+  useEffect(() => {
+    if (isOpen && user?.role === 'parent') {
+      loadPendingTasks();
+    }
+  }, [isOpen, user]);
 
-  const [approvedTasks] = useState<PendingTask[]>([
-    {
-      id: '3',
-      studentId: '1',
-      studentName: '小明',
-      task: {
-        id: 't3',
-        title: '练习书法',
-        description: '练习汉字书写',
-        category: 'art',
-        points: 12,
-      },
-      evidence: [
-        {
-          type: 'text',
-          content: '今天练习了"静心"两个字，写了20遍。',
-          timestamp: new Date(),
-        },
-      ],
-      notes: '字写得越来越好看了！',
-      submittedAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-      status: 'approved',
-    },
-  ]);
-
-  const [rejectedTasks] = useState<PendingTask[]>([]);
-
-  const handleApproveTask = (taskId: string) => {
-    const task = pendingTasks.find(t => t.id === taskId);
-    if (task) {
-      // In a real app, this would call an API
-      console.log('Approving task:', taskId, 'with bonus points:', bonusPoints, 'notes:', approvalNotes);
-      setPendingTasks(prev => prev.filter(t => t.id !== taskId));
-      setSelectedTask(null);
-      setApprovalNotes('');
-      setBonusPoints(0);
+  const loadPendingTasks = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await apiService.getPendingApprovalTasks() as any;
+      if (response.success) {
+        const tasks = response.data.tasks || [];
+        
+        // Separate tasks by approval status
+        setPendingTasks(tasks.filter((task: PendingTask) => task.status === 'pending'));
+        setApprovedTasks(tasks.filter((task: PendingTask) => task.status === 'approved'));
+        setRejectedTasks(tasks.filter((task: PendingTask) => task.status === 'rejected'));
+      } else {
+        setError('加载待审批任务失败');
+      }
+    } catch (error: any) {
+      console.error('Error loading pending tasks:', error);
+      setError(error.message || '网络错误，请重试');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleRejectTask = (taskId: string) => {
-    const task = pendingTasks.find(t => t.id === taskId);
-    if (task) {
-      // In a real app, this would call an API
-      console.log('Rejecting task:', taskId, 'notes:', approvalNotes);
-      setPendingTasks(prev => prev.filter(t => t.id !== taskId));
-      setSelectedTask(null);
-      setApprovalNotes('');
+  const handleApproveTask = async (taskId: string) => {
+    try {
+      setLoading(true);
+      
+      const response = await apiService.approveTask(taskId, {
+        action: 'approve',
+        approvalNotes,
+        bonusPoints: bonusPoints > 0 ? bonusPoints : undefined,
+      }) as any;
+      
+      if (response.success) {
+        // Move task from pending to approved
+        const task = pendingTasks.find(t => t.id === taskId);
+        if (task) {
+          const updatedTask = { ...task, status: 'approved' as const };
+          setPendingTasks(prev => prev.filter(t => t.id !== taskId));
+          setApprovedTasks(prev => [...prev, updatedTask]);
+        }
+        
+        setSelectedTask(null);
+        setApprovalNotes('');
+        setBonusPoints(0);
+      } else {
+        setError('审批失败，请重试');
+      }
+    } catch (error: any) {
+      console.error('Error approving task:', error);
+      setError(error.message || '审批失败，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectTask = async (taskId: string) => {
+    try {
+      setLoading(true);
+      
+      const response = await apiService.approveTask(taskId, {
+        action: 'reject',
+        approvalNotes,
+      }) as any;
+      
+      if (response.success) {
+        // Move task from pending to rejected
+        const task = pendingTasks.find(t => t.id === taskId);
+        if (task) {
+          const updatedTask = { ...task, status: 'rejected' as const };
+          setPendingTasks(prev => prev.filter(t => t.id !== taskId));
+          setRejectedTasks(prev => [...prev, updatedTask]);
+        }
+        
+        setSelectedTask(null);
+        setApprovalNotes('');
+      } else {
+        setError('拒绝失败，请重试');
+      }
+    } catch (error: any) {
+      console.error('Error rejecting task:', error);
+      setError(error.message || '拒绝失败，请重试');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -192,6 +182,18 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
             <div>
               <h2 className="text-2xl font-bold text-cartoon-dark font-fun">✅ 任务审批</h2>
               <p className="text-cartoon-gray">审核孩子提交的任务完成证据</p>
+              {loading && <p className="text-sm text-cartoon-blue mt-1">加载中...</p>}
+              {error && (
+                <div className="mt-2 bg-danger-50 border border-danger-200 rounded-cartoon p-2">
+                  <p className="text-sm text-danger-800">{error}</p>
+                  <button
+                    onClick={loadPendingTasks}
+                    className="text-xs text-danger-600 hover:text-danger-800 underline mt-1"
+                  >
+                    重试
+                  </button>
+                </div>
+              )}
             </div>
             <button
               onClick={onClose}
@@ -271,7 +273,7 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
                             提交于 {formatTimeAgo(task.submittedAt)}
                           </span>
                           <span className="text-xs bg-cartoon-blue/10 text-cartoon-blue px-2 py-1 rounded-cartoon">
-                            {task.evidence.length} 个证据
+                            {(task.evidenceText ? 1 : 0) + (task.evidenceMedia?.length || 0)} 个证据
                           </span>
                         </div>
                       </div>
@@ -304,34 +306,36 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
                     <div>
                       <h3 className="font-semibold text-cartoon-dark mb-2 font-fun">📎 提交证据</h3>
                       <div className="space-y-3">
-                        {selectedTask.evidence.map((evidence, index) => (
+                        {selectedTask.evidenceText && (
+                          <div className="bg-white rounded-cartoon p-4">
+                            <h5 className="text-sm font-medium text-cartoon-dark mb-2">📝 文字描述</h5>
+                            <p className="text-sm text-cartoon-gray">{selectedTask.evidenceText}</p>
+                          </div>
+                        )}
+                        {selectedTask.evidenceMedia && selectedTask.evidenceMedia.map((media, index) => (
                           <div key={index} className="bg-white rounded-cartoon p-4">
-                            {evidence.type === 'text' && (
-                              <div>
-                                <h5 className="text-sm font-medium text-cartoon-dark mb-2">📝 文字描述</h5>
-                                <p className="text-sm text-cartoon-gray">{evidence.content}</p>
-                              </div>
-                            )}
-                            {(evidence.type === 'photo' || evidence.type === 'video' || evidence.type === 'audio') && (
-                              <div>
-                                <h5 className="text-sm font-medium text-cartoon-dark mb-2">
-                                  {evidence.type === 'photo' && '📸 照片证据'}
-                                  {evidence.type === 'video' && '🎥 视频证据'}
-                                  {evidence.type === 'audio' && '🎵 音频证据'}
-                                </h5>
-                                <MediaPreview
-                                  files={[{
-                                    url: evidence.content,
-                                    type: evidence.type === 'photo' ? 'image/jpeg' : evidence.type === 'video' ? 'video/mp4' : 'audio/mp3',
-                                    name: evidence.fileName || `${evidence.type}.${evidence.type === 'photo' ? 'jpg' : evidence.type === 'video' ? 'mp4' : 'mp3'}`,
-                                    size: evidence.fileSize
-                                  }]}
-                                  readOnly={true}
-                                />
-                              </div>
-                            )}
+                            <h5 className="text-sm font-medium text-cartoon-dark mb-2">
+                              {media.type.startsWith('image') && '📸 照片证据'}
+                              {media.type.startsWith('video') && '🎥 视频证据'}
+                              {media.type.startsWith('audio') && '🎵 音频证据'}
+                            </h5>
+                            <MediaPreview
+                              files={[{
+                                url: media.url,
+                                type: media.type,
+                                name: media.fileName || 'evidence-file',
+                                size: media.fileSize
+                              }]}
+                              readOnly={true}
+                            />
                           </div>
                         ))}
+                        {!selectedTask.evidenceText && (!selectedTask.evidenceMedia || selectedTask.evidenceMedia.length === 0) && (
+                          <div className="bg-white rounded-cartoon p-4 text-center text-cartoon-gray">
+                            <div className="text-2xl mb-2">📎</div>
+                            <p className="text-sm">暂无证据内容</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -383,15 +387,17 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
                           <div className="flex space-x-3">
                             <button
                               onClick={() => handleRejectTask(selectedTask.id)}
-                              className="flex-1 bg-gradient-to-r from-cartoon-red to-danger-400 text-white py-2 px-4 rounded-cartoon font-medium hover:shadow-cartoon-lg transition-all duration-200"
+                              disabled={loading}
+                              className="flex-1 bg-gradient-to-r from-cartoon-red to-danger-400 text-white py-2 px-4 rounded-cartoon font-medium hover:shadow-cartoon-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              ❌ 拒绝
+                              ❌ {loading ? '处理中...' : '拒绝'}
                             </button>
                             <button
                               onClick={() => handleApproveTask(selectedTask.id)}
-                              className="flex-1 bg-gradient-to-r from-cartoon-green to-success-400 text-white py-2 px-4 rounded-cartoon font-medium hover:shadow-cartoon-lg transition-all duration-200"
+                              disabled={loading}
+                              className="flex-1 bg-gradient-to-r from-cartoon-green to-success-400 text-white py-2 px-4 rounded-cartoon font-medium hover:shadow-cartoon-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              ✅ 通过
+                              ✅ {loading ? '处理中...' : '通过'}
                             </button>
                           </div>
                         </div>

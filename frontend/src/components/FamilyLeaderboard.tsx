@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import PointsDisplay from './PointsDisplay';
 import AchievementBadge from './AchievementBadge';
 
@@ -23,44 +25,35 @@ interface FamilyLeaderboardProps {
 }
 
 const FamilyLeaderboard: React.FC<FamilyLeaderboardProps> = ({ className = '' }) => {
-  // Mock leaderboard data
-  const leaderboardData: LeaderboardEntry[] = [
-    {
-      id: '1',
-      name: '小明',
-      points: 250,
-      level: 3,
-      tasksCompleted: 23,
-      streakDays: 5,
-      rank: 1,
-      recentAchievements: [
-        { type: 'streak', title: '连续达人', isNew: true },
-        { type: 'points', title: '积分大师', isNew: false },
-      ],
-    },
-    {
-      id: '2',
-      name: '小红',
-      points: 180,
-      level: 2,
-      tasksCompleted: 15,
-      streakDays: 3,
-      rank: 2,
-      recentAchievements: [
-        { type: 'tasks', title: '任务完成者', isNew: false },
-      ],
-    },
-    {
-      id: '3',
-      name: '小李',
-      points: 120,
-      level: 2,
-      tasksCompleted: 12,
-      streakDays: 2,
-      rank: 3,
-      recentAchievements: [],
-    },
-  ];
+  const { user } = useAuth();
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    if (user?.role === 'parent') {
+      loadLeaderboard();
+    }
+  }, [user]);
+
+  const loadLeaderboard = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await apiService.getFamilyLeaderboard() as any;
+      if (response.success) {
+        setLeaderboardData(response.data.leaderboard || []);
+      } else {
+        setError('加载排行榜失败');
+      }
+    } catch (error: any) {
+      console.error('Error loading leaderboard:', error);
+      setError(error.message || '网络错误，请重试');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getRankIcon = (rank: number) => {
     const iconMap: { [key: number]: string } = {
@@ -87,14 +80,43 @@ const FamilyLeaderboard: React.FC<FamilyLeaderboardProps> = ({ className = '' })
     return 'shadow-cartoon';
   };
 
+  // Only show for parents
+  if (user?.role !== 'parent') {
+    return null;
+  }
+
   return (
     <div className={`bg-white rounded-cartoon-lg shadow-cartoon p-6 ${className}`}>
       <div className="text-center mb-6">
         <h3 className="text-xl font-bold text-cartoon-dark font-fun mb-2">🏆 家庭排行榜</h3>
         <p className="text-sm text-cartoon-gray">本周积分排名</p>
+        {loading && <p className="text-xs text-cartoon-blue mt-1">加载中...</p>}
+        {error && (
+          <div className="mt-2 bg-danger-50 border border-danger-200 rounded-cartoon p-2">
+            <p className="text-xs text-danger-800">{error}</p>
+            <button
+              onClick={loadLeaderboard}
+              className="text-xs text-danger-600 hover:text-danger-800 underline mt-1"
+            >
+              重试
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-4">
+      {loading ? (
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-cartoon-gray">加载排行榜...</p>
+        </div>
+      ) : leaderboardData.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="text-4xl mb-4">🏆</div>
+          <h4 className="font-semibold text-cartoon-dark mb-2">暂无排行榜数据</h4>
+          <p className="text-sm text-cartoon-gray">孩子们完成任务后即可查看排名</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
         {leaderboardData.map((entry, index) => (
           <div
             key={entry.id}
@@ -198,18 +220,21 @@ const FamilyLeaderboard: React.FC<FamilyLeaderboardProps> = ({ className = '' })
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Encouragement for lower ranks */}
-      <div className="mt-6 text-center p-4 bg-cartoon-light rounded-cartoon">
-        <div className="text-2xl mb-2">💪</div>
-        <p className="text-sm font-medium text-cartoon-dark">
-          继续努力，下周冲击更高排名！
-        </p>
-        <p className="text-xs text-cartoon-gray mt-1">
-          每完成一个任务都是进步的一小步
-        </p>
-      </div>
+      {!loading && leaderboardData.length > 0 && (
+        <div className="mt-6 text-center p-4 bg-cartoon-light rounded-cartoon">
+          <div className="text-2xl mb-2">💪</div>
+          <p className="text-sm font-medium text-cartoon-dark">
+            继续努力，下周冲击更高排名！
+          </p>
+          <p className="text-xs text-cartoon-gray mt-1">
+            每完成一个任务都是进步的一小步
+          </p>
+        </div>
+      )}
     </div>
   );
 };

@@ -11,6 +11,7 @@ const TaskPlanning: React.FC = () => {
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
   const [planningTask, setPlanningTask] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
@@ -31,10 +32,12 @@ const TaskPlanning: React.FC = () => {
   const loadTasks = async () => {
     try {
       setLoading(true);
+      setError('');
       const response = await apiService.getTasks();
       setTasks((response as any).data.tasks);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading tasks:', error);
+      setError(error.message || '加载任务列表失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -44,8 +47,9 @@ const TaskPlanning: React.FC = () => {
     try {
       const response = await apiService.getDailyTasks({ date: selectedDate });
       setDailyTasks((response as any).data.dailyTasks);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading daily tasks:', error);
+      setError(error.message || '加载每日任务失败，请重试');
     }
   };
 

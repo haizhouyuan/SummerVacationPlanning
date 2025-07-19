@@ -146,7 +146,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
     }
 
     const { dailyTaskId } = req.params;
-    const { status, evidence, notes } = req.body;
+    const { status, evidence, notes, evidenceText, evidenceMedia, isPublic } = req.body;
 
     const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
     if (!dailyTask) {
@@ -177,8 +177,8 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           
           // Calculate bonus points for extra content (e.g., diary word count)
           let bonusPoints = 0;
-          if (evidence) {
-            bonusPoints = calculateBonusPoints(task, evidence);
+          if (evidence || evidenceText || evidenceMedia) {
+            bonusPoints = calculateBonusPoints(task, evidence, evidenceText, evidenceMedia);
           }
           
           // Apply medal multipliers
@@ -202,8 +202,14 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
       }
     }
 
-    if (evidence) {
-      updates.evidence = evidence;
+    if (evidenceText !== undefined) {
+      updates.evidenceText = evidenceText;
+    }
+    if (evidenceMedia !== undefined) {
+      updates.evidenceMedia = evidenceMedia;
+    }
+    if (isPublic !== undefined) {
+      updates.isPublic = isPublic;
     }
 
     if (notes) {
@@ -332,24 +338,256 @@ export const getWeeklyStats = async (req: AuthRequest, res: Response) => {
   }
 };
 
+export const getPublicDailyTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    const { page = 1, limit = 20, sort = 'createdAt' } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const query: any = { isPublic: true };
+    const total = await collections.dailyTasks.countDocuments(query);
+    const tasks = await collections.dailyTasks
+      .find(query)
+      .sort({ [sort as string]: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .toArray();
+    // 可选：附带用户信息
+    res.status(200).json({
+      success: true,
+      data: {
+        total,
+        page: Number(page),
+        limit: Number(limit),
+        tasks: tasks.map((t: any) => ({ ...t, id: t._id?.toString() })),
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Failed to get public daily tasks' });
+  }
+};
+
 // Helper function to calculate bonus points based on evidence
-function calculateBonusPoints(task: Task, evidence: any[]): number {
+function calculateBonusPoints(task: Task, evidence: any[], evidenceText?: string, evidenceMedia?: any[]): number {
   let bonusPoints = 0;
   
-  // For diary tasks, add 1 point for every 50 characters
+  // 文字证据加分
   if (task.category === 'reading' && task.title.includes('日记')) {
-    for (const item of evidence) {
-      if (item.type === 'text' && item.content) {
-        const wordCount = item.content.length;
-        bonusPoints += Math.floor(wordCount / 50);
+    if (evidenceText) {
+      const wordCount = evidenceText.length;
+      bonusPoints += Math.floor(wordCount / 50);
+    } else if (evidence) {
+      for (const item of evidence) {
+        if (item.type === 'text' && item.content) {
+          const wordCount = item.content.length;
+          bonusPoints += Math.floor(wordCount / 50);
+        }
       }
     }
   }
   
-  // Add more bonus point rules here as needed
+  // 媒体证据加分
+  if (evidenceMedia && evidenceMedia.length > 0) {
+    // 每个媒体文件额外加1分
+    bonusPoints += evidenceMedia.length;
+    
+    // 视频文件额外加分（因为制作视频更费时间）
+    const videoCount = evidenceMedia.filter(media => media.type === 'video').length;
+    bonusPoints += videoCount * 2;
+  }
   
   return bonusPoints;
 }
+
+// Get pending tasks for parent approval
+export const getPendingApprovalTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    // Only parents can get pending approval tasks
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only parents can access pending approval tasks',
+      });
+    }
+
+    // Get all children IDs for this parent
+    const childrenIds = req.user.children || [];
+    
+    if (childrenIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: { tasks: [] },
+      });
+    }
+
+    // Find daily tasks that are completed but need approval
+    // Tasks need approval if they have evidence and are from children
+    const pendingTasks = await collections.dailyTasks.find({
+      userId: { $in: childrenIds },
+      status: 'completed',
+      $and: [
+        {
+          $or: [
+            { evidenceText: { $exists: true, $ne: '' } },
+            { evidenceMedia: { $exists: true, $not: { $size: 0 } } }
+          ]
+        },
+        {
+          $or: [
+            { approvalStatus: { $exists: false } },
+            { approvalStatus: 'pending' }
+          ]
+        }
+      ]
+    }).toArray();
+
+    // Get task details and user details for each pending task
+    const tasksWithDetails = await Promise.all(
+      pendingTasks.map(async (dailyTask: any) => {
+        const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+        const student = await collections.users.findOne({ _id: new ObjectId(dailyTask.userId) });
+        
+        return {
+          id: dailyTask._id.toString(),
+          studentId: dailyTask.userId,
+          studentName: student?.displayName || 'Unknown Student',
+          task: task ? {
+            id: task._id.toString(),
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            points: task.points,
+          } : null,
+          evidenceText: dailyTask.evidenceText,
+          evidenceMedia: dailyTask.evidenceMedia || [],
+          notes: dailyTask.notes || '',
+          submittedAt: dailyTask.completedAt || dailyTask.updatedAt,
+          status: dailyTask.approvalStatus || 'pending',
+          pointsEarned: dailyTask.pointsEarned || 0,
+        };
+      })
+    );
+
+    // Filter out tasks without valid task details
+    const validTasks = tasksWithDetails.filter(task => task.task !== null);
+
+    res.status(200).json({
+      success: true,
+      data: { tasks: validTasks },
+    });
+  } catch (error: any) {
+    console.error('Get pending approval tasks error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get pending approval tasks',
+    });
+  }
+};
+
+// Approve or reject a task
+export const approveTask = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    // Only parents can approve tasks
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only parents can approve tasks',
+      });
+    }
+
+    const { dailyTaskId } = req.params;
+    const { action, approvalNotes, bonusPoints } = req.body;
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Action must be either approve or reject',
+      });
+    }
+
+    const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+    if (!dailyTask) {
+      return res.status(404).json({
+        success: false,
+        error: 'Daily task not found',
+      });
+    }
+
+    // Verify this task belongs to one of the parent's children
+    if (!req.user.children?.includes(dailyTask.userId)) {
+      return res.status(403).json({
+        success: false,
+        error: 'You can only approve tasks from your children',
+      });
+    }
+
+    const updates: any = {
+      approvalStatus: action === 'approve' ? 'approved' : 'rejected',
+      approvedBy: req.user.id,
+      approvedAt: new Date(),
+      approvalNotes: approvalNotes || '',
+      updatedAt: new Date(),
+    };
+
+    // If approving and bonus points are provided, add them
+    if (action === 'approve' && bonusPoints && bonusPoints > 0) {
+      const currentPoints = dailyTask.pointsEarned || 0;
+      updates.pointsEarned = currentPoints + parseInt(bonusPoints);
+      
+      // Add bonus points to user's total
+      await collections.users.updateOne(
+        { _id: new ObjectId(dailyTask.userId) },
+        { 
+          $inc: { points: parseInt(bonusPoints) },
+          $set: { updatedAt: new Date() }
+        }
+      );
+    }
+
+    // If rejecting, we might want to deduct points or mark task as incomplete
+    if (action === 'reject') {
+      // Optionally revert the task status
+      updates.status = 'in_progress'; // or keep as completed but rejected
+    }
+
+    await collections.dailyTasks.updateOne(
+      { _id: new ObjectId(dailyTaskId) },
+      { $set: updates }
+    );
+
+    // Get updated task for response
+    const updatedTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+
+    res.status(200).json({
+      success: true,
+      data: { 
+        task: { 
+          ...updatedTask, 
+          id: updatedTask._id.toString() 
+        } 
+      },
+      message: `Task ${action}d successfully`,
+    });
+  } catch (error: any) {
+    console.error('Approve task error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to approve task',
+    });
+  }
+};
 
 // Helper function to calculate medal multiplier
 function calculateMedalMultiplier(medals: { bronze: boolean; silver: boolean; gold: boolean; diamond: boolean }): number {

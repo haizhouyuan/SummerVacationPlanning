@@ -152,6 +152,41 @@ class ApiService {
     const queryParams = new URLSearchParams(filters).toString();
     return this.request(`/redemptions/stats${queryParams ? `?${queryParams}` : ''}`);
   }
+
+  async getPublicDailyTasks(filters?: any) {
+    const queryParams = new URLSearchParams(filters).toString();
+    return this.request(`/daily-tasks/public${queryParams ? `?${queryParams}` : ''}`);
+  }
+
+  // Dashboard statistics
+  async getDashboardStats(): Promise<any> {
+    return this.request('/auth/dashboard-stats');
+  }
+
+  // Family management (parent only)
+  async getChildren(): Promise<any> {
+    return this.request('/auth/children');
+  }
+
+  async getChildStats(childId: string): Promise<any> {
+    return this.request(`/auth/children/${childId}/stats`);
+  }
+
+  async getFamilyLeaderboard(): Promise<any> {
+    return this.request('/auth/family-leaderboard');
+  }
+
+  // Task approval workflow (parent only)
+  async getPendingApprovalTasks(): Promise<any> {
+    return this.request('/daily-tasks/pending-approval');
+  }
+
+  async approveTask(dailyTaskId: string, data: { action: 'approve' | 'reject'; approvalNotes?: string; bonusPoints?: number }): Promise<any> {
+    return this.request(`/daily-tasks/${dailyTaskId}/approve`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();
