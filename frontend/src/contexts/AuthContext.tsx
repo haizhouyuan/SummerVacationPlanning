@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, AuthContextType } from '../types';
-import { mongoAuthService } from '../services/mongoAuth';
+import { compatibleAuthService } from '../services/compatibleAuth';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -23,8 +23,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (mongoAuthService.isAuthenticated()) {
-          const userProfile = await mongoAuthService.getProfile();
+        if (compatibleAuthService.isAuthenticated()) {
+          const userProfile = await compatibleAuthService.getProfile();
           setUser(userProfile);
         } else {
           setUser(null);
@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const result = await mongoAuthService.login(email, password);
+      const result = await compatibleAuthService.login(email, password);
       setUser(result.user);
     } catch (error) {
       throw error;
@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     parentEmail?: string
   ) => {
     try {
-      const result = await mongoAuthService.register(email, password, displayName, role, parentEmail);
+      const result = await compatibleAuthService.register(email, password, displayName, role, parentEmail);
       setUser(result.user);
     } catch (error) {
       throw error;
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await mongoAuthService.logout();
+      await compatibleAuthService.logout();
       setUser(null);
     } catch (error) {
       throw error;
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (displayName?: string, avatar?: string) => {
     try {
-      const updatedUser = await mongoAuthService.updateProfile(displayName, avatar);
+      const updatedUser = await compatibleAuthService.updateProfile(displayName, avatar);
       setUser(updatedUser);
     } catch (error) {
       throw error;
@@ -85,8 +85,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      if (mongoAuthService.isAuthenticated()) {
-        const userProfile = await mongoAuthService.getProfile();
+      if (compatibleAuthService.isAuthenticated()) {
+        const userProfile = await compatibleAuthService.getProfile();
         setUser(userProfile);
       }
     } catch (error) {

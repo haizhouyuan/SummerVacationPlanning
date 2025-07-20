@@ -30,8 +30,8 @@ const Login: React.FC = () => {
     setLoading(true);
 
     const demoCredentials = {
-      student: { email: 'student@demo.com', password: 'demo123' },
-      parent: { email: 'parent@demo.com', password: 'demo123' }
+      student: { email: 'student@example.com', password: 'testpass123' },
+      parent: { email: 'parent@example.com', password: 'testpass123' }
     };
 
     const credentials = demoCredentials[userType];
@@ -61,6 +61,17 @@ const Login: React.FC = () => {
           <p className="mt-2 text-center text-sm text-gray-600">
             登录您的暑假计划账户
           </p>
+          
+          {/* 网络兼容模式提示 */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center">
+              <span className="text-blue-500 mr-2">🔧</span>
+              <div className="text-xs text-blue-700">
+                <strong>网络兼容模式已启用</strong>
+                <br />适配受限网络环境，正常登录使用
+              </div>
+            </div>
+          </div>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
