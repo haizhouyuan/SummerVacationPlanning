@@ -1,6 +1,6 @@
 import admin from 'firebase-admin';
 
-// Initialize Firebase Admin SDK
+// Initialize Firebase Admin SDK for Storage only
 if (!admin.apps.length) {
   const serviceAccount = {
     projectId: process.env.FIREBASE_PROJECT_ID,
@@ -14,18 +14,7 @@ if (!admin.apps.length) {
   });
 }
 
-export const auth = admin.auth();
-export const firestore = admin.firestore();
+// Only export storage - we use MongoDB for data storage
 export const storage = admin.storage();
-
-// Firestore collection references
-export const collections = {
-  users: firestore.collection('users'),
-  tasks: firestore.collection('tasks'),
-  dailyTasks: firestore.collection('dailyTasks'),
-  redemptions: firestore.collection('redemptions'),
-  gameTimeExchanges: firestore.collection('gameTimeExchanges'),
-  gameSessions: firestore.collection('gameSessions'),
-};
 
 export default admin;
