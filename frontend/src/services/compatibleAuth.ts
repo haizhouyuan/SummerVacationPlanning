@@ -60,8 +60,15 @@ export const compatibleAuthService = {
                   role: email.includes('parent') ? 'parent' as const : 'student' as const,
                   avatar: '',
                   points: 150,
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString()
+                  currentStreak: 3,
+                  medals: {
+                    bronze: true,
+                    silver: false,
+                    gold: false,
+                    diamond: false
+                  },
+                  createdAt: new Date(),
+                  updatedAt: new Date()
                 },
                 token: 'demo-token-' + Date.now()
               };
@@ -140,8 +147,15 @@ export const compatibleAuthService = {
               role: role,
               avatar: '',
               points: 0,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+              currentStreak: 0,
+              medals: {
+                bronze: false,
+                silver: false,
+                gold: false,
+                diamond: false
+              },
+              createdAt: new Date(),
+              updatedAt: new Date()
             },
             token: 'demo-token-' + Date.now()
           };
@@ -186,8 +200,15 @@ export const compatibleAuthService = {
       role: role as 'student' | 'parent',
       avatar: '',
       points: 150,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      currentStreak: 3,
+      medals: {
+        bronze: true,
+        silver: false,
+        gold: false,
+        diamond: false
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
   },
 
@@ -200,7 +221,7 @@ export const compatibleAuthService = {
       ...currentUser,
       displayName: displayName || currentUser.displayName,
       avatar: avatar || currentUser.avatar,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date()
     };
     
     // 可以将更新信息存储在localStorage中

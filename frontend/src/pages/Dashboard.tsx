@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiService } from '../services/compatibleApi';
 import PointsDisplay from '../components/PointsDisplay';
 import ProgressBar from '../components/ProgressBar';
 import CelebrationModal from '../components/CelebrationModal';
@@ -28,6 +28,7 @@ const Dashboard: React.FC = () => {
       setLoading(true);
       setError('');
       
+      const apiService = detectNetworkAndGetApiService();
       const response = await apiService.getDashboardStats() as any;
       if (response.success) {
         setStats(response.data.stats);

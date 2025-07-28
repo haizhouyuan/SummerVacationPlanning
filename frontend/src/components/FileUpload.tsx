@@ -127,6 +127,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           accept={getAcceptString()}
           onChange={handleFileInput}
           className="hidden"
+          disabled={uploading}
         />
 
         {uploading ? (
@@ -159,15 +160,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
               <p className="text-lg font-medium text-gray-900">
                 上传{getTypeText()}文件
               </p>
-              <p className="text-sm text-gray-500 mt-1">
-                拖拽文件到这里，或者
+              <div className="text-sm text-gray-500 mt-1">
+                <span>拖拽文件到这里，或者</span>
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="text-primary-600 hover:text-primary-700 font-medium ml-1"
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!uploading && fileInputRef.current) {
+                      fileInputRef.current.click();
+                    }
+                  }}
+                  disabled={uploading}
+                  className={`font-medium ml-1 underline focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 rounded px-1 ${
+                    uploading 
+                      ? 'text-gray-400 cursor-not-allowed' 
+                      : 'text-primary-600 hover:text-primary-700 cursor-pointer'
+                  }`}
                 >
                   点击选择文件
                 </button>
-              </p>
+              </div>
               <p className="text-xs text-gray-400 mt-2">
                 最多{maxFiles}个文件，每个文件最大10MB
               </p>
