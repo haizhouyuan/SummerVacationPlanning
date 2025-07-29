@@ -3,6 +3,7 @@ import { collections } from '../config/mongodb';
 import { Task, TaskFilters } from '../types';
 import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
+import { getTaskRecommendations, getUserInsights } from '../services/recommendationService';
 
 export const createTask = async (req: AuthRequest, res: Response) => {
   try {
@@ -357,5 +358,97 @@ export const getActivityPoints = (category: string, activity: string, duration?:
     
     default:
       return 1;
+  }
+};
+
+/**
+ * Get personalized task recommendations for the authenticated user
+ */
+export const getRecommendedTasks = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    const {
+      limit = 5,
+      categories,
+      difficulties,
+      excludeTaskIds,
+      minPoints,
+      maxPoints,
+      includeNovelTasks = true,
+      timeWindow = 30
+    } = req.query;
+
+    // Parse array parameters
+    const categoryArray = categories ? (categories as string).split(',') : [];
+    const difficultyArray = difficulties ? (difficulties as string).split(',') : [];
+    const excludeArray = excludeTaskIds ? (excludeTaskIds as string).split(',') : [];
+
+    const options = {
+      limit: parseInt(limit as string),
+      categories: categoryArray,
+      difficulties: difficultyArray,
+      excludeTaskIds: excludeArray,
+      minPoints: minPoints ? parseInt(minPoints as string) : undefined,
+      maxPoints: maxPoints ? parseInt(maxPoints as string) : undefined,
+      includeNovelTasks: includeNovelTasks === 'true',
+      timeWindow: parseInt(timeWindow as string)
+    };
+
+    const recommendations = await getTaskRecommendations(req.user.id, options);
+
+    res.status(200).json({
+      success: true,
+      data: { 
+        recommendations,
+        count: recommendations.length,
+        generatedAt: new Date()
+      },
+      message: 'Recommendations generated successfully'
+    });
+
+  } catch (error: any) {
+    console.error('Get recommendations error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to generate recommendations',
+    });
+  }
+};
+
+/**
+ * Get user behavior insights and analytics
+ */
+export const getUserBehaviorInsights = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    const insights = await getUserInsights(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      data: { 
+        insights,
+        generatedAt: new Date()
+      },
+      message: 'User insights generated successfully'
+    });
+
+  } catch (error: any) {
+    console.error('Get user insights error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to generate user insights',
+    });
   }
 };

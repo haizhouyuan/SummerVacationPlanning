@@ -14,6 +14,8 @@ const TaskPlanning: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [planningTask, setPlanningTask] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [recommendedTasks, setRecommendedTasks] = useState<any[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   const categories = [
     { key: 'all', label: '全部', emoji: '📋' },
@@ -27,6 +29,7 @@ const TaskPlanning: React.FC = () => {
   useEffect(() => {
     loadTasks();
     loadDailyTasks();
+    loadRecommendations();
   }, [selectedDate]);
 
   const loadTasks = async () => {
@@ -50,6 +53,19 @@ const TaskPlanning: React.FC = () => {
     } catch (error: any) {
       console.error('Error loading daily tasks:', error);
       setError(error.message || '加载每日任务失败，请重试');
+    }
+  };
+
+  const loadRecommendations = async () => {
+    try {
+      setLoadingRecommendations(true);
+      const response = await apiService.getRecommendedTasks({ limit: 3 });
+      setRecommendedTasks((response as any).data?.recommendations || []);
+    } catch (error: any) {
+      console.error('Error loading recommendations:', error);
+      // Don't show error for recommendations as it's not critical
+    } finally {
+      setLoadingRecommendations(false);
     }
   };
 
@@ -247,6 +263,81 @@ const TaskPlanning: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {/* Intelligent Recommendations */}
+            {recommendedTasks.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                <div className="flex items-center mb-4">
+                  <span className="text-2xl mr-3">🤖</span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">智能推荐</h3>
+                    <p className="text-sm text-gray-600">基于您的偏好和历史数据精选任务</p>
+                  </div>
+                </div>
+                
+                {loadingRecommendations ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    <span className="ml-3 text-gray-600">生成推荐中...</span>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {recommendedTasks.map((recommendation, index) => (
+                      <div key={recommendation.task.id} className="border border-primary-200 rounded-lg p-4 bg-gradient-to-br from-primary-50 to-white hover:shadow-md transition-shadow duration-200">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900 mb-1">{recommendation.task.title}</h4>
+                            <p className="text-sm text-gray-600 mb-2">{recommendation.task.description}</p>
+                            <div className="flex items-center space-x-3 text-xs text-gray-500">
+                              <span className="flex items-center">
+                                <span className="mr-1">⭐</span>
+                                {recommendation.task.points}分
+                              </span>
+                              <span className="flex items-center">
+                                <span className="mr-1">⏱️</span>
+                                {recommendation.task.estimatedTime}分钟
+                              </span>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                recommendation.task.difficulty === 'easy' ? 'bg-success-100 text-success-700' :
+                                recommendation.task.difficulty === 'medium' ? 'bg-secondary-100 text-secondary-700' :
+                                'bg-danger-100 text-danger-700'
+                              }`}>
+                                {recommendation.task.difficulty === 'easy' ? '简单' :
+                                 recommendation.task.difficulty === 'medium' ? '中等' : '困难'}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="ml-3 text-right">
+                            <div className="text-xs font-medium text-primary-600 mb-1">
+                              匹配度 {Math.round(recommendation.score * 100)}%
+                            </div>
+                            <button
+                              onClick={() => handleTaskSelect(recommendation.task)}
+                              disabled={selectedTasks.some(t => t.id === recommendation.task.id) || isTaskPlanned(recommendation.task)}
+                              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200 ${
+                                selectedTasks.some(t => t.id === recommendation.task.id) || isTaskPlanned(recommendation.task)
+                                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                  : 'bg-primary-600 text-white hover:bg-primary-700'
+                              }`}
+                            >
+                              {selectedTasks.some(t => t.id === recommendation.task.id) ? '已选择' : 
+                               isTaskPlanned(recommendation.task) ? '已规划' : '选择'}
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                          <div className="flex items-start">
+                            <span className="text-sm mr-2">💡</span>
+                            <p className="text-xs text-gray-700 leading-relaxed">{recommendation.reason}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Task Grid */}
             {loading ? (

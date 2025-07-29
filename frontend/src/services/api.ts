@@ -187,6 +187,12 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // Task recommendations
+  async getRecommendedTasks(filters?: any): Promise<any> {
+    const queryParams = new URLSearchParams(filters).toString();
+    return this.request(`/tasks/recommended${queryParams ? `?${queryParams}` : ''}`);
+  }
 }
 
 export const apiService = new ApiService();

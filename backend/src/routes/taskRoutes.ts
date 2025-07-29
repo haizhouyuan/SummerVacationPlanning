@@ -6,6 +6,8 @@ import {
   getTaskById,
   updateTask,
   deleteTask,
+  getRecommendedTasks,
+  getUserBehaviorInsights,
 } from '../controllers/taskController';
 import { authenticateToken } from '../middleware/mongoAuth';
 import { validateRequest } from '../middleware/validation';
@@ -45,6 +47,8 @@ router.use(authenticateToken);
 // Task CRUD routes
 router.post('/', taskValidation, validateRequest, createTask);
 router.get('/', getTasks);
+router.get('/recommended', getRecommendedTasks); // Must come before /:taskId
+router.get('/insights', getUserBehaviorInsights);
 router.get('/:taskId', getTaskById);
 router.put('/:taskId', taskUpdateValidation, validateRequest, updateTask);
 router.delete('/:taskId', deleteTask);

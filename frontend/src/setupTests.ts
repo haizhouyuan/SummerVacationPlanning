@@ -4,31 +4,8 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
-// Mock Firebase
+// Mock Firebase Storage (only service we use)
 jest.mock('./config/firebase', () => ({
-  auth: {
-    currentUser: null,
-    onAuthStateChanged: jest.fn(),
-    signInWithEmailAndPassword: jest.fn(),
-    createUserWithEmailAndPassword: jest.fn(),
-    signOut: jest.fn(),
-    updateProfile: jest.fn(),
-  },
-  db: {
-    collection: jest.fn(() => ({
-      doc: jest.fn(() => ({
-        get: jest.fn(),
-        set: jest.fn(),
-        update: jest.fn(),
-        delete: jest.fn(),
-      })),
-      add: jest.fn(),
-      where: jest.fn(),
-      orderBy: jest.fn(),
-      limit: jest.fn(),
-      get: jest.fn(),
-    })),
-  },
   storage: {
     ref: jest.fn(() => ({
       uploadBytes: jest.fn(),

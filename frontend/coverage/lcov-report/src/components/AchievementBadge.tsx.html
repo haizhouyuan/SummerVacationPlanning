@@ -25,28 +25,28 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>19/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">94.28% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>29/29</span>
+                <span class='fraction'>33/35</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>18/18</span>
             </div>
         
             
@@ -217,7 +217,31 @@
 <a name='L152'></a><a href='#L152'>152</a>
 <a name='L153'></a><a href='#L153'>153</a>
 <a name='L154'></a><a href='#L154'>154</a>
-<a name='L155'></a><a href='#L155'>155</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -244,9 +268,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">13x</span>
+<span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -371,10 +408,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from 'react';
 &nbsp;
 interface AchievementBadgeProps {
-  type: 'streak' | 'points' | 'tasks' | 'category' | 'special';
+  type: 'streak' | 'points' | 'tasks' | 'category' | 'special' | 'medal';
   level: number;
   title: string;
   description: string;
@@ -384,6 +428,8 @@ interface AchievementBadgeProps {
   size?: 'sm' | 'md' | 'lg';
   showProgress?: boolean;
   className?: string;
+  medalType?: 'bronze' | 'silver' | 'gold' | 'diamond';
+  multiplier?: number;
 }
 &nbsp;
 const AchievementBadge: React.FC&lt;AchievementBadgeProps&gt; = ({
@@ -397,6 +443,8 @@ const AchievementBadge: React.FC&lt;AchievementBadgeProps&gt; = ({
   size = 'md',
   showProgress = true,
   className = '',
+  medalType,
+  multiplier,
 }) =&gt; {
   const getBadgeData = () =&gt; {
     const badgeMap: { [key: string]: { emoji: string; color: string; bgColor: string } } = {
@@ -405,8 +453,19 @@ const AchievementBadge: React.FC&lt;AchievementBadgeProps&gt; = ({
       tasks: { emoji: '✅', color: 'text-cartoon-green', bgColor: 'bg-gradient-to-br from-cartoon-green to-success-400' },
       category: { emoji: '🎯', color: 'text-cartoon-purple', bgColor: 'bg-gradient-to-br from-cartoon-purple to-primary-400' },
       special: { emoji: '🏆', color: 'text-cartoon-pink', bgColor: 'bg-gradient-to-br from-cartoon-pink to-cartoon-purple' },
+      medal: getMedalData(),
     };
     return badgeMap[type];
+  };
+&nbsp;
+  const getMedalData = () =&gt; {
+    const medalMap: { [key: string]: { emoji: string; color: string; bgColor: string } } = {
+      bronze: { emoji: '🥉', color: 'text-orange-400', bgColor: 'bg-gradient-to-br from-orange-400 to-orange-600' },
+      silver: { emoji: '🥈', color: 'text-gray-400', bgColor: 'bg-gradient-to-br from-gray-400 to-gray-600' },
+      gold: { emoji: '🥇', color: 'text-yellow-400', bgColor: 'bg-gradient-to-br from-yellow-400 to-yellow-600' },
+      diamond: { emoji: '💎', color: 'text-purple-400', bgColor: 'bg-gradient-to-br from-purple-400 to-purple-600' },
+    };
+    return medalMap[medalType || 'bronze'];
   };
 &nbsp;
   const getSizeClasses = () =&gt; {
@@ -467,10 +526,17 @@ const AchievementBadge: React.FC&lt;AchievementBadgeProps&gt; = ({
           &lt;/div&gt;
         )}
 &nbsp;
-        {/* Level indicator */}
-        {level &gt; 1 &amp;&amp; isUnlocked &amp;&amp; (
+        {/* Level indicator or multiplier */}
+        {level &gt; 1 &amp;&amp; isUnlocked &amp;&amp; !multiplier &amp;&amp; (
           &lt;div className="absolute -top-2 -right-2 bg-cartoon-purple text-white text-xs font-bold px-2 py-1 rounded-full"&gt;
             Lv.{level}
+          &lt;/div&gt;
+        )}
+        
+        {/* Medal multiplier */}
+        {multiplier &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >isUnlocked </span>&amp;&amp; (
+<span class="branch-2 cbranch-no" title="branch not covered" >          &lt;div className="absolute -top-2 -right-2 bg-cartoon-green text-white text-xs font-bold px-2 py-1 rounded-full"&gt;</span>
+            {multiplier.toFixed(1)}x
           &lt;/div&gt;
         )}
 &nbsp;
@@ -532,7 +598,7 @@ export default AchievementBadge;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-15T11:25:02.222Z
+                at 2025-07-19T22:38:55.795Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
