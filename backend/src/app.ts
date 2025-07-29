@@ -25,7 +25,6 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: 'Too many requests from this IP, please try again later.',
-  trustProxy: true,
 });
 app.use('/api/', limiter);
 
@@ -55,6 +54,7 @@ import taskRoutes from './routes/taskRoutes';
 import dailyTaskRoutes from './routes/dailyTaskRoutes';
 import redemptionRoutes from './routes/redemptionRoutes';
 import rewardsRoutes from './routes/rewardsRoutes';
+import pointsConfigRoutes from './routes/pointsConfigRoutes';
 
 // Debug middleware for all API routes
 app.use('/api', (req, res, next) => {
@@ -67,6 +67,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/daily-tasks', dailyTaskRoutes);
 app.use('/api/redemptions', redemptionRoutes);
 app.use('/api/rewards', rewardsRoutes);
+app.use('/api/points-config', pointsConfigRoutes);
 
 // 静态资源服务，开放 /uploads 目录
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

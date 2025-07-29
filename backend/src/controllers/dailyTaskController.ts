@@ -3,6 +3,7 @@ import { collections } from '../config/mongodb';
 import { DailyTask, Task } from '../types';
 import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
+import { calculateConfigurablePoints } from './pointsConfigController';
 
 export const createDailyTask = async (req: AuthRequest, res: Response) => {
   try {
@@ -13,7 +14,19 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const { taskId, date, plannedTime, notes } = req.body;
+    const { 
+      taskId, 
+      date, 
+      plannedTime, 
+      plannedEndTime,
+      reminderTime,
+      priority = 'medium',
+      timePreference,
+      isRecurring = false,
+      recurringPattern,
+      notes,
+      planningNotes
+    } = req.body;
 
     // Validate required fields
     if (!taskId || !date) {
@@ -52,8 +65,16 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
       date,
       status: 'planned',
       plannedTime,
+      plannedEndTime,
+      reminderTime,
+      priority,
+      timePreference,
+      isRecurring,
+      recurringPattern,
       notes,
+      planningNotes,
       pointsEarned: 0,
+      approvalStatus: 'pending',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -169,29 +190,82 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
     if (status) {
       updates.status = status;
       
-      // If completing task, calculate points
+      // If completing task, calculate points using configurable system
       if (status === 'completed') {
         const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
         if (task) {
-          const basePoints = task.points;
+          // Prepare data for configurable points calculation
+          const baseData = {
+            duration: task.estimatedTime,
+            wordCount: evidenceText ? evidenceText.length : undefined,
+            quality: 'normal', // Could be determined from evidence or user input
+            difficulty: task.difficulty,
+          };
+
+          // Use configurable points calculation
+          const pointsResult = await calculateConfigurablePoints(
+            task.category,
+            task.title.toLowerCase().includes('日记') ? 'diary' : 
+            task.title.toLowerCase().includes('数学') ? 'math_video' : 
+            task.title.toLowerCase().includes('奥数') ? 'olympiad_problem' :
+            task.title.toLowerCase().includes('编程') ? 'programming_game' :
+            task.title.toLowerCase().includes('音乐') ? 'music_practice' :
+            task.title.toLowerCase().includes('运动') ? 'general_exercise' :
+            task.title.toLowerCase().includes('家务') ? 'chores' : 'general',
+            baseData,
+            req.user.medals
+          );
           
-          // Calculate bonus points for extra content (e.g., diary word count)
-          let bonusPoints = 0;
-          if (evidence || evidenceText || evidenceMedia) {
-            bonusPoints = calculateBonusPoints(task, evidence, evidenceText, evidenceMedia);
-          }
-          
-          // Apply medal multipliers
-          const multiplier = calculateMedalMultiplier(req.user.medals || { bronze: false, silver: false, gold: false, diamond: false });
-          const totalPoints = Math.round((basePoints + bonusPoints) * multiplier);
-          updates.pointsEarned = totalPoints;
+          updates.pointsEarned = pointsResult.totalPoints;
           updates.completedAt = new Date();
+          
+          // Check daily limits before adding points
+          const today = new Date().toISOString().split('T')[0];
+          let userPointsLimit = await collections.userPointsLimits.findOne({
+            userId: req.user.id,
+            date: today,
+          });
+
+          if (!userPointsLimit) {
+            const gameTimeConfig = await collections.gameTimeConfigs.findOne({ isActive: true });
+            const baseGameTime = gameTimeConfig?.baseGameTimeMinutes || 30;
+
+            userPointsLimit = {
+              userId: req.user.id,
+              date: today,
+              activityPoints: {},
+              totalDailyPoints: 0,
+              gameTimeUsed: 0,
+              gameTimeAvailable: baseGameTime,
+              accumulatedPoints: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+
+            const result = await collections.userPointsLimits.insertOne(userPointsLimit);
+            userPointsLimit.id = result.insertedId.toString();
+          }
+
+          // Update daily points tracking
+          const activityKey = task.category + '_' + task.title.substring(0, 20);
+          const currentActivityPoints = userPointsLimit.activityPoints[activityKey] || 0;
+          
+          await collections.userPointsLimits.updateOne(
+            { userId: req.user.id, date: today },
+            {
+              $set: {
+                [`activityPoints.${activityKey}`]: currentActivityPoints + pointsResult.totalPoints,
+                totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + pointsResult.totalPoints,
+                updatedAt: new Date(),
+              }
+            }
+          );
           
           // Update user's total points
           await collections.users.updateOne(
             { _id: new ObjectId(req.user.id) },
             { 
-              $inc: { points: totalPoints },
+              $inc: { points: pointsResult.totalPoints },
               $set: { updatedAt: new Date() }
             }
           );
@@ -670,3 +744,298 @@ async function checkAndUpdateStreak(userId: string, date: string): Promise<void>
     console.error('Error updating streak:', error);
   }
 }
+
+// Enhanced Task Planning Functions
+
+/**
+ * Get weekly schedule for a user
+ */
+export const getWeeklySchedule = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    const { weekStart } = req.query;
+    let startDate: Date;
+    
+    if (weekStart) {
+      startDate = new Date(weekStart as string);
+    } else {
+      // Default to current week's Monday
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const monday = new Date(today);
+      monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+      startDate = monday;
+    }
+
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + 6);
+
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+
+    // Get all daily tasks for the week
+    const dailyTasks = await collections.dailyTasks
+      .find({
+        userId: req.user.id,
+        date: { $gte: startDateStr, $lte: endDateStr }
+      })
+      .sort({ date: 1, plannedTime: 1 })
+      .toArray();
+
+    // Calculate statistics
+    const totalPlannedTasks = dailyTasks.length;
+    const totalCompletedTasks = dailyTasks.filter((task: any) => task.status === 'completed').length;
+    const totalPointsEarned = dailyTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0);
+    const completionRate = totalPlannedTasks > 0 ? totalCompletedTasks / totalPlannedTasks : 0;
+
+    const weeklySchedule = {
+      userId: req.user.id,
+      weekStart: startDateStr,
+      tasks: dailyTasks.map((task: any) => ({ ...task, id: task._id.toString() })),
+      totalPlannedTasks,
+      totalCompletedTasks,
+      totalPointsEarned,
+      completionRate
+    };
+
+    res.status(200).json({
+      success: true,
+      data: { weeklySchedule },
+    });
+  } catch (error: any) {
+    console.error('Get weekly schedule error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get weekly schedule',
+    });
+  }
+};
+
+/**
+ * Check for scheduling conflicts when planning tasks
+ */
+export const checkSchedulingConflicts = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    const { date, plannedTime, estimatedTime, excludeTaskId } = req.query;
+
+    if (!date || !plannedTime || !estimatedTime) {
+      return res.status(400).json({
+        success: false,
+        error: 'Date, planned time, and estimated time are required',
+      });
+    }
+
+    const [hours, minutes] = (plannedTime as string).split(':').map(Number);
+    const startTime = new Date();
+    startTime.setHours(hours, minutes, 0, 0);
+    
+    const endTime = new Date(startTime);
+    endTime.setMinutes(startTime.getMinutes() + parseInt(estimatedTime as string));
+
+    // Find conflicting tasks
+    const query: any = {
+      userId: req.user.id,
+      date: date as string,
+      plannedTime: { $exists: true },
+      status: { $ne: 'skipped' }
+    };
+
+    if (excludeTaskId) {
+      query._id = { $ne: new ObjectId(excludeTaskId as string) };
+    }
+
+    const existingTasks = await collections.dailyTasks.find(query).toArray();
+    
+    const conflicts: any[] = [];
+    
+    for (const existingTask of existingTasks) {
+      if (!existingTask.plannedTime) continue;
+      
+      const [existingHours, existingMinutes] = existingTask.plannedTime.split(':').map(Number);
+      const existingStart = new Date();
+      existingStart.setHours(existingHours, existingMinutes, 0, 0);
+      
+      // Get task details for estimated time
+      const taskDetails = await collections.tasks.findOne({ _id: new ObjectId(existingTask.taskId) });
+      const existingEnd = new Date(existingStart);
+      existingEnd.setMinutes(existingStart.getMinutes() + (taskDetails?.estimatedTime || 30));
+      
+      // Check for overlap
+      if (startTime < existingEnd && endTime > existingStart) {
+        conflicts.push({
+          taskId: existingTask.taskId,
+          title: taskDetails?.title || 'Unknown Task',
+          plannedTime: existingTask.plannedTime,
+          estimatedTime: taskDetails?.estimatedTime || 30
+        });
+      }
+    }
+
+    const suggestions = conflicts.length > 0 ? [
+      {
+        action: 'reschedule',
+        details: 'Consider scheduling this task for a different time slot'
+      },
+      {
+        action: 'adjust_time',
+        details: 'Reduce the estimated time or split into shorter sessions'
+      },
+      {
+        action: 'change_date',
+        details: 'Move one of the conflicting tasks to another day'
+      }
+    ] : [];
+
+    res.status(200).json({
+      success: true,
+      data: {
+        hasConflicts: conflicts.length > 0,
+        conflict: conflicts.length > 0 ? {
+          date: date as string,
+          timeSlot: `${plannedTime}-${endTime.getHours()}:${endTime.getMinutes().toString().padStart(2, '0')}`,
+          conflictingTasks: conflicts,
+          suggestions
+        } : null
+      },
+    });
+  } catch (error: any) {
+    console.error('Check scheduling conflicts error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to check scheduling conflicts',
+    });
+  }
+};
+
+/**
+ * Batch approve/reject multiple tasks
+ */
+export const batchApproveTask = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only parents can approve tasks',
+      });
+    }
+
+    const { dailyTaskIds, action, approvalNotes, bonusPoints } = req.body;
+
+    if (!dailyTaskIds || !Array.isArray(dailyTaskIds) || dailyTaskIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Daily task IDs array is required',
+      });
+    }
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Action must be either approve or reject',
+      });
+    }
+
+    const results = [];
+    
+    for (const dailyTaskId of dailyTaskIds) {
+      try {
+        const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+        
+        if (!dailyTask) {
+          results.push({ dailyTaskId, success: false, error: 'Task not found' });
+          continue;
+        }
+
+        // Verify this task belongs to one of the parent's children
+        if (!req.user.children?.includes(dailyTask.userId)) {
+          results.push({ dailyTaskId, success: false, error: 'Unauthorized' });
+          continue;
+        }
+
+        const updates: any = {
+          approvalStatus: action === 'approve' ? 'approved' : 'rejected',
+          approvedBy: req.user.id,
+          approvedAt: new Date(),
+          approvalNotes: approvalNotes || '',
+          updatedAt: new Date(),
+        };
+
+        // Apply bonus points if approving
+        if (action === 'approve' && bonusPoints && bonusPoints[dailyTaskId]) {
+          const bonus = parseInt(bonusPoints[dailyTaskId]);
+          if (bonus > 0) {
+            const currentPoints = dailyTask.pointsEarned || 0;
+            updates.pointsEarned = currentPoints + bonus;
+            updates.bonusPoints = bonus;
+            
+            // Add bonus points to user's total
+            await collections.users.updateOne(
+              { _id: new ObjectId(dailyTask.userId) },
+              { 
+                $inc: { points: bonus },
+                $set: { updatedAt: new Date() }
+              }
+            );
+          }
+        }
+
+        // If rejecting, optionally revert task status
+        if (action === 'reject') {
+          updates.status = 'in_progress';
+        }
+
+        await collections.dailyTasks.updateOne(
+          { _id: new ObjectId(dailyTaskId) },
+          { $set: updates }
+        );
+
+        results.push({ dailyTaskId, success: true });
+      } catch (error: any) {
+        results.push({ dailyTaskId, success: false, error: error.message });
+      }
+    }
+
+    const successful = results.filter(r => r.success).length;
+    const failed = results.filter(r => !r.success).length;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        results,
+        summary: {
+          total: dailyTaskIds.length,
+          successful,
+          failed,
+          action
+        }
+      },
+      message: `Batch ${action}: ${successful} successful, ${failed} failed`,
+    });
+  } catch (error: any) {
+    console.error('Batch approve task error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to batch approve tasks',
+    });
+  }
+};

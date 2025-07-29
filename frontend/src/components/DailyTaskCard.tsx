@@ -64,13 +64,13 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
     }
   };
 
-  const handleSubmitEvidence = (
-    evidenceText: string,
-    evidenceMedia: any[],
-    isPublic: boolean,
-    notes: string
-  ) => {
-    onStatusUpdate?.(dailyTask.id, 'completed', evidenceText, evidenceMedia, isPublic, notes);
+  const handleSubmitEvidence = (evidenceData: {
+    evidenceText: string;
+    evidenceMedia: any[];
+    notes: string;
+    isPublic: boolean;
+  }) => {
+    onStatusUpdate?.(dailyTask.id, 'completed', evidenceData.evidenceText, evidenceData.evidenceMedia, evidenceData.isPublic, evidenceData.notes);
     setShowEvidenceModal(false);
   };
 
@@ -229,11 +229,10 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
       {/* Evidence Modal */}
       {showEvidenceModal && dailyTask.task && (
         <EvidenceModal
-          isOpen={showEvidenceModal}
           onClose={() => setShowEvidenceModal(false)}
           onSubmit={handleSubmitEvidence}
           task={dailyTask.task}
-          dailyTaskId={dailyTask.id}
+          dailyTask={dailyTask}
         />
       )}
     </>

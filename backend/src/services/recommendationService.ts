@@ -133,12 +133,12 @@ export class RecommendationService {
       .toArray();
 
     // Get corresponding task details
-    const taskIds = dailyTasks.map(dt => new ObjectId(dt.taskId));
+    const taskIds = dailyTasks.map((dt: any) => new ObjectId(dt.taskId));
     const tasks = await collections.tasks
       .find({ _id: { $in: taskIds } })
       .toArray();
 
-    const taskMap = new Map(tasks.map(t => [t._id.toString(), t]));
+    const taskMap = new Map(tasks.map((t: any) => [t._id.toString(), t]));
 
     // Initialize stats
     const categoryStats: { [category: string]: number } = {};
@@ -149,24 +149,24 @@ export class RecommendationService {
     const timeRanges: number[] = [];
 
     // Analyze completed tasks
-    const completedTasks = dailyTasks.filter(dt => dt.status === 'completed');
+    const completedTasks = dailyTasks.filter((dt: any) => dt.status === 'completed');
     
-    completedTasks.forEach(dailyTask => {
+    completedTasks.forEach((dailyTask: any) => {
       const task = taskMap.get(dailyTask.taskId);
       if (!task) return;
 
       totalCompleted++;
-      totalPoints += dailyTask.pointsEarned || task.points || 0;
-      totalTime += task.estimatedTime || 0;
+      totalPoints += dailyTask.pointsEarned || (task as any).points || 0;
+      totalTime += (task as any).estimatedTime || 0;
       
       // Track category preferences
-      categoryStats[task.category] = (categoryStats[task.category] || 0) + 1;
+      categoryStats[(task as any).category] = (categoryStats[(task as any).category] || 0) + 1;
       
       // Track difficulty preferences
-      difficultyStats[task.difficulty] = (difficultyStats[task.difficulty] || 0) + 1;
+      difficultyStats[(task as any).difficulty] = (difficultyStats[(task as any).difficulty] || 0) + 1;
       
       // Track preferred time ranges
-      timeRanges.push(task.estimatedTime || 0);
+      timeRanges.push((task as any).estimatedTime || 0);
     });
 
     // Calculate completion rate
@@ -232,7 +232,7 @@ export class RecommendationService {
       .limit(100) // Reasonable limit for scoring
       .toArray();
 
-    return tasks.map(task => ({
+    return tasks.map((task: any) => ({
       ...task,
       id: task._id.toString()
     })) as Task[];

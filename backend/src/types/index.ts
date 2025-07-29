@@ -56,6 +56,16 @@ export interface DailyTask {
   date: string; // YYYY-MM-DD format
   status: 'planned' | 'in_progress' | 'completed' | 'skipped';
   plannedTime?: string; // HH:MM format
+  plannedEndTime?: string; // HH:MM format for time blocks
+  reminderTime?: string; // HH:MM format for reminders
+  priority: 'low' | 'medium' | 'high'; // Task priority for scheduling
+  timePreference?: 'morning' | 'afternoon' | 'evening' | 'flexible'; // Preferred time of day
+  isRecurring?: boolean; // Whether this is part of a recurring schedule
+  recurringPattern?: {
+    type: 'daily' | 'weekly' | 'custom';
+    daysOfWeek?: number[]; // [0-6] for weekly patterns, 0=Sunday
+    interval?: number; // For custom intervals
+  };
   completedAt?: Date;
   evidenceText?: string; // 文本心得
   evidenceMedia?: EvidenceMediaItem[]; // 多媒体证据
@@ -66,7 +76,14 @@ export interface DailyTask {
     timestamp: Date;
   }[];
   notes?: string;
+  planningNotes?: string; // Notes added during planning phase
   pointsEarned: number;
+  // Approval system enhancement
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string; // Parent ID
+  approvedAt?: Date;
+  approvalNotes?: string;
+  bonusPoints?: number; // Additional points awarded by parent
   createdAt: Date;
   updatedAt: Date;
 }
@@ -109,4 +126,103 @@ export interface TaskFilters {
   requiresEvidence?: boolean;
   tags?: string[];
   isPublic?: boolean;
+}
+
+// New interfaces for enhanced task planning
+export interface TaskScheduleRequest {
+  taskId: string;
+  date: string;
+  plannedTime?: string;
+  plannedEndTime?: string;
+  reminderTime?: string;
+  priority: 'low' | 'medium' | 'high';
+  timePreference?: 'morning' | 'afternoon' | 'evening' | 'flexible';
+  isRecurring?: boolean;
+  recurringPattern?: {
+    type: 'daily' | 'weekly' | 'custom';
+    daysOfWeek?: number[];
+    interval?: number;
+  };
+  planningNotes?: string;
+}
+
+export interface WeeklySchedule {
+  userId: string;
+  weekStart: string; // YYYY-MM-DD format (Monday)
+  tasks: DailyTask[];
+  totalPlannedTasks: number;
+  totalCompletedTasks: number;
+  totalPointsEarned: number;
+  completionRate: number;
+}
+
+export interface SchedulingConflict {
+  date: string;
+  timeSlot: string;
+  conflictingTasks: {
+    taskId: string;
+    title: string;
+    plannedTime: string;
+    estimatedTime: number;
+  }[];
+  suggestions: {
+    action: 'reschedule' | 'adjust_time' | 'change_date';
+    details: string;
+  }[];
+}
+
+export interface BatchApprovalRequest {
+  dailyTaskIds: string[];
+  action: 'approve' | 'reject';
+  approvalNotes?: string;
+  bonusPoints?: { [dailyTaskId: string]: number };
+}
+
+// Points Configuration System
+export interface PointsRule {
+  id: string;
+  category: Task['category'];
+  activity: string; // Specific activity name
+  basePoints: number;
+  bonusRules?: {
+    type: 'word_count' | 'duration' | 'quality' | 'completion';
+    threshold: number;
+    bonusPoints: number;
+    maxBonus?: number;
+  }[];
+  dailyLimit?: number; // Max points per day for this activity
+  multipliers?: {
+    difficulty?: { [key: string]: number };
+    quality?: { [key: string]: number };
+    medal?: { [key: string]: number };
+  };
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface GameTimeConfig {
+  id: string;
+  baseGameTimeMinutes: number; // Daily free game time
+  pointsToMinutesRatio: number; // How many minutes per point
+  educationalGameBonus: number; // Multiplier for educational games
+  dailyGameTimeLimit: number; // Max total game time per day
+  freeEducationalMinutes: number; // Free daily minutes for educational games
+  weeklyAccumulationLimit: number; // Max accumulated points that can be stored
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserPointsLimit {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD format
+  activityPoints: { [activityId: string]: number }; // Track daily points per activity
+  totalDailyPoints: number;
+  gameTimeUsed: number; // Minutes used today
+  gameTimeAvailable: number; // Minutes available (from points + base time)
+  accumulatedPoints: number; // Saved points from previous days
+  createdAt: Date;
+  updatedAt: Date;
 }

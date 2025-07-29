@@ -42,7 +42,14 @@ export interface DailyTask {
   date: string;
   status: 'planned' | 'in_progress' | 'completed' | 'skipped';
   plannedTime?: string;
+  plannedEndTime?: string;
+  reminderTime?: string;
+  priority?: 'low' | 'medium' | 'high';
+  timePreference?: 'morning' | 'afternoon' | 'evening' | 'flexible';
+  planningNotes?: string;
   completedAt?: Date;
+  evidenceText?: string;
+  evidenceMedia?: any[];
   evidence?: {
     type: 'text' | 'photo' | 'video' | 'audio';
     content: string;
@@ -51,6 +58,7 @@ export interface DailyTask {
     fileSize?: number;
   }[];
   notes?: string;
+  isPublic?: boolean;
   pointsEarned: number;
   createdAt: Date;
   updatedAt: Date;

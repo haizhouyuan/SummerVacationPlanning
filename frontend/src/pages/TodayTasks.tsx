@@ -346,16 +346,15 @@ const TodayTasks: React.FC = () => {
       </div>
 
       {/* Evidence Upload Modal */}
-      {selectedTask && selectedTask.task && (
+      {modalOpen && selectedTask && selectedTask.task && (
         <EvidenceModal
-          isOpen={modalOpen}
           onClose={() => {
             setModalOpen(false);
             setSelectedTask(null);
           }}
           onSubmit={handleEvidenceSubmit}
           task={selectedTask.task}
-          dailyTaskId={selectedTask.id}
+          dailyTask={selectedTask}
         />
       )}
     </div>
