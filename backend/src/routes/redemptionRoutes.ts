@@ -6,6 +6,7 @@ import {
   updateRedemptionStatus,
   deleteRedemption,
   getRedemptionStats,
+  getPendingRedemptions,
 } from '../controllers/redemptionController';
 import { authenticateToken } from '../middleware/mongoAuth';
 import { validateRequest } from '../middleware/validation';
@@ -31,6 +32,7 @@ router.use(authenticateToken);
 // Redemption routes
 router.post('/', redemptionValidation, validateRequest, createRedemption);
 router.get('/', getRedemptions);
+router.get('/pending', getPendingRedemptions); // Must be before /:redemptionId
 router.put('/:redemptionId', redemptionUpdateValidation, validateRequest, updateRedemptionStatus);
 router.delete('/:redemptionId', deleteRedemption);
 router.get('/stats', getRedemptionStats);

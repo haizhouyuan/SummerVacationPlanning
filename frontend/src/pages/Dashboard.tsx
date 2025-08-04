@@ -7,6 +7,7 @@ import ProgressBar from '../components/ProgressBar';
 import CelebrationModal from '../components/CelebrationModal';
 import AchievementBadge from '../components/AchievementBadge';
 import SummerProgressTracker from '../components/SummerProgressTracker';
+import PointsHistory from '../components/PointsHistory';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -15,6 +16,7 @@ const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const [showPointsHistory, setShowPointsHistory] = useState(false);
 
   // Load dashboard statistics
   useEffect(() => {
@@ -209,6 +211,12 @@ const Dashboard: React.FC = () => {
               >
                 🏆 成就广场
               </button>
+              <button 
+                onClick={() => setShowPointsHistory(true)}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-400 hover:from-pink-500 hover:to-purple-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
+              >
+                💎 积分历史
+              </button>
             </div>
           </div>
 
@@ -278,6 +286,12 @@ const Dashboard: React.FC = () => {
         message="恭喜你完成了今天的任务！"
         points={10}
         emoji="🎉"
+      />
+
+      {/* Points History Modal */}
+      <PointsHistory
+        isOpen={showPointsHistory}
+        onClose={() => setShowPointsHistory(false)}
       />
     </div>
   );

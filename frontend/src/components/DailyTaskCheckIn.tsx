@@ -24,6 +24,11 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'time' | 'priority' | 'status'>('time');
+  const [dailyPointsInfo, setDailyPointsInfo] = useState<{
+    currentPoints: number;
+    dailyLimit: number;
+    limitReached: boolean;
+  }>({ currentPoints: 0, dailyLimit: 20, limitReached: false });
 
   const statusOptions = [
     { key: 'all', label: '全部', emoji: '📋', color: 'bg-gray-100 text-gray-700' },
@@ -37,7 +42,24 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
 
   useEffect(() => {
     loadDailyTasks();
+    loadDailyPointsInfo();
   }, [selectedDate]);
+
+  const loadDailyPointsInfo = async () => {
+    try {
+      // Try to get current daily points from the user's stats
+      const response = await apiService.getDashboardStats();
+      if (response.success && response.data.dailyPoints !== undefined) {
+        setDailyPointsInfo({
+          currentPoints: response.data.dailyPoints,
+          dailyLimit: 20,
+          limitReached: response.data.dailyPoints >= 20,
+        });
+      }
+    } catch (error: any) {
+      console.error('Error loading daily points info:', error);
+    }
+  };
 
   const loadDailyTasks = async () => {
     try {
@@ -207,8 +229,24 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
     const inProgress = dailyTasks.filter(t => t.status === 'in_progress').length;
     const planned = dailyTasks.filter(t => t.status === 'planned').length;
     const totalPoints = dailyTasks.reduce((sum, task) => sum + task.pointsEarned, 0);
+    const potentialPoints = dailyTasks.reduce((sum, task) => {
+      if (task.status === 'completed') {
+        return sum + task.pointsEarned;
+      }
+      return sum + (task.task?.points || 0);
+    }, 0);
     
-    return { total, completed, inProgress, planned, totalPoints };
+    // Update daily points info based on current task stats
+    const currentEarnedPoints = dailyPointsInfo.currentPoints > 0 ? dailyPointsInfo.currentPoints : totalPoints;
+    if (dailyPointsInfo.currentPoints === 0 && totalPoints > 0) {
+      setDailyPointsInfo(prev => ({
+        ...prev,
+        currentPoints: totalPoints,
+        limitReached: totalPoints >= prev.dailyLimit
+      }));
+    }
+    
+    return { total, completed, inProgress, planned, totalPoints, potentialPoints };
   };
 
   const stats = getTaskStats();

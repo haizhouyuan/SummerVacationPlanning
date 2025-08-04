@@ -377,7 +377,7 @@ export const calculateConfigurablePoints = async (
 };
 
 /**
- * Check and update user daily points limit
+ * Check and update user daily points limit with global daily cap (20 points)
  */
 export const checkDailyPointsLimit = async (req: AuthRequest, res: Response) => {
   try {
@@ -398,6 +398,7 @@ export const checkDailyPointsLimit = async (req: AuthRequest, res: Response) => 
     }
 
     const today = date || new Date().toISOString().split('T')[0];
+    const GLOBAL_DAILY_POINTS_LIMIT = 20; // 全局每日积分上限
 
     // Get or create user points limit for today
     let userPointsLimit = await collections.userPointsLimits.findOne({
@@ -425,6 +426,25 @@ export const checkDailyPointsLimit = async (req: AuthRequest, res: Response) => 
       userPointsLimit.id = result.insertedId.toString();
     }
 
+    // Check global daily points limit first
+    const currentTotalPoints = userPointsLimit.totalDailyPoints || 0;
+    if (currentTotalPoints >= GLOBAL_DAILY_POINTS_LIMIT) {
+      return res.status(400).json({
+        success: false,
+        error: 'Daily global points limit reached',
+        data: {
+          canAdd: 0,
+          globalDailyLimit: GLOBAL_DAILY_POINTS_LIMIT,
+          currentTotal: currentTotalPoints,
+          isGlobalLimitReached: true,
+        },
+      });
+    }
+
+    // Calculate how many points can be added considering global limit
+    const globalRemainingPoints = GLOBAL_DAILY_POINTS_LIMIT - currentTotalPoints;
+    const actualPointsToAdd = Math.min(pointsToAdd, globalRemainingPoints);
+
     // Check activity daily limit
     const pointsRule = await collections.pointsRules.findOne({
       activity,
@@ -433,27 +453,57 @@ export const checkDailyPointsLimit = async (req: AuthRequest, res: Response) => 
 
     if (pointsRule && pointsRule.dailyLimit) {
       const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
-      if (currentActivityPoints + pointsToAdd > pointsRule.dailyLimit) {
+      const activityRemainingPoints = pointsRule.dailyLimit - currentActivityPoints;
+      
+      if (activityRemainingPoints <= 0) {
         return res.status(400).json({
           success: false,
           error: `Daily limit exceeded for ${activity}. Maximum: ${pointsRule.dailyLimit}, Current: ${currentActivityPoints}`,
           data: {
-            canAdd: Math.max(0, pointsRule.dailyLimit - currentActivityPoints),
+            canAdd: 0,
             dailyLimit: pointsRule.dailyLimit,
             current: currentActivityPoints,
+            isActivityLimitReached: true,
           },
         });
       }
-    }
 
-    res.status(200).json({
-      success: true,
-      data: {
-        canAddPoints: true,
-        remainingLimit: pointsRule?.dailyLimit ? pointsRule.dailyLimit - (userPointsLimit.activityPoints[activity] || 0) : null,
-        currentPoints: userPointsLimit.activityPoints[activity] || 0,
-      },
-    });
+      // Take minimum of activity limit and global limit
+      const finalPointsToAdd = Math.min(actualPointsToAdd, activityRemainingPoints);
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          canAddPoints: finalPointsToAdd > 0,
+          canAdd: finalPointsToAdd,
+          requestedPoints: pointsToAdd,
+          actualPointsToAdd: finalPointsToAdd,
+          activityRemainingLimit: activityRemainingPoints,
+          globalRemainingLimit: globalRemainingPoints,
+          dailyLimit: pointsRule.dailyLimit,
+          globalDailyLimit: GLOBAL_DAILY_POINTS_LIMIT,
+          currentActivityPoints: currentActivityPoints,
+          currentTotalPoints: currentTotalPoints,
+          isLimitedByGlobal: finalPointsToAdd < pointsToAdd && globalRemainingPoints < activityRemainingPoints,
+          isLimitedByActivity: finalPointsToAdd < pointsToAdd && activityRemainingPoints < globalRemainingPoints,
+        },
+      });
+    } else {
+      // No activity-specific limit, only global limit applies
+      res.status(200).json({
+        success: true,
+        data: {
+          canAddPoints: actualPointsToAdd > 0,
+          canAdd: actualPointsToAdd,
+          requestedPoints: pointsToAdd,
+          actualPointsToAdd: actualPointsToAdd,
+          globalRemainingLimit: globalRemainingPoints,
+          globalDailyLimit: GLOBAL_DAILY_POINTS_LIMIT,
+          currentTotalPoints: currentTotalPoints,
+          isLimitedByGlobal: actualPointsToAdd < pointsToAdd,
+        },
+      });
+    }
   } catch (error: any) {
     console.error('Check daily points limit error:', error);
     res.status(500).json({
@@ -464,7 +514,7 @@ export const checkDailyPointsLimit = async (req: AuthRequest, res: Response) => 
 };
 
 /**
- * Initialize default points rules based on EarnPoints.md
+ * Initialize default points rules based on revised requirements document 2025-08-04
  */
 export const initializeDefaultPointsRules = async (req: AuthRequest, res: Response) => {
   try {
@@ -491,8 +541,9 @@ export const initializeDefaultPointsRules = async (req: AuthRequest, res: Respon
       });
     }
 
-    // Default rules based on EarnPoints.md
+    // Default rules based on revised requirements document 2025-08-04
     const defaultRules: Omit<PointsRule, 'id'>[] = [
+      // 日记任务：基础2分 + 每50字1分（封顶+10分）
       {
         category: 'reading',
         activity: 'diary',
@@ -505,10 +556,18 @@ export const initializeDefaultPointsRules = async (req: AuthRequest, res: Respon
             maxBonus: 10,
           },
         ],
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // 数学视频：基础2分 + 提前完成课程奖励5分
       {
         category: 'learning',
         activity: 'math_video',
@@ -520,18 +579,34 @@ export const initializeDefaultPointsRules = async (req: AuthRequest, res: Respon
             bonusPoints: 5, // Bonus for completing ahead of grade level
           },
         ],
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // 奥数题：每题1分
       {
         category: 'learning',
         activity: 'olympiad_problem',
         basePoints: 1,
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // 运动任务：基础0分 + 每10分钟1分，每日封顶3分
       {
         category: 'exercise',
         activity: 'general_exercise',
@@ -539,39 +614,71 @@ export const initializeDefaultPointsRules = async (req: AuthRequest, res: Respon
         bonusRules: [
           {
             type: 'duration',
-            threshold: 10,
-            bonusPoints: 1,
+            threshold: 10, // 每10分钟
+            bonusPoints: 1, // 1分
           },
         ],
-        dailyLimit: 3,
+        dailyLimit: 3, // 每日封顶3分
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // 编程游戏：基础2分
       {
         category: 'creativity',
         activity: 'programming_game',
         basePoints: 2,
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // DIY项目里程碑
       {
         category: 'creativity',
         activity: 'diy_project_milestone',
         basePoints: 10,
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // DIY项目完成
       {
         category: 'creativity',
         activity: 'diy_project_complete',
         basePoints: 50,
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // 音乐练习：基础0分 + 每15分钟1分 + 优秀表现奖励2分
       {
         category: 'other',
         activity: 'music_practice',
@@ -579,23 +686,38 @@ export const initializeDefaultPointsRules = async (req: AuthRequest, res: Respon
         bonusRules: [
           {
             type: 'duration',
-            threshold: 15,
-            bonusPoints: 1,
+            threshold: 15, // 每15分钟
+            bonusPoints: 1, // 1分
           },
           {
             type: 'quality',
-            threshold: 1, // For excellent quality
-            bonusPoints: 2,
+            threshold: 1, // 优秀表现
+            bonusPoints: 2, // 奖励2分
           },
         ],
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
+      // 家务劳动：基础1分
       {
         category: 'other',
         activity: 'chores',
         basePoints: 1,
+        multipliers: {
+          difficulty: {
+            easy: 1.0,
+            medium: 1.2,
+            hard: 1.5,
+          },
+        },
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),

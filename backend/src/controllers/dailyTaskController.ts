@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { collections } from '../config/mongodb';
+import { collections, mongodb } from '../config/mongodb';
 import { DailyTask, Task } from '../types';
 import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
@@ -221,6 +221,8 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           
           // Check daily limits before adding points
           const today = new Date().toISOString().split('T')[0];
+          const GLOBAL_DAILY_POINTS_LIMIT = 20; // 全局每日积分上限
+          
           let userPointsLimit = await collections.userPointsLimits.findOne({
             userId: req.user.id,
             date: today,
@@ -246,29 +248,98 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
             userPointsLimit.id = result.insertedId.toString();
           }
 
-          // Update daily points tracking
+          // Apply global daily points limit
+          const currentTotalPoints = userPointsLimit.totalDailyPoints || 0;
+          let actualPointsAwarded = pointsResult.totalPoints;
+          let isLimitReached = false;
+          let isPointsTruncated = false;
+
+          if (currentTotalPoints >= GLOBAL_DAILY_POINTS_LIMIT) {
+            // Already at limit, no points awarded
+            actualPointsAwarded = 0;
+            isLimitReached = true;
+          } else if (currentTotalPoints + pointsResult.totalPoints > GLOBAL_DAILY_POINTS_LIMIT) {
+            // Truncate points to not exceed limit
+            actualPointsAwarded = GLOBAL_DAILY_POINTS_LIMIT - currentTotalPoints;
+            isPointsTruncated = true;
+          }
+
+          // Check activity daily limit if applicable
           const activityKey = task.category + '_' + task.title.substring(0, 20);
-          const currentActivityPoints = userPointsLimit.activityPoints[activityKey] || 0;
-          
-          await collections.userPointsLimits.updateOne(
-            { userId: req.user.id, date: today },
-            {
-              $set: {
-                [`activityPoints.${activityKey}`]: currentActivityPoints + pointsResult.totalPoints,
-                totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + pointsResult.totalPoints,
-                updatedAt: new Date(),
-              }
+          const activity = task.title.toLowerCase().includes('日记') ? 'diary' : 
+                          task.title.toLowerCase().includes('数学') ? 'math_video' : 
+                          task.title.toLowerCase().includes('奥数') ? 'olympiad_problem' :
+                          task.title.toLowerCase().includes('编程') ? 'programming_game' :
+                          task.title.toLowerCase().includes('音乐') ? 'music_practice' :
+                          task.title.toLowerCase().includes('运动') ? 'general_exercise' :
+                          task.title.toLowerCase().includes('家务') ? 'chores' : 'general';
+
+          const pointsRule = await collections.pointsRules.findOne({
+            activity,
+            isActive: true,
+          });
+
+          if (pointsRule && pointsRule.dailyLimit) {
+            const currentActivityPoints = userPointsLimit.activityPoints[activityKey] || 0;
+            const activityRemainingPoints = pointsRule.dailyLimit - currentActivityPoints;
+            
+            if (activityRemainingPoints <= 0) {
+              actualPointsAwarded = 0;
+              isLimitReached = true;
+            } else if (actualPointsAwarded > activityRemainingPoints) {
+              actualPointsAwarded = activityRemainingPoints;
+              isPointsTruncated = true;
             }
-          );
-          
-          // Update user's total points
-          await collections.users.updateOne(
-            { _id: new ObjectId(req.user.id) },
-            { 
-              $inc: { points: pointsResult.totalPoints },
-              $set: { updatedAt: new Date() }
+          }
+
+          // Update points tracking and award points only if any points remain
+          if (actualPointsAwarded > 0) {
+            // Use transaction to ensure atomic operations
+            const session = mongodb['client'].startSession();
+            try {
+              await session.withTransaction(async () => {
+                const currentActivityPoints = userPointsLimit.activityPoints[activityKey] || 0;
+                
+                // Update user points limit
+                await collections.userPointsLimits.updateOne(
+                  { userId: req.user!.id, date: today },
+                  {
+                    $set: {
+                      [`activityPoints.${activityKey}`]: currentActivityPoints + actualPointsAwarded,
+                      totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + actualPointsAwarded,
+                      updatedAt: new Date(),
+                    }
+                  },
+                  { session }
+                );
+                
+                // Update user's total points
+                await collections.users.updateOne(
+                  { _id: new ObjectId(req.user!.id) },
+                  { 
+                    $inc: { points: actualPointsAwarded },
+                    $set: { updatedAt: new Date() }
+                  },
+                  { session }
+                );
+              });
+            } finally {
+              await session.endSession();
             }
-          );
+          }
+
+          // Update the points earned in the task record
+          updates.pointsEarned = actualPointsAwarded;
+          
+          // Add limit information to response
+          updates.pointsLimitInfo = {
+            originalPoints: pointsResult.totalPoints,
+            actualPointsAwarded,
+            isLimitReached,
+            isPointsTruncated,
+            currentTotalPoints: currentTotalPoints + actualPointsAwarded,
+            globalDailyLimit: GLOBAL_DAILY_POINTS_LIMIT,
+          };
           
           // Check if this completion triggers a streak update
           await checkAndUpdateStreak(req.user.id, dailyTask.date);
@@ -298,10 +369,27 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
     // Get updated daily task
     const updatedDailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
     
+    // Prepare response with limit information if applicable
+    let responseMessage = 'Daily task updated successfully';
+    let responseData: any = { dailyTask: { ...updatedDailyTask, id: updatedDailyTask._id.toString() } };
+
+    if (updates.pointsLimitInfo) {
+      const limitInfo = updates.pointsLimitInfo;
+      responseData.pointsLimitInfo = limitInfo;
+      
+      if (limitInfo.isLimitReached && limitInfo.actualPointsAwarded === 0) {
+        responseMessage = 'Task completed but daily points limit reached - no points awarded';
+      } else if (limitInfo.isPointsTruncated) {
+        responseMessage = `Task completed with ${limitInfo.actualPointsAwarded} points (truncated from ${limitInfo.originalPoints} due to daily limit)`;
+      } else {
+        responseMessage = `Task completed successfully! Earned ${limitInfo.actualPointsAwarded} points`;
+      }
+    }
+    
     res.status(200).json({
       success: true,
-      data: { dailyTask: { ...updatedDailyTask, id: updatedDailyTask._id.toString() } },
-      message: 'Daily task updated successfully',
+      data: responseData,
+      message: responseMessage,
     });
   } catch (error: any) {
     console.error('Update daily task status error:', error);
