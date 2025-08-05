@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import PointsDisplay from './PointsDisplay';
+import { getStatsPeriod, formatPoints } from '../utils/statisticsService';
 
 interface PointsTransaction {
   id: string;
@@ -47,126 +48,52 @@ const PointsHistory: React.FC<PointsHistoryProps> = ({ isOpen, onClose }) => {
       setLoading(true);
       setError('');
       
-      // Since we don't have a specific points history API, 
-      // we'll simulate by combining data from various sources
-      const [dailyTasksResponse, exchangesResponse, redemptionsResponse] = await Promise.all([
-        apiService.getDailyTasks({ 
-          date: getDateRange().start,
-          endDate: getDateRange().end,
-          status: 'completed' 
-        }).catch(() => ({ data: { dailyTasks: [] } })),
-        apiService.getGameTimeExchanges({ 
-          startDate: getDateRange().start,
-          endDate: getDateRange().end 
-        }).catch(() => ({ data: { exchanges: [] } })),
-        apiService.getRedemptions({ 
-          startDate: getDateRange().start,
-          endDate: getDateRange().end 
-        }).catch(() => ({ data: { redemptions: [] } }))
-      ]);
+      const apiService = detectNetworkAndGetApiServiceSync();
+      const dateRange = getDateRange();
+      
+      // Use the new dedicated points history endpoint
+      const response = await apiService.getPointsHistory({
+        startDate: dateRange.start,
+        endDate: dateRange.end,
+        type: typeFilter === 'all' ? undefined : typeFilter,
+      });
 
-      const allTransactions: PointsTransaction[] = [];
+      if (response && response.success && response.data?.history) {
+        // Transform the data to match our interface
+        const transformedTransactions: PointsTransaction[] = response.data.history.map((item: any) => ({
+          id: item.id,
+          type: item.type,
+          amount: item.amount,
+          source: item.source,
+          description: item.description,
+          date: new Date(item.date),
+          details: item.details || {}
+        }));
 
-      // Add earning transactions from completed tasks
-      if ((dailyTasksResponse as any).data?.dailyTasks) {
-        (dailyTasksResponse as any).data.dailyTasks.forEach((dailyTask: any) => {
-          if (dailyTask.pointsEarned > 0) {
-            allTransactions.push({
-              id: `task-${dailyTask.id}`,
-              type: 'earn',
-              amount: dailyTask.pointsEarned,
-              source: 'task_completion',
-              description: `完成任务: ${dailyTask.task?.title || '未知任务'}`,
-              date: new Date(dailyTask.completedAt || dailyTask.updatedAt),
-              details: {
-                taskTitle: dailyTask.task?.title,
-                taskCategory: dailyTask.task?.category,
-                difficulty: dailyTask.task?.difficulty,
-                originalPoints: dailyTask.task?.points,
-              }
-            });
-          }
-        });
+        setTransactions(transformedTransactions);
+      } else {
+        // Fallback to empty array if response is malformed
+        setTransactions([]);
+        if (!response.success) {
+          setError(response.error || '加载积分历史失败');
+        }
       }
-
-      // Add spending transactions from game time exchanges
-      if ((exchangesResponse as any).data?.exchanges) {
-        (exchangesResponse as any).data.exchanges.forEach((exchange: any) => {
-          allTransactions.push({
-            id: `exchange-${exchange.id}`,
-            type: 'spend',
-            amount: exchange.pointsSpent,
-            source: 'game_time_exchange',
-            description: `兑换游戏时间: ${exchange.minutesGranted}分钟${exchange.gameType === 'normal' ? '普通' : '教育'}游戏`,
-            date: new Date(exchange.createdAt),
-            details: {
-              gameType: exchange.gameType,
-            }
-          });
-        });
-      }
-
-      // Add spending transactions from redemptions
-      if ((redemptionsResponse as any).data?.redemptions) {
-        (redemptionsResponse as any).data.redemptions.forEach((redemption: any) => {
-          if (redemption.status === 'approved') {
-            allTransactions.push({
-              id: `redemption-${redemption.id}`,
-              type: 'spend',
-              amount: redemption.pointsCost,
-              source: 'reward_redemption',
-              description: `兑换奖励: ${redemption.rewardTitle}`,
-              date: new Date(redemption.processedAt || redemption.requestedAt),
-              details: {
-                rewardTitle: redemption.rewardTitle,
-              }
-            });
-          }
-        });
-      }
-
-      // Sort by date (newest first)
-      allTransactions.sort((a, b) => b.date.getTime() - a.date.getTime());
-
-      setTransactions(allTransactions);
     } catch (error: any) {
       console.error('Error loading points history:', error);
-      setError('加载积分历史失败，请重试');
+      setError(`加载积分历史失败: ${error.message || '请检查网络连接并重试'}`);
+      
+      // Set empty transactions but don't fail completely
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
   };
 
   const getDateRange = () => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    switch (timeFilter) {
-      case 'today':
-        return {
-          start: today.toISOString().split('T')[0],
-          end: today.toISOString().split('T')[0]
-        };
-      case 'week':
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() - 7);
-        return {
-          start: weekStart.toISOString().split('T')[0],
-          end: today.toISOString().split('T')[0]
-        };
-      case 'month':
-        const monthStart = new Date(today);
-        monthStart.setDate(today.getDate() - 30);
-        return {
-          start: monthStart.toISOString().split('T')[0],
-          end: today.toISOString().split('T')[0]
-        };
-      default:
-        return {
-          start: '2024-01-01',
-          end: today.toISOString().split('T')[0]
-        };
-    }
+    // Use unified statistics service for consistent date range calculations
+    const statsType = timeFilter === 'all' ? 'year' : timeFilter;
+    const period = getStatsPeriod(statsType as any);
+    return period.dateRange;
   };
 
   const filteredTransactions = transactions.filter(transaction => {
@@ -247,16 +174,16 @@ const PointsHistory: React.FC<PointsHistoryProps> = ({ isOpen, onClose }) => {
         <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-cartoon-light">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">{stats.earned}</div>
+              <div className="text-2xl font-bold text-green-600">{formatPoints(stats.earned)}</div>
               <div className="text-sm text-gray-600">总获得</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">{stats.spent}</div>
+              <div className="text-2xl font-bold text-red-600">{formatPoints(stats.spent)}</div>
               <div className="text-sm text-gray-600">总消费</div>
             </div>
             <div className="text-center">
               <div className={`text-2xl font-bold ${stats.net >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {stats.net >= 0 ? '+' : ''}{stats.net}
+                {stats.net >= 0 ? '+' : ''}{formatPoints(stats.net)}
               </div>
               <div className="text-sm text-gray-600">净收益</div>
             </div>

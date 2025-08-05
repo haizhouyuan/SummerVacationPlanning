@@ -163,6 +163,12 @@ class ApiService {
     return this.request('/auth/dashboard-stats');
   }
 
+  // Points history
+  async getPointsHistory(filters?: { startDate?: string; endDate?: string; type?: string; limit?: number; offset?: number }): Promise<any> {
+    const queryParams = new URLSearchParams(filters as any).toString();
+    return this.request(`/auth/points-history${queryParams ? `?${queryParams}` : ''}`);
+  }
+
   // Family management (parent only)
   async getChildren(): Promise<any> {
     return this.request('/auth/children');

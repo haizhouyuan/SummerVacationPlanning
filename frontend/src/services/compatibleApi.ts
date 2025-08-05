@@ -1,11 +1,63 @@
 import { apiService } from './api';
 
 // Mock data for demonstration in network-restricted environments
+// This structure matches the backend getDashboardStats response
 const mockDashboardStats = {
+  user: {
+    id: 'demo-user-123',
+    name: '演示学生',
+    email: 'demo@example.com',
+    points: 240,
+    level: 3, // Math.floor(240 / 100) + 1
+    currentStreak: 3,
+    medals: {
+      bronze: false,
+      silver: false,
+      gold: false,
+      diamond: false
+    }
+  },
+  weeklyStats: {
+    completed: 8,
+    planned: 3,
+    inProgress: 2,
+    skipped: 2,
+    total: 15
+  },
+  achievements: [
+    {
+      type: 'streak',
+      level: 1,
+      title: '连续达人',
+      description: '连续完成每日任务',
+      isUnlocked: true,
+      progress: 3,
+      maxProgress: 3
+    },
+    {
+      type: 'points',
+      level: 3,
+      title: '积分收集者',
+      description: '累计获得积分',
+      isUnlocked: true,
+      progress: 40, // 240 % 100
+      maxProgress: 100
+    },
+    {
+      type: 'tasks',
+      level: 2,
+      title: '任务完成者',
+      description: '本周完成任务',
+      isUnlocked: true,
+      progress: 3, // 8 % 5
+      maxProgress: 5
+    }
+  ],
+  weeklyGoal: 7,
+  // Additional stats for other components
   totalTasks: 15,
   completedTasks: 8,
   pointsEarned: 240,
-  currentStreak: 3,
   weeklyProgress: 75,
   todayTasks: 5,
   completedToday: 3,
@@ -91,7 +143,7 @@ export const compatibleApiService = {
   async getDashboardStats() {
     return Promise.resolve({
       success: true,
-      data: mockDashboardStats
+      data: { stats: mockDashboardStats }
     });
   },
 
@@ -187,14 +239,77 @@ export const compatibleApiService = {
   },
 
   // Points and rewards
-  async getPointsHistory() {
+  async getPointsHistory(filters?: { startDate?: string; endDate?: string; type?: string; limit?: number; offset?: number }) {
+    const mockHistory = [
+      {
+        id: 'task-1',
+        type: 'earn',
+        amount: 20,
+        source: 'task_completion',
+        description: '完成任务: 跑步锻炼',
+        date: new Date(),
+        details: {
+          taskTitle: '跑步锻炼',
+          taskCategory: 'exercise',
+          difficulty: 'medium',
+          originalPoints: 20,
+        }
+      },
+      {
+        id: 'task-2',
+        type: 'earn',
+        amount: 15,
+        source: 'task_completion',  
+        description: '完成任务: 阅读30分钟',
+        date: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
+        details: {
+          taskTitle: '阅读30分钟',
+          taskCategory: 'reading',
+          difficulty: 'easy',
+          originalPoints: 15,
+        }
+      },
+      {
+        id: 'exchange-1',
+        type: 'spend',
+        amount: 10,
+        source: 'game_time_exchange',
+        description: '兑换游戏时间: 30分钟普通游戏',
+        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        details: {
+          gameType: 'normal',
+          minutesGranted: 30,
+        }
+      }
+    ];
+
+    // Apply filters
+    let filteredHistory = mockHistory;
+    if (filters?.type && filters.type !== 'all') {
+      filteredHistory = mockHistory.filter(entry => entry.type === filters.type);
+    }
+
+    const summary = {
+      totalTransactions: filteredHistory.length,
+      totalEarned: mockHistory.filter(entry => entry.type === 'earn').reduce((sum, entry) => sum + entry.amount, 0),
+      totalSpent: mockHistory.filter(entry => entry.type === 'spend').reduce((sum, entry) => sum + entry.amount, 0),
+      netGain: 0,
+      periodStart: filters?.startDate || null,
+      periodEnd: filters?.endDate || null,
+    };
+    summary.netGain = summary.totalEarned - summary.totalSpent;
+
     return Promise.resolve({
       success: true,
       data: {
-        history: [
-          { date: new Date(), points: 20, reason: '完成跑步任务', taskTitle: '跑步锻炼' },
-          { date: new Date(), points: 15, reason: '完成阅读任务', taskTitle: '阅读30分钟' }
-        ]
+        history: filteredHistory,
+        summary,
+        pagination: {
+          total: filteredHistory.length,
+          limit: filters?.limit || 50,
+          offset: filters?.offset || 0,
+          hasMore: false,
+        }
       }
     });
   },
@@ -212,48 +327,214 @@ export const compatibleApiService = {
   }
 };
 
-// 检测网络环境并选择合适的API服务
-export const detectNetworkAndGetApiService = () => {
-  // 检测是否支持fetch和CORS
-  const supportsFetch = typeof fetch !== 'undefined';
-  
-  if (supportsFetch) {
-    // 尝试检测网络限制
-    const testApiConnection = async () => {
-      try {
-        // 尝试一个简单的API请求
-        const response = await fetch('http://47.120.74.212/api/health', {
-          method: 'GET',
-          mode: 'cors',
-          timeout: 3000
-        } as any);
-        return response.ok;
-      } catch (error) {
-        console.log('检测到网络限制，使用兼容API模式');
-        return false;
-      }
-    };
+// Enhanced network detection and API service selection
+let networkStatusCache: { isOnline: boolean; lastChecked: number; apiWorking: boolean } = {
+  isOnline: navigator.onLine,
+  lastChecked: 0,
+  apiWorking: false
+};
 
-    // 异步检测，如果失败则后续使用兼容模式
-    testApiConnection().then(success => {
-      if (!success) {
-        console.log('网络连接受限，建议使用兼容模式');
-      }
+// Cache duration for network status (5 minutes)
+const NETWORK_CACHE_DURATION = 5 * 60 * 1000;
+
+/**
+ * Test API connectivity with proper timeout and error handling
+ */
+const testApiConnection = async (timeout: number = 5000): Promise<boolean> => {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    // Try to connect to the actual API endpoint
+    const testUrl = process.env.REACT_APP_API_URL 
+      ? `${process.env.REACT_APP_API_URL}/api/health`
+      : 'http://localhost:3000/api/health';
+
+    const response = await fetch(testUrl, {
+      method: 'GET',
+      mode: 'cors',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error: any) {
+    console.warn('API connectivity test failed:', error.message);
+    
+    // Check specific error types for better handling
+    if (error.name === 'AbortError') {
+      console.warn('API request timed out - using compatible mode');
+    } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      console.warn('Network error detected - using compatible mode');
+    }
+    
+    return false;
+  }
+};
+
+/**
+ * Check various indicators for network/API availability
+ */
+const checkNetworkStatus = async (): Promise<{ isOnline: boolean; apiWorking: boolean }> => {
+  // Check basic connectivity
+  const isOnline = navigator.onLine;
+  
+  if (!isOnline) {
+    return { isOnline: false, apiWorking: false };
   }
 
-  // 检查环境变量或用户设置决定使用哪个服务
-  const useCompatibleMode = process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
-                           localStorage.getItem('use_compatible_api') === 'true';
+  // Test API connectivity
+  let apiWorking = false;
+  try {
+    apiWorking = await testApiConnection(3000);
+  } catch (error) {
+    console.warn('Network status check failed:', error);
+    apiWorking = false;
+  }
 
-  if (useCompatibleMode) {
-    console.log('使用网络兼容API服务');
+  return { isOnline, apiWorking };
+};
+
+/**
+ * Get cached network status or perform fresh check
+ */
+const getCachedNetworkStatus = async (forceRefresh: boolean = false): Promise<{ isOnline: boolean; apiWorking: boolean }> => {
+  const now = Date.now();
+  
+  // Use cached result if it's still valid and not forcing refresh
+  if (!forceRefresh && (now - networkStatusCache.lastChecked) < NETWORK_CACHE_DURATION) {
+    return {
+      isOnline: networkStatusCache.isOnline,
+      apiWorking: networkStatusCache.apiWorking
+    };
+  }
+
+  // Perform fresh network check
+  const status = await checkNetworkStatus();
+  
+  // Update cache
+  networkStatusCache = {
+    ...status,
+    lastChecked: now
+  };
+
+  return status;
+};
+
+/**
+ * Enhanced API service detection with multiple fallback strategies
+ */
+export const detectNetworkAndGetApiService = async (options: {
+  forceRefresh?: boolean;
+  timeout?: number;
+} = {}) => {
+  const { forceRefresh = false, timeout = 3000 } = options;
+
+  try {
+    // Check for explicit configuration
+    const forceCompatibleMode = 
+      process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
+      localStorage.getItem('use_compatible_api') === 'true' ||
+      localStorage.getItem('api_mode') === 'compatible';
+
+    if (forceCompatibleMode) {
+      console.log('🔄 Using compatible API service (forced by configuration)');
+      return compatibleApiService;
+    }
+
+    // Check network status
+    const networkStatus = await getCachedNetworkStatus(forceRefresh);
+    
+    if (!networkStatus.isOnline) {
+      console.log('🔄 Using compatible API service (offline)');
+      return compatibleApiService;
+    }
+
+    if (!networkStatus.apiWorking) {
+      console.log('🔄 Using compatible API service (API unreachable)');
+      
+      // Store preference for subsequent requests
+      localStorage.setItem('api_mode', 'compatible');
+      return compatibleApiService;
+    }
+
+    // API is working, use real service
+    console.log('✅ Using real API service');
+    localStorage.removeItem('api_mode'); // Clear any cached compatible mode preference
+    return apiService;
+
+  } catch (error) {
+    console.warn('🔄 API service detection failed, falling back to compatible mode:', error);
+    return compatibleApiService;
+  }
+};
+
+/**
+ * Synchronous version for cases where async detection isn't possible
+ */
+export const detectNetworkAndGetApiServiceSync = () => {
+  // Check for explicit configuration first
+  const forceCompatibleMode = 
+    process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
+    localStorage.getItem('use_compatible_api') === 'true' ||
+    localStorage.getItem('api_mode') === 'compatible';
+
+  if (forceCompatibleMode) {
+    console.log('🔄 Using compatible API service (sync - forced by configuration)');
     return compatibleApiService;
   }
 
-  // 默认尝试使用正常的API服务
+  // Check basic connectivity
+  if (!navigator.onLine) {
+    console.log('🔄 Using compatible API service (sync - offline)');
+    return compatibleApiService;
+  }
+
+  // Use cached network status if available
+  const now = Date.now();
+  if ((now - networkStatusCache.lastChecked) < NETWORK_CACHE_DURATION) {
+    if (!networkStatusCache.apiWorking) {
+      console.log('🔄 Using compatible API service (sync - cached API failure)');
+      return compatibleApiService;
+    }
+  }
+
+  // Default to real API service for sync calls
+  console.log('✅ Using real API service (sync)');
   return apiService;
 };
+
+/**
+ * Reset network status cache (useful for retry scenarios)
+ */
+export const resetNetworkCache = () => {
+  networkStatusCache = {
+    isOnline: navigator.onLine,
+    lastChecked: 0,
+    apiWorking: false
+  };
+  localStorage.removeItem('api_mode');
+  console.log('🔄 Network cache reset');
+};
+
+/**
+ * Listen for network status changes
+ */
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    console.log('🌐 Network came online');
+    resetNetworkCache();
+  });
+
+  window.addEventListener('offline', () => {
+    console.log('🔌 Network went offline');
+    networkStatusCache.isOnline = false;
+    networkStatusCache.apiWorking = false;
+  });
+}
 
 // 导出默认的API服务检测结果
 export const detectedApiService = detectNetworkAndGetApiService();

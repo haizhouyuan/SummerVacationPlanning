@@ -15,28 +15,29 @@ npm start          # Start development server (port 3000)
 npm run build      # Build for production
 npm test          # Run Jest unit tests
 npm test -- --coverage  # Run tests with coverage report
+npm test ComponentName   # Run specific test file
 ```
 
-### Backend (Node.js + Express + TypeScript)
+### Backend (Node.js + Express + TypeScript + MongoDB)
 ```bash
 cd backend
 npm run dev       # Start development server with nodemon
 npm run build     # Build TypeScript to JavaScript
 npm start         # Start production server
+npm run create-indexes  # Create MongoDB database indexes
+npm run db:optimize     # Optimize database with indexes
 ```
 
-### Firebase Functions
-```bash
-cd functions
-npm run build     # Build TypeScript functions
-npm run serve     # Start local emulator
-npm run deploy    # Deploy to Firebase
-```
-
-### End-to-End Testing
+### End-to-End Testing (Cypress)
 ```bash
 cd frontend
-# Start dev server first, then run:
+# First, start the frontend dev server (port 3000)
+npm start
+
+# In another terminal, start the backend server
+cd backend && npm run dev
+
+# Then run Cypress tests
 npx cypress open   # Open Cypress test runner
 npx cypress run    # Run tests headlessly
 ```
@@ -46,11 +47,8 @@ npx cypress run    # Run tests headlessly
 # Frontend
 cd frontend && npm install
 
-# Backend
+# Backend  
 cd backend && npm install
-
-# Functions
-cd functions && npm install
 ```
 
 ## Code Architecture
@@ -68,22 +66,23 @@ cd functions && npm install
 
 ### Backend Structure (`backend/src/`)
 - **Controllers**: Handle HTTP requests and responses
-  - authController, taskController, dailyTaskController, redemptionController
-- **Middleware**: Authentication, validation, and error handling
+  - mongoAuthController, taskController, dailyTaskController, redemptionController
+- **Middleware**: Authentication (JWT), validation, and error handling
 - **Routes**: API endpoint definitions
-- **Config**: Firebase Admin SDK and database configuration
+- **Config**: MongoDB database configuration
+- **Services**: Business logic (recommendation service)
 - **Types**: TypeScript interfaces shared with frontend
 - **Utils**: Utility functions (JWT, default tasks)
 
 ### Key Components
 
-- **Authentication System**: Firebase Auth with student/parent roles
+- **Authentication System**: JWT-based auth with MongoDB, student/parent roles
 - **Task Management**: CRUD operations for tasks and daily planning
 - **Points System**: Gamification with earning and redemption mechanics
 - **Media Upload**: File upload for task completion evidence
-- **Real-time Updates**: Firestore for live data synchronization
+- **Database**: MongoDB with optimized indexes for performance
 
-## Database Schema (Firestore)
+## Database Schema (MongoDB)
 
 ### Collections
 - `users`: User profiles with roles (student/parent), points, parent-child relationships
@@ -103,14 +102,15 @@ cd functions && npm install
 
 ### Frontend Environment Variables
 Copy `.env.example` to `.env.local` and configure:
-- Firebase configuration keys
 - API endpoint URLs
+- Any external service configurations
 
 ### Backend Environment Variables
 Copy `.env.example` to `.env` and configure:
-- Firebase Admin SDK credentials
-- JWT secrets
-- Database connection strings
+- MongoDB connection string
+- JWT secrets and configuration
+- File upload settings
+- Server port configuration
 
 ## File Structure
 
@@ -128,66 +128,56 @@ Copy `.env.example` to `.env` and configure:
 │   ├── src/
 │   │   ├── controllers/
 │   │   ├── middleware/
-│   │   ├── models/
 │   │   ├── routes/
 │   │   ├── services/
 │   │   ├── config/
-│   │   └── types/
+│   │   ├── types/
+│   │   └── utils/
+│   ├── scripts/        # Database scripts
 │   └── tsconfig.json
 └── .specstory/         # SpecStory extension artifacts
 ```
 
-## Firebase Configuration
+## Database Setup
 
-### Security Rules
-The project includes comprehensive Firebase security rules:
-- **Firestore Rules**: `firestore.rules` - Role-based access control
-- **Storage Rules**: `storage.rules` - File upload restrictions and user-specific access
-- **Indexes**: `firestore.indexes.json` - Query optimization for performance
+### MongoDB Configuration
+The project uses MongoDB with optimized indexes for performance:
+- **Connection**: Configured via environment variables
+- **Indexes**: Database indexes for query optimization
+- **Scripts**: Automated database setup and optimization
 
-### Deployment Commands
+### Database Commands
 ```bash
-# Install Firebase CLI
-npm install -g firebase-tools
+# Create database indexes
+cd backend && npm run create-indexes
 
-# Login to Firebase
-firebase login
+# Optimize database performance
+cd backend && npm run db:optimize
 
-# Deploy security rules
-firebase deploy --only firestore:rules,storage:rules
-
-# Deploy functions (backend)
-firebase deploy --only functions
-
-# Deploy hosting (frontend)
-firebase deploy --only hosting
-
-# Deploy all
-firebase deploy
+# Run database setup script (if exists)
+node create-database-indexes.js
 ```
 
-### Firebase Storage Structure
+### File Storage Structure
 ```
-storage/
+uploads/
 ├── evidence/
 │   └── {userId}/
 │       └── {taskId}/
 │           └── {timestamp}_{filename}
-├── profiles/
-│   └── {userId}/
-│       └── {filename}
-└── public/
-    └── {assets}
+└── profiles/
+    └── {userId}/
+        └── {filename}
 ```
 
 ## Testing Strategy
 
 ### Unit Tests (Jest + React Testing Library)
 - **Components**: 39 tests covering UI components and interactions
-- **Services**: 18 tests for API calls and Firebase integration
+- **Services**: 18 tests for API calls and backend integration
 - **Hooks**: 8 tests for custom React hooks
 - **Coverage**: 100% core functionality coverage
-- **Mocks**: Firebase services mocked in `setupTests.ts`
+- **Mocks**: API services mocked in `setupTests.ts`
 
 ### E2E Tests (Cypress)
 - **Authentication flow**: Login, registration, validation
@@ -211,22 +201,24 @@ npx cypress run            # Headless execution
 
 ### Key Technologies
 - **Frontend**: React 19.1.0, TypeScript, Tailwind CSS v3
-- **Backend**: Node.js 18, Express, Firebase Admin SDK
-- **Database**: Firestore with security rules
-- **Authentication**: Firebase Auth with custom claims
-- **Storage**: Firebase Storage with 10MB file limit
+- **Backend**: Node.js 18, Express, MongoDB
+- **Database**: MongoDB with optimized indexes
+- **Authentication**: JWT-based authentication with role-based access
+- **Storage**: Local file storage with 10MB file limit
 - **Testing**: Jest, React Testing Library, Cypress
 
 ### Architecture Patterns
-- **Role-based access**: Student/parent hierarchy with security rules
-- **Real-time sync**: Firestore listeners for live updates
+- **Role-based access**: Student/parent hierarchy with JWT-based authorization
+- **RESTful API**: Clean API design with Express.js routes
 - **Type safety**: Shared TypeScript interfaces between frontend/backend
 - **Component testing**: Comprehensive test coverage with mocks
 - **Evidence workflow**: File upload with validation and approval process
 
 ### Security Features
-- **Firestore rules**: User-specific data access control
-- **Storage rules**: File type/size restrictions, user-specific folders
-- **Authentication**: Firebase Auth with role-based permissions
+- **JWT authentication**: Secure token-based authentication
+- **Role-based authorization**: User-specific data access control
+- **File upload security**: File type/size restrictions, user-specific folders
 - **Input validation**: Express-validator middleware
 - **Rate limiting**: Express rate limiting for API endpoints
+- **Password hashing**: bcrypt for secure password storage
+```

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { detectNetworkAndGetApiService } from '../services/compatibleApi';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import PointsDisplay from '../components/PointsDisplay';
 import ProgressBar from '../components/ProgressBar';
 import CelebrationModal from '../components/CelebrationModal';
 import AchievementBadge from '../components/AchievementBadge';
+import { LoadingSpinner, ErrorDisplay, useDataState, withRetry } from '../utils/errorHandling';
 import SummerProgressTracker from '../components/SummerProgressTracker';
 import PointsHistory from '../components/PointsHistory';
 
@@ -13,10 +14,10 @@ const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showCelebration, setShowCelebration] = useState(false);
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
   const [showPointsHistory, setShowPointsHistory] = useState(false);
+  
+  // Use the new data state management hook
+  const statsState = useDataState<any>(null);
 
   // Load dashboard statistics
   useEffect(() => {
@@ -26,22 +27,40 @@ const Dashboard: React.FC = () => {
   }, [user]);
 
   const loadDashboardStats = async () => {
+    statsState.setLoading({ 
+      isLoading: true, 
+      loadingMessage: '正在加载统计数据...' 
+    });
+
     try {
-      setLoading(true);
-      setError('');
-      
-      const apiService = detectNetworkAndGetApiService();
-      const response = await apiService.getDashboardStats() as any;
-      if (response.success) {
-        setStats(response.data.stats);
-      } else {
-        setError('加载统计数据失败');
-      }
+      const result = await withRetry(
+        async () => {
+          const apiService = detectNetworkAndGetApiServiceSync();
+          const response = await apiService.getDashboardStats() as any;
+          
+          if (!response.success) {
+            throw new Error(response.error || '加载统计数据失败');
+          }
+          
+          return response.data.stats;
+        },
+        {
+          maxRetries: 2,
+          baseDelay: 1000,
+          onRetry: (attempt, error) => {
+            console.warn(`Dashboard stats loading attempt ${attempt} failed:`, error);
+            statsState.setLoading({ 
+              isLoading: true, 
+              loadingMessage: `重试中... (${attempt}/2)` 
+            });
+          }
+        }
+      );
+
+      statsState.setData(result);
     } catch (error: any) {
       console.error('Error loading dashboard stats:', error);
-      setError(error.message || '网络错误，请重试');
-    } finally {
-      setLoading(false);
+      statsState.setError(error, '统计数据加载', loadDashboardStats);
     }
   };
 
@@ -54,34 +73,35 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  if (!user || loading) {
+  // Loading state
+  if (!user || statsState.loading.isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">加载中...</p>
+        <LoadingSpinner
+          size="lg"
+          message={statsState.loading.loadingMessage || '加载中...'}
+          className="text-center"
+        />
+      </div>
+    );
+  }
+
+  // Error state
+  if (statsState.error.hasError || !statsState.data) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
+        <div className="max-w-md mx-auto p-6">
+          <ErrorDisplay
+            error={statsState.error}
+            size="lg"
+            className="shadow-cartoon-lg"
+          />
         </div>
       </div>
     );
   }
 
-  if (error || !stats) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <div className="text-6xl mb-4">😕</div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">数据加载失败</h2>
-          <p className="text-gray-600 mb-4">{error || '无法获取统计数据'}</p>
-          <button
-            onClick={loadDashboardStats}
-            className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-cartoon font-medium"
-          >
-            重新加载
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const stats = statsState.data;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cartoon-light via-primary-50 to-secondary-50">
@@ -117,22 +137,6 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error State */}
-        {error && (
-          <div className="mb-6 bg-danger-50 border border-danger-200 rounded-cartoon-lg p-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-danger-600">⚠️</span>
-              <p className="text-danger-800">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="ml-auto bg-danger-600 hover:bg-danger-700 text-white px-3 py-1 rounded-cartoon text-sm"
-              >
-                重试
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Welcome Card */}
           <div className="bg-white rounded-cartoon-lg shadow-cartoon-lg p-6 col-span-full animate-bounce-in">

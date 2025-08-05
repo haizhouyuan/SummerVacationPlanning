@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { register, login, getProfile, updateProfile, getChildren, getChildStats, getDashboardStats, getFamilyLeaderboard } from '../controllers/mongoAuthController';
+import { register, login, getProfile, updateProfile, getChildren, getChildStats, getDashboardStats, getFamilyLeaderboard, getPointsHistory } from '../controllers/mongoAuthController';
 import { authenticateToken } from '../middleware/mongoAuth';
 import { validateRequest } from '../middleware/validation';
 
@@ -37,6 +37,9 @@ router.put('/profile', authenticateToken, updateProfileValidation, validateReque
 
 // Dashboard statistics
 router.get('/dashboard-stats', authenticateToken, getDashboardStats);
+
+// Points history
+router.get('/points-history', authenticateToken, getPointsHistory);
 
 // Family management routes (parent only)
 router.get('/children', authenticateToken, getChildren);

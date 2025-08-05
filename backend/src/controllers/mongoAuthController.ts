@@ -540,45 +540,162 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       date: { $gte: weekStart, $lte: weekEnd }
     }).toArray();
 
-    // Calculate weekly statistics
+    // Calculate comprehensive weekly statistics
     const weeklyStats = {
       completed: weeklyTasks.filter((task: any) => task.status === 'completed').length,
       planned: weeklyTasks.filter((task: any) => task.status === 'planned').length,
       inProgress: weeklyTasks.filter((task: any) => task.status === 'in_progress').length,
       skipped: weeklyTasks.filter((task: any) => task.status === 'skipped').length,
       total: weeklyTasks.length,
+      totalPointsEarned: weeklyTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0),
+      completionRate: weeklyTasks.length > 0 ? Math.round((weeklyTasks.filter((task: any) => task.status === 'completed').length / weeklyTasks.length) * 100) : 0,
+      averagePointsPerTask: weeklyTasks.length > 0 ? Math.round(weeklyTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0) / weeklyTasks.length) : 0,
     };
 
-    // Calculate achievements
-    const achievements = [
-      {
+    // Enhanced achievements calculation
+    const achievements = [];
+    
+    // Streak achievements with multiple tiers
+    const streakValue = user.currentStreak || 0;
+    if (streakValue >= 3) {
+      let streakLevel = 1;
+      let nextMilestone = 7;
+      if (streakValue >= 7) { streakLevel = 2; nextMilestone = 14; }
+      if (streakValue >= 14) { streakLevel = 3; nextMilestone = 30; }
+      if (streakValue >= 30) { streakLevel = 4; nextMilestone = 60; }
+      if (streakValue >= 60) { streakLevel = 5; nextMilestone = 100; }
+      
+      achievements.push({
         type: 'streak',
-        level: Math.max(1, Math.floor((user.currentStreak || 0) / 3) + 1),
+        level: streakLevel,
+        title: '连续达人',
+        description: `连续${streakValue}天完成任务`,
+        isUnlocked: true,
+        progress: streakValue < nextMilestone ? streakValue : nextMilestone,
+        maxProgress: nextMilestone,
+      });
+    } else {
+      achievements.push({
+        type: 'streak',
+        level: 1,
         title: '连续达人',
         description: '连续完成每日任务',
-        isUnlocked: (user.currentStreak || 0) >= 3,
-        progress: (user.currentStreak || 0) % 3,
+        isUnlocked: false,
+        progress: streakValue,
         maxProgress: 3,
+      });
+    }
+    
+    // Points achievements with enhanced tiers
+    const pointsValue = user.points || 0;
+    let pointsLevel = Math.max(1, Math.floor(pointsValue / 100) + 1);
+    let pointsNextMilestone = pointsLevel * 100;
+    
+    achievements.push({
+      type: 'points',
+      level: pointsLevel,
+      title: '积分收集者',
+      description: `累计获得${pointsValue}积分`,
+      isUnlocked: pointsValue >= 100,
+      progress: pointsValue % 100,
+      maxProgress: 100,
+    });
+    
+    // Task completion achievements
+    const weeklyCompleted = weeklyStats.completed;
+    let taskLevel = 1;
+    let taskNextMilestone = 5;
+    if (weeklyCompleted >= 5) { taskLevel = 2; taskNextMilestone = 10; }
+    if (weeklyCompleted >= 10) { taskLevel = 3; taskNextMilestone = 15; }
+    if (weeklyCompleted >= 15) { taskLevel = 4; taskNextMilestone = 20; }
+    
+    achievements.push({
+      type: 'tasks',
+      level: taskLevel,
+      title: '任务完成者',
+      description: `本周完成${weeklyCompleted}个任务`,
+      isUnlocked: weeklyCompleted >= 5,
+      progress: weeklyCompleted % 5,
+      maxProgress: 5,
+    });
+    
+    // Medal-based achievements
+    const medals = user.medals || { bronze: false, silver: false, gold: false, diamond: false };
+    let medalCount = 0;
+    if (medals.bronze) medalCount++;
+    if (medals.silver) medalCount++;
+    if (medals.gold) medalCount++;
+    if (medals.diamond) medalCount++;
+    
+    if (medalCount > 0) {
+      achievements.push({
+        type: 'medals',
+        level: medalCount,
+        title: '徽章收集者',
+        description: `获得${medalCount}个徽章`,
+        isUnlocked: true,
+        progress: medalCount,
+        maxProgress: 4,
+      });
+    }
+    
+    // Category diversity achievement (bonus)
+    const categoryTasksPromise = collections.dailyTasks.aggregate([
+      {
+        $match: {
+          userId: userId,
+          status: 'completed',
+          date: { $gte: weekStart, $lte: weekEnd }
+        }
       },
       {
-        type: 'points',
-        level: Math.max(1, Math.floor((user.points || 0) / 100) + 1),
-        title: '积分收集者',
-        description: '累计获得积分',
-        isUnlocked: (user.points || 0) >= 100,
-        progress: (user.points || 0) % 100,
-        maxProgress: 100,
+        $lookup: {
+          from: 'tasks',
+          localField: 'taskId',
+          foreignField: '_id',
+          as: 'taskDetails'
+        }
       },
       {
-        type: 'tasks',
-        level: Math.max(1, Math.floor(weeklyStats.completed / 5) + 1),
-        title: '任务完成者',
-        description: '本周完成任务',
-        isUnlocked: weeklyStats.completed >= 5,
-        progress: weeklyStats.completed % 5,
-        maxProgress: 5,
+        $unwind: '$taskDetails'
       },
-    ];
+      {
+        $group: {
+          _id: '$taskDetails.category',
+          count: { $sum: 1 }
+        }
+      }
+    ]).toArray();
+    
+    const categoryTasks = await categoryTasksPromise;
+    const uniqueCategories = categoryTasks.length;
+    
+    if (uniqueCategories >= 3) {
+      achievements.push({
+        type: 'diversity',
+        level: Math.min(uniqueCategories, 6),
+        title: '全能发展',
+        description: `完成${uniqueCategories}种不同类型的任务`,
+        isUnlocked: true,
+        progress: uniqueCategories,
+        maxProgress: 6, // Total number of categories
+      });
+    }
+
+    // Calculate today's tasks for quick overview
+    const today = new Date().toISOString().split('T')[0];
+    const todayTasks = await collections.dailyTasks.find({
+      userId: userId,
+      date: today
+    }).toArray();
+    
+    const todayStats = {
+      total: todayTasks.length,
+      completed: todayTasks.filter((task: any) => task.status === 'completed').length,
+      planned: todayTasks.filter((task: any) => task.status === 'planned').length,
+      inProgress: todayTasks.filter((task: any) => task.status === 'in_progress').length,
+      pointsEarned: todayTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0),
+    };
 
     const dashboardStats = {
       user: {
@@ -591,8 +708,16 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         medals: user.medals || { bronze: false, silver: false, gold: false, diamond: false },
       },
       weeklyStats,
+      todayStats,
       achievements,
       weeklyGoal: 7, // Default weekly goal
+      // Additional useful statistics
+      performance: {
+        thisWeekCompletion: weeklyStats.completionRate,
+        pointsPerTask: weeklyStats.averagePointsPerTask,
+        streakProgress: user.currentStreak || 0,
+        nextLevelPoints: (Math.floor((user.points || 0) / 100) + 1) * 100 - (user.points || 0),
+      }
     };
 
     res.status(200).json({
@@ -601,9 +726,233 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     });
   } catch (error: any) {
     console.error('Get dashboard stats error:', error);
+    
+    // Provide fallback statistics in case of database issues
+    const fallbackStats = {
+      user: {
+        id: req.user.id,
+        name: req.user.displayName,
+        email: req.user.email,
+        points: req.user.points || 0,
+        level: Math.floor((req.user.points || 0) / 100) + 1,
+        currentStreak: req.user.currentStreak || 0,
+        medals: req.user.medals || { bronze: false, silver: false, gold: false, diamond: false },
+      },
+      weeklyStats: {
+        completed: 0,
+        planned: 0,
+        inProgress: 0,
+        skipped: 0,
+        total: 0,
+        totalPointsEarned: 0,
+        completionRate: 0,
+        averagePointsPerTask: 0,
+      },
+      todayStats: {
+        total: 0,
+        completed: 0,
+        planned: 0,
+        inProgress: 0,
+        pointsEarned: 0,
+      },
+      achievements: [],
+      weeklyGoal: 7,
+      performance: {
+        thisWeekCompletion: 0,
+        pointsPerTask: 0,
+        streakProgress: req.user.currentStreak || 0,
+        nextLevelPoints: (Math.floor((req.user.points || 0) / 100) + 1) * 100 - (req.user.points || 0),
+      }
+    };
+    
+    // Try to return fallback data instead of complete failure
+    if (error.name === 'MongoError' || error.message.includes('database')) {
+      res.status(200).json({
+        success: true,
+        data: { stats: fallbackStats },
+        warning: 'Using cached user data due to database connectivity issues',
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to get dashboard statistics',
+      });
+    }
+  }
+};
+
+// Get comprehensive points history for a user
+export const getPointsHistory = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    const { startDate, endDate, type, limit = 50, offset = 0 } = req.query;
+    const userId = req.user.id;
+
+    // Build date filter
+    let dateFilter: any = {};
+    if (startDate || endDate) {
+      dateFilter = {};
+      if (startDate) dateFilter.$gte = startDate as string;
+      if (endDate) dateFilter.$lte = endDate as string;
+    }
+
+    const pointsHistory: any[] = [];
+
+    // Get points earned from completed daily tasks
+    const taskEarningQuery: any = {
+      userId: userId,
+      status: 'completed',
+      pointsEarned: { $gt: 0 }
+    };
+    
+    if (Object.keys(dateFilter).length > 0) {
+      taskEarningQuery.date = dateFilter;
+    }
+
+    const earnedFromTasks = await collections.dailyTasks.find(taskEarningQuery)
+      .sort({ completedAt: -1, updatedAt: -1 })
+      .toArray();
+
+    // Process task earnings with task details
+    for (const dailyTask of earnedFromTasks) {
+      try {
+        const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+        
+        pointsHistory.push({
+          id: `task-${dailyTask._id.toString()}`,
+          type: 'earn',
+          amount: dailyTask.pointsEarned || 0,
+          source: 'task_completion',
+          description: `完成任务: ${task?.title || '未知任务'}`,
+          date: dailyTask.completedAt || dailyTask.updatedAt,
+          details: {
+            taskId: dailyTask.taskId,
+            taskTitle: task?.title,
+            taskCategory: task?.category,
+            difficulty: task?.difficulty,
+            originalPoints: task?.points,
+            bonusPoints: dailyTask.bonusPoints || 0,
+            evidenceProvided: !!(dailyTask.evidenceText || (dailyTask.evidenceMedia && dailyTask.evidenceMedia.length > 0)),
+            approvalStatus: dailyTask.approvalStatus,
+          }
+        });
+      } catch (taskError) {
+        console.warn('Error processing task for points history:', taskError);
+      }
+    }
+
+    // Get points spent on game time exchanges
+    try {
+      const gameTimeExchanges = await collections.gameTimeExchanges?.find({
+        userId: userId,
+        ...(Object.keys(dateFilter).length > 0 && { 
+          createdAt: { 
+            $gte: startDate ? new Date(startDate as string) : new Date(0),
+            $lte: endDate ? new Date(endDate as string) : new Date()
+          } 
+        })
+      }).sort({ createdAt: -1 }).toArray() || [];
+
+      gameTimeExchanges.forEach((exchange: any) => {
+        pointsHistory.push({
+          id: `exchange-${exchange._id.toString()}`,
+          type: 'spend',
+          amount: exchange.pointsSpent || 0,
+          source: 'game_time_exchange',
+          description: `兑换游戏时间: ${exchange.minutesGranted || 0}分钟${exchange.gameType === 'normal' ? '普通' : '教育'}游戏`,
+          date: exchange.createdAt,
+          details: {
+            gameType: exchange.gameType,
+            minutesGranted: exchange.minutesGranted,
+            exchangeRate: exchange.pointsPerMinute,
+          }
+        });
+      });
+    } catch (exchangeError) {
+      console.warn('Error loading game time exchanges for points history:', exchangeError);
+    }
+
+    // Get points spent on redemptions
+    try {
+      const redemptions = await collections.redemptions?.find({
+        userId: userId,
+        status: 'approved',
+        ...(Object.keys(dateFilter).length > 0 && { 
+          processedAt: { 
+            $gte: startDate ? new Date(startDate as string) : new Date(0),
+            $lte: endDate ? new Date(endDate as string) : new Date()
+          } 
+        })
+      }).sort({ processedAt: -1 }).toArray() || [];
+
+      redemptions.forEach((redemption: any) => {
+        pointsHistory.push({
+          id: `redemption-${redemption._id.toString()}`,
+          type: 'spend',
+          amount: redemption.pointsCost || 0,
+          source: 'reward_redemption',
+          description: `兑换奖励: ${redemption.rewardTitle || '未知奖励'}`,
+          date: redemption.processedAt,
+          details: {
+            rewardId: redemption.rewardId,
+            rewardTitle: redemption.rewardTitle,
+            rewardType: redemption.rewardType,
+            processedBy: redemption.processedBy,
+          }
+        });
+      });
+    } catch (redemptionError) {
+      console.warn('Error loading redemptions for points history:', redemptionError);
+    }
+
+    // Filter by type if specified
+    let filteredHistory = pointsHistory;
+    if (type && type !== 'all') {
+      filteredHistory = pointsHistory.filter(entry => entry.type === type);
+    }
+
+    // Sort by date (newest first)
+    filteredHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    // Apply pagination
+    const totalCount = filteredHistory.length;
+    const paginatedHistory = filteredHistory.slice(Number(offset), Number(offset) + Number(limit));
+
+    // Calculate summary statistics
+    const summary = {
+      totalTransactions: totalCount,
+      totalEarned: pointsHistory.filter(entry => entry.type === 'earn').reduce((sum, entry) => sum + entry.amount, 0),
+      totalSpent: pointsHistory.filter(entry => entry.type === 'spend').reduce((sum, entry) => sum + entry.amount, 0),
+      netGain: 0,
+      periodStart: startDate || null,
+      periodEnd: endDate || null,
+    };
+    summary.netGain = summary.totalEarned - summary.totalSpent;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        history: paginatedHistory,
+        summary,
+        pagination: {
+          total: totalCount,
+          limit: Number(limit),
+          offset: Number(offset),
+          hasMore: Number(offset) + Number(limit) < totalCount,
+        }
+      },
+    });
+  } catch (error: any) {
+    console.error('Get points history error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to get dashboard statistics',
+      error: error.message || 'Failed to get points history',
     });
   }
 };
