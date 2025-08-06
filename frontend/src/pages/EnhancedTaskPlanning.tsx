@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Task, DailyTask } from '../types';
 import { apiService } from '../services/api';
 import TaskLibrary from '../components/TaskLibrary';
+import { getCurrentWeek, formatDate } from '../utils/statisticsService';
 
 interface WeeklySchedule {
   userId: string;
@@ -105,12 +106,11 @@ const EnhancedTaskPlanning: React.FC = () => {
     }
   };
 
-  const getWeekStart = (date: string) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
-    const monday = new Date(d.setDate(diff));
-    return monday.toISOString().split('T')[0];
+  const getWeekStart = (date?: string) => {
+    // Use unified date calculation from statisticsService
+    const referenceDate = date ? new Date(date) : undefined;
+    const weekInfo = getCurrentWeek(referenceDate);
+    return formatDate(weekInfo.monday);
   };
 
   const handleTaskSelect = (task: Task) => {

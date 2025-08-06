@@ -1,7 +1,7 @@
 import { apiService } from './api';
 
 // Mock data for demonstration in network-restricted environments
-// This structure matches the backend getDashboardStats response
+// This structure exactly matches the backend getDashboardStats response
 const mockDashboardStats = {
   user: {
     id: 'demo-user-123',
@@ -22,56 +22,62 @@ const mockDashboardStats = {
     planned: 3,
     inProgress: 2,
     skipped: 2,
-    total: 15
+    total: 15,
+    totalPointsEarned: 160,
+    completionRate: 53, // Math.round((8/15) * 100)
+    averagePointsPerTask: 20, // Math.round(160/8)
+  },
+  todayStats: {
+    total: 3,
+    completed: 2,
+    planned: 1,
+    inProgress: 0,
+    pointsEarned: 35,
   },
   achievements: [
     {
       type: 'streak',
       level: 1,
       title: '连续达人',
-      description: '连续完成每日任务',
+      description: '连续3天完成任务',
       isUnlocked: true,
       progress: 3,
-      maxProgress: 3
+      maxProgress: 7,
     },
     {
       type: 'points',
       level: 3,
       title: '积分收集者',
-      description: '累计获得积分',
+      description: '累计获得240积分',
       isUnlocked: true,
       progress: 40, // 240 % 100
-      maxProgress: 100
+      maxProgress: 100,
     },
     {
       type: 'tasks',
       level: 2,
       title: '任务完成者',
-      description: '本周完成任务',
+      description: '本周完成8个任务',
       isUnlocked: true,
       progress: 3, // 8 % 5
-      maxProgress: 5
+      maxProgress: 5,
+    },
+    {
+      type: 'diversity',
+      level: 4,
+      title: '全能发展',
+      description: '完成4种不同类型的任务',
+      isUnlocked: true,
+      progress: 4,
+      maxProgress: 6,
     }
   ],
   weeklyGoal: 7,
-  // Additional stats for other components
-  totalTasks: 15,
-  completedTasks: 8,
-  pointsEarned: 240,
-  weeklyProgress: 75,
-  todayTasks: 5,
-  completedToday: 3,
-  pendingApproval: 2,
-  recentAchievements: [
-    { id: '1', title: '阅读达人', description: '连续阅读7天', earnedAt: new Date() },
-    { id: '2', title: '运动小将', description: '完成10次运动任务', earnedAt: new Date() }
-  ],
-  categoryStats: {
-    reading: { completed: 3, total: 5 },
-    exercise: { completed: 2, total: 3 },
-    learning: { completed: 2, total: 4 },
-    creativity: { completed: 1, total: 2 },
-    chores: { completed: 0, total: 1 }
+  performance: {
+    thisWeekCompletion: 53,
+    pointsPerTask: 20,
+    streakProgress: 3,
+    nextLevelPoints: 60, // 400 - 240
   }
 };
 

@@ -4,6 +4,7 @@ import { DailyTask, Task } from '../types';
 import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
 import { calculateConfigurablePoints } from './pointsConfigController';
+import { getCurrentWeek } from '../utils/dateUtils';
 
 export const createDailyTask = async (req: AuthRequest, res: Response) => {
   try {
@@ -848,24 +849,21 @@ export const getWeeklySchedule = async (req: AuthRequest, res: Response) => {
     }
 
     const { weekStart } = req.query;
-    let startDate: Date;
+    let startDateStr: string;
+    let endDateStr: string;
     
     if (weekStart) {
-      startDate = new Date(weekStart as string);
+      // Use provided week start and calculate end
+      const providedStart = new Date(weekStart as string);
+      const weekInfo = getCurrentWeek(providedStart);
+      startDateStr = weekInfo.weekStart;
+      endDateStr = weekInfo.weekEnd;
     } else {
-      // Default to current week's Monday
-      const today = new Date();
-      const dayOfWeek = today.getDay();
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-      startDate = monday;
+      // Use unified current week calculation
+      const weekInfo = getCurrentWeek();
+      startDateStr = weekInfo.weekStart;
+      endDateStr = weekInfo.weekEnd;
     }
-
-    const endDate = new Date(startDate);
-    endDate.setDate(startDate.getDate() + 6);
-
-    const startDateStr = startDate.toISOString().split('T')[0];
-    const endDateStr = endDate.toISOString().split('T')[0];
 
     // Get all daily tasks for the week
     const dailyTasks = await collections.dailyTasks

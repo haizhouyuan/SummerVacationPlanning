@@ -5,6 +5,7 @@ import { collections } from '../config/mongodb';
 import { User } from '../types';
 import { generateToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/mongoAuth';
+import { getCurrentWeek, getToday, calculateCompletionRate, calculateAverage } from '../utils/dateUtils';
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -406,14 +407,9 @@ export const getChildStats = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Get child's daily tasks for current week
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Start of week
-    weekStart.setHours(0, 0, 0, 0);
-    
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6); // End of week
-    weekEnd.setHours(23, 59, 59, 999);
+    // Get child's daily tasks for current week using unified date calculation
+    const weekInfo = getCurrentWeek();
+    const { monday: weekStart, sunday: weekEnd } = weekInfo;
 
     const dailyTasks = await collections.dailyTasks.find({
       userId: childId,
@@ -520,19 +516,9 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Calculate current week start and end
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - (currentDay === 0 ? 6 : currentDay - 1)); // Set to Monday
-    monday.setHours(0, 0, 0, 0);
-    
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6); // Set to Sunday
-    sunday.setHours(23, 59, 59, 999);
-
-    const weekStart = monday.toISOString().split('T')[0];
-    const weekEnd = sunday.toISOString().split('T')[0];
+    // Calculate current week start and end using unified date calculation
+    const weekInfo = getCurrentWeek();
+    const { weekStart, weekEnd } = weekInfo;
 
     // Get this week's daily tasks
     const weeklyTasks = await collections.dailyTasks.find({
@@ -992,19 +978,9 @@ export const getFamilyLeaderboard = async (req: AuthRequest, res: Response) => {
 
     const childrenIds = children.map((child: any) => child._id.toString());
 
-    // Calculate current week start and end
-    const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const monday = new Date(now);
-    monday.setDate(now.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
-    monday.setHours(0, 0, 0, 0);
-    
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-
-    const weekStart = monday.toISOString().split('T')[0];
-    const weekEnd = sunday.toISOString().split('T')[0];
+    // Calculate current week start and end using unified date calculation
+    const weekInfo = getCurrentWeek();
+    const { weekStart, weekEnd } = weekInfo;
 
     // Get this week's daily tasks for all children
     const weeklyTasks = await collections.dailyTasks.find({
