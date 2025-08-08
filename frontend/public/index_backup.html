@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0" />
+    <meta name="theme-color" content="#667eea" />
+    <meta name="description" content="暑假计划助手 - 让孩子的暑假更有意义" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>暑假计划助手 - 智能时间轴版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .mobile-safe-area {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .tab-active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .slide-up {
+            animation: slideUp 0.4s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .touch-btn {
+            min-height: 48px;
+            min-width: 48px;
+        }
+        
+        /* 时间轴相关样式 */
+        .timeline-slot {
+            height: 60px;
+            border-bottom: 1px solid #e5e7eb;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .timeline-slot:hover {
+            background-color: #f9fafb;
+        }
+        .timeline-slot.current-time-slot {
+            background-color: #fef3c7;
+        }
+        
+        .task-block {
+            position: absolute;
+            left: 80px;
+            right: 10px;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            user-select: none;
+            z-index: 10;
+            border: 2px solid rgba(255,255,255,0.3);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* 任务状态样式 */
+        .task-block.future {
+            background: linear-gradient(135deg, #a7f3d0, #10b981);
+        }
+        .task-block.current {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            animation: pulse 2s infinite;
+        }
+        .task-block.past-incomplete {
+            background: linear-gradient(135deg, #9ca3af, #6b7280);
+            border-color: rgba(255,255,255,0.5);
+        }
+        .task-block.past-completed {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        }
+        .task-block.pending-confirm {
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+        }
+        .task-block.confirmed {
+            background: linear-gradient(135deg, #34d399, #059669);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        
+        .task-block:active {
+            transform: scale(0.98);
+        }
+        
+        .time-label {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            font-weight: 500;
+            color: #6b7280;
+            width: 60px;
+        }
+        
+        .current-time-line {
+            position: absolute;
+            left: 75px;
+            right: 5px;
+            height: 3px;
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            z-index: 30;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+            border-radius: 2px;
+            transition: top 1s ease;
+        }
+        
+        .current-time-dot {
+            position: absolute;
+            left: -6px;
+            top: -3px;
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+            animation: pulse-dot 2s infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        
+        /* 拖拽相关 */
+        .drag-handle {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 12px;
+            cursor: ns-resize;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 15;
+        }
+        .task-block:hover .drag-handle {
+            opacity: 1;
+        }
+        .drag-handle.top {
+            top: -6px;
+        }
+        .drag-handle.bottom {
+            bottom: -6px;
+        }
+        
+        /* 证据上传样式 */
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9fafb;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        .upload-area.dragover {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            margin: 10px auto;
+            display: block;
+        }
+        
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .text-4xl { font-size: 2rem; }
+            .text-3xl { font-size: 1.75rem; }
+            .text-2xl { font-size: 1.5rem; }
+            .task-block {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- 首页 -->
+    <div id="homepage" class="min-h-screen">
+        <!-- Hero Section -->
+        <div class="gradient-bg text-white relative overflow-hidden">
+            <div class="absolute inset-0 bg-black bg-opacity-10"></div>
+            <div class="relative z-10 px-4 sm:px-6 py-12 sm:py-16 text-center">
+                <div class="bounce-in">
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">🌟 暑假计划助手</h1>
+                    <p class="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 text-blue-100">智能时间轴，让每分钟都有意义</p>
+                </div>
+                
+                <!-- 快速体验 -->
+                <div class="slide-up bg-white bg-opacity-20 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 backdrop-blur-sm max-w-md mx-auto">
+                    <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">📱 快速体验</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <button onclick="quickLogin('student')" class="touch-btn bg-green-500 hover:bg-green-600 text-white font-medium py-3 sm:py-3 px-4 rounded-xl transition-all duration-200 active:scale-95 text-sm sm:text-base">
+                            👦 学生演示
+                        </button>
+                        <button onclick="quickLogin('parent')" class="touch-btn bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 sm:py-3 px-4 rounded-xl transition-all duration-200 active:scale-95 text-sm sm:text-base">
+                            👨‍👩‍👧‍👦 家长演示
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 正式注册登录 -->
+                <div class="slide-up bg-white bg-opacity-20 rounded-2xl p-4 sm:p-6 backdrop-blur-sm max-w-md mx-auto">
+                    <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4">🔐 正式使用</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <button onclick="showRegister()" class="touch-btn bg-purple-500 hover:bg-purple-600 text-white font-medium py-3 sm:py-3 px-4 rounded-xl transition-all duration-200 active:scale-95 text-sm sm:text-base">
+                            📝 注册账户
+                        </button>
+                        <button onclick="showLogin()" class="touch-btn bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-3 sm:py-3 px-4 rounded-xl transition-all duration-200 active:scale-95 text-sm sm:text-base">
+                            🔑 登录账户
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能介绍 -->
+        <div class="px-4 sm:px-6 py-8 sm:py-12">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 text-center mb-6 sm:mb-8">✨ 智能特性</h2>
+            <div class="grid grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
+                <div class="text-center p-3 sm:p-4">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-3">⏰</div>
+                    <h3 class="font-semibold text-gray-800 mb-1 sm:mb-2 text-sm sm:text-base">智能时间轴</h3>
+                    <p class="text-xs sm:text-sm text-gray-600">实时时间指示，自动状态管理</p>
+                </div>
+                <div class="text-center p-3 sm:p-4">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-3">🎯</div>
+                    <h3 class="font-semibold text-gray-800 mb-1 sm:mb-2 text-sm sm:text-base">拖拽规划</h3>
+                    <p class="text-xs sm:text-sm text-gray-600">直观的时间调整，所见即所得</p>
+                </div>
+                <div class="text-center p-3 sm:p-4">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-3">📸</div>
+                    <h3 class="font-semibold text-gray-800 mb-1 sm:mb-2 text-sm sm:text-base">证据上传</h3>
+                    <p class="text-xs sm:text-sm text-gray-600">完成任务拍照证明，家长确认</p>
+                </div>
+                <div class="text-center p-3 sm:p-4">
+                    <div class="text-3xl sm:text-4xl mb-2 sm:mb-3">⭐</div>
+                    <h3 class="font-semibold text-gray-800 mb-1 sm:mb-2 text-sm sm:text-base">积分奖励</h3>
+                    <p class="text-xs sm:text-sm text-gray-600">完成获积分，兑换心愿奖励</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主应用 -->
+    <div id="main-app" class="hidden min-h-screen bg-gray-50">
+        <!-- 顶部状态栏 -->
+        <div class="gradient-bg text-white px-4 sm:px-6 py-3 sm:py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-base sm:text-lg font-semibold" id="user-greeting">👋 欢迎回来</h1>
+                    <p class="text-xs sm:text-sm text-blue-100" id="current-date">2025年7月21日</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="bg-yellow-400 text-yellow-900 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-bold">
+                        <span id="user-points">230</span> ⭐
+                    </div>
+                    <button onclick="logout()" class="touch-btn text-white hover:text-gray-200 p-2 text-lg">
+                        🚪
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="px-4 sm:px-6 py-4 sm:py-6 pb-20">
+            <!-- 仪表盘页面 -->
+            <div id="dashboard-content" class="tab-content">
+                <!-- 积分概览 -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 card-shadow">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                        💰 积分概览
+                    </h3>
+                    <div class="grid grid-cols-3 gap-3 sm:gap-4 text-center">
+                        <div>
+                            <div class="text-xl sm:text-2xl font-bold text-blue-600" id="total-points">350</div>
+                            <div class="text-xs sm:text-sm text-gray-600">总积分</div>
+                        </div>
+                        <div>
+                            <div class="text-xl sm:text-2xl font-bold text-red-500" id="used-points">120</div>
+                            <div class="text-xs sm:text-sm text-gray-600">已兑换</div>
+                        </div>
+                        <div>
+                            <div class="text-xl sm:text-2xl font-bold text-green-600" id="available-points">230</div>
+                            <div class="text-xs sm:text-sm text-gray-600">余额</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 任务统计 -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 card-shadow">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                        📊 任务统计
+                    </h3>
+                    <div class="grid grid-cols-3 gap-3 sm:gap-4 text-center mb-3 sm:mb-4">
+                        <div>
+                            <div class="text-xl sm:text-2xl font-bold text-purple-600" id="total-completed">45</div>
+                            <div class="text-xs sm:text-sm text-gray-600">总完成</div>
+                        </div>
+                        <div>
+                            <div class="text-xl sm:text-2xl font-bold text-orange-600" id="today-progress">3/5</div>
+                            <div class="text-xs sm:text-sm text-gray-600">今日</div>
+                        </div>
+                        <div>
+                            <div class="text-xl sm:text-2xl font-bold text-teal-600" id="completion-rate">60%</div>
+                            <div class="text-xs sm:text-sm text-gray-600">完成率</div>
+                        </div>
+                    </div>
+                    <!-- 进度条 -->
+                    <div class="w-full bg-gray-200 rounded-full h-2 sm:h-3">
+                        <div class="bg-gradient-to-r from-teal-400 to-blue-500 h-2 sm:h-3 rounded-full transition-all duration-300" style="width: 60%"></div>
+                    </div>
+                </div>
+
+                <!-- 获得勋章 -->
+                <div class="bg-white rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 card-shadow">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4 flex items-center">
+                        🏆 获得勋章
+                    </h3>
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3" id="badges-container">
+                        <div class="bg-gradient-to-r from-yellow-200 to-yellow-300 p-3 rounded-xl text-center">
+                            <div class="text-xl sm:text-2xl mb-1">🌟</div>
+                            <div class="text-xs sm:text-sm font-semibold text-yellow-800">早起者</div>
+                        </div>
+                        <div class="bg-gradient-to-r from-blue-200 to-blue-300 p-3 rounded-xl text-center">
+                            <div class="text-xl sm:text-2xl mb-1">📚</div>
+                            <div class="text-xs sm:text-sm font-semibold text-blue-800">阅读达人</div>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-200 to-green-300 p-3 rounded-xl text-center">
+                            <div class="text-xl sm:text-2xl mb-1">🏃</div>
+                            <div class="text-xs sm:text-sm font-semibold text-green-800">运动小将</div>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-200 to-purple-300 p-3 rounded-xl text-center">
+                            <div class="text-xl sm:text-2xl mb-1">🎨</div>
+                            <div class="text-xs sm:text-sm font-semibold text-purple-800">创意之星</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 规划页面 -->
+            <div id="planning-content" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg sm:text-xl font-bold text-gray-800">📅 今日规划</h2>
+                    <div class="text-xs text-gray-500" id="current-time-display"></div>
+                </div>
+                
+                <!-- 时间轴容器 -->
+                <div class="bg-white rounded-2xl card-shadow overflow-hidden relative">
+                    <div id="timeline-container" class="relative">
+                        <!-- 时间轴槽位将由JS生成 -->
+                    </div>
+                    <div id="current-time-indicator" class="current-time-line">
+                        <div class="current-time-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 奖励页面 -->
+            <div id="rewards-content" class="tab-content hidden">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">🎁 积分商城</h2>
+                <div class="space-y-3 sm:space-y-4" id="rewards-list">
+                    <!-- 奖励列表将由JS生成 -->
+                </div>
+            </div>
+
+            <!-- 记录页面 -->
+            <div id="records-content" class="tab-content hidden">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">📈 完成记录</h2>
+                <div class="space-y-3 sm:space-y-4" id="records-list">
+                    <!-- 记录列表将由JS生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航栏 -->
+        <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 mobile-safe-area">
+            <div class="grid grid-cols-4 py-1 sm:py-2">
+                <button onclick="showTab('dashboard')" class="tab-btn tab-active touch-btn flex flex-col items-center py-2 px-1">
+                    <span class="text-lg sm:text-xl mb-1">📊</span>
+                    <span class="text-xs">仪表盘</span>
+                </button>
+                <button onclick="showTab('planning')" class="tab-btn touch-btn flex flex-col items-center py-2 px-1">
+                    <span class="text-lg sm:text-xl mb-1">📅</span>
+                    <span class="text-xs">规划</span>
+                </button>
+                <button onclick="showTab('rewards')" class="tab-btn touch-btn flex flex-col items-center py-2 px-1">
+                    <span class="text-lg sm:text-xl mb-1">🎁</span>
+                    <span class="text-xs">奖励</span>
+                </button>
+                <button onclick="showTab('records')" class="tab-btn touch-btn flex flex-col items-center py-2 px-1">
+                    <span class="text-lg sm:text-xl mb-1">📈</span>
+                    <span class="text-xs">记录</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 任务详情模态框 -->
+    <div id="task-detail-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-800">任务详情</h3>
+                    <button onclick="closeTaskDetail()" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
+                </div>
+                
+                <div class="space-y-4" id="task-detail-content">
+                    <!-- 任务详情内容 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 证据上传模态框 -->
+    <div id="evidence-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-800">📸 上传完成证据</h3>
+                    <button onclick="closeEvidenceModal()" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
+                </div>
+                
+                <div class="space-y-6">
+                    <!-- 任务信息 -->
+                    <div class="bg-blue-50 rounded-xl p-4">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3" id="evidence-task-emoji">📝</span>
+                            <div>
+                                <h4 class="font-semibold text-blue-800" id="evidence-task-name">任务名称</h4>
+                                <p class="text-sm text-blue-600" id="evidence-task-time">时间范围</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 拍照上传区域 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">📷 拍照或选择图片</label>
+                        <div class="upload-area" onclick="triggerImageUpload()">
+                            <div id="upload-prompt" class="text-center">
+                                <div class="text-4xl mb-3">📸</div>
+                                <p class="text-gray-600 mb-2 font-medium">点击拍照或选择图片</p>
+                                <p class="text-xs text-gray-500">支持JPG、PNG格式，最大5MB</p>
+                            </div>
+                            <div id="image-preview-container" class="hidden">
+                                <img id="image-preview" class="image-preview" />
+                                <button type="button" onclick="removeImage()" class="mt-2 text-red-500 text-sm hover:text-red-700">
+                                    🗑️ 重新选择
+                                </button>
+                            </div>
+                        </div>
+                        <input type="file" id="image-upload" accept="image/*" capture="camera" style="display: none;" onchange="handleImageUpload(event)">
+                    </div>
+                    
+                    <!-- 完成说明 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">📝 完成说明</label>
+                        <textarea 
+                            id="evidence-notes"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                            rows="4"
+                            placeholder="请描述您是如何完成这个任务的...&#10;例如：跑步30分钟，路线是小区公园绕行3圈，心率保持在合理范围。"
+                        ></textarea>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-xs text-gray-500">详细说明有助于家长更好地了解完成情况</p>
+                            <span class="text-xs text-gray-400" id="char-counter">0/200</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 完成时间确认 -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">⏰ 实际完成时间</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <input 
+                                type="time" 
+                                id="actual-start-time"
+                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <input 
+                                type="time" 
+                                id="actual-end-time"
+                                class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">确认实际完成的时间段</p>
+                    </div>
+                    
+                    <!-- 按钮组 -->
+                    <div class="flex space-x-3 pt-4 border-t border-gray-200">
+                        <button onclick="closeEvidenceModal()" class="flex-1 py-3 px-4 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+                            取消
+                        </button>
+                        <button onclick="submitEvidence()" id="submit-evidence-btn" class="flex-1 py-3 px-4 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            📤 提交证据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 应用状态
+        let currentUser = null;
+        let currentTab = 'dashboard';
+        let isDemo = false;
+        let tasks = [];
+        let draggedTask = null;
+        let dragMode = null;
+        let currentImageFile = null;
+        let isDragging = false;
+        let clickStartTime = 0;
+
+        // 时间相关
+        const timeSlots = [];
+        for (let hour = 0; hour <= 23; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+                timeSlots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
+            }
+        }
+
+        // 模拟数据
+        const mockRewards = [
+            { id: 1, title: '额外游戏时间30分钟', cost: 50, emoji: '🎮' },
+            { id: 2, title: '选择今晚看的电影', cost: 30, emoji: '🎬' },
+            { id: 3, title: '周末外出活动', cost: 100, emoji: '🎈' },
+            { id: 4, title: '购买小礼物', cost: 80, emoji: '🎁' },
+            { id: 5, title: '睡前故事时间', cost: 20, emoji: '📖' },
+            { id: 6, title: '选择午餐菜单', cost: 40, emoji: '🍕' },
+        ];
+
+        const mockRecords = [
+            { id: 1, title: '阅读20分钟', emoji: '📚', points: 10, time: '今天 14:30', color: 'green' },
+            { id: 2, title: '整理房间', emoji: '🧹', points: 8, time: '今天 10:15', color: 'blue' },
+            { id: 3, title: '练习钢琴', emoji: '🎹', points: 12, time: '昨天 19:15', color: 'purple' },
+            { id: 4, title: '晨练30分钟', emoji: '🏃‍♂️', points: 15, time: '昨天 07:00', color: 'orange' },
+            { id: 5, title: '学习编程', emoji: '💻', points: 20, time: '前天 16:20', color: 'teal' },
+        ];
+
+        // 初始化示例任务
+        function initializeTasks() {
+            tasks = [
+                {
+                    id: 1,
+                    name: '晨练',
+                    startTime: '07:00',
+                    endTime: '07:30',
+                    difficulty: 'medium',
+                    selfPoints: 15,
+                    status: 'confirmed',
+                    emoji: '🏃‍♂️'
+                },
+                {
+                    id: 2,
+                    name: '阅读时间',
+                    startTime: '14:00',
+                    endTime: '14:30',
+                    difficulty: 'easy',
+                    selfPoints: 10,
+                    status: 'planning',
+                    emoji: '📚'
+                },
+                {
+                    id: 3,
+                    name: '英语学习',
+                    startTime: '16:00',
+                    endTime: '17:00',
+                    difficulty: 'hard',
+                    selfPoints: 20,
+                    status: 'planning',
+                    emoji: '📖'
+                }
+            ];
+        }
+
+        // 页面显示函数
+        function showHomepage() {
+            document.getElementById('homepage').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            console.log('showMainApp called, currentUser:', currentUser);
+            document.getElementById('homepage').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            updateUserInfo();
+            updateCurrentDate();
+            setupUserInterface();
+            loadTabContent();
+            startTimeUpdater();
+        }
+
+        // 根据用户角色设置界面
+        function setupUserInterface() {
+            console.log("setupUserInterface called - v2.0");
+            console.log("currentUser:", currentUser);
+            const isParent = currentUser && currentUser.role === "parent";
+            console.log("isParent:", isParent);
+            alert("Debug: setupUserInterface called, isParent=" + isParent);
+            console.log('setupUserInterface called');
+            console.log('currentUser:', currentUser);
+            const isParent = currentUser && currentUser.role === 'parent';
+            console.log('isParent:', isParent);
+            
+            // 更新底部导航
+            const bottomNav = document.querySelector('.fixed.bottom-0 .grid');
+            console.log('bottomNav found:', !!bottomNav);
+            if (isParent) {
+                bottomNav.innerHTML = `
+                    <button onclick="showTab('dashboard')" class="tab-btn tab-active touch-btn flex flex-col items-center py-2 px-1">
+                        <span class="text-lg sm:text-xl mb-1">📊</span>
+                        <span class="text-xs">总览</span>
+                    </button>
+                    <button onclick="showTab('monitoring')" class="tab-btn touch-btn flex flex-col items-center py-2 px-1">
+                        <span class="text-lg sm:text-xl mb-1">👀</span>
+                        <span class="text-xs">监控</span>
+                    </button>
+                    <button onclick="showTab('approval')" class="tab-btn touch-btn flex flex-col items-center py-2 px-1">
+                        <span class="text-lg sm:text-xl mb-1">✅</span>
+                        <span class="text-xs">审核</span>
+                    </button>
+                    <button onclick="showTab('management')" class="tab-btn touch-btn flex flex-col items-center py-2 px-1">
+                        <span class="text-lg sm:text-xl mb-1">⚙️</span>
+                        <span class="text-xs">管理</span>
+                    </button>
+                `;
+            }
+            
+            // 添加家长专用内容区域
+            if (isParent) {
+                const contentArea = document.querySelector('.px-4.sm\\:px-6.py-4');
+                const parentContent = `
+                    <!-- 家长监控页面 -->
+                    <div id="monitoring-content" class="tab-content hidden">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">👀 孩子活动监控</h2>
+                        <div id="child-activity-list" class="space-y-3 sm:space-y-4"></div>
+                    </div>
+
+                    <!-- 家长审核页面 -->
+                    <div id="approval-content" class="tab-content hidden">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">✅ 任务审核确认</h2>
+                        <div id="pending-approvals" class="space-y-3 sm:space-y-4"></div>
+                    </div>
+
+                    <!-- 家长管理页面 -->
+                    <div id="management-content" class="tab-content hidden">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">⚙️ 积分与奖励管理</h2>
+                        <div id="management-tools" class="space-y-3 sm:space-y-4"></div>
+                    </div>
+                `;
+                contentArea.insertAdjacentHTML('beforeend', parentContent);
+            }
+        }
+
+        // 快速登录演示账户
+        function quickLogin(role) {
+            isDemo = true;
+            currentUser = {
+                name: role === 'student' ? '小明同学' : '张家长',
+                email: role === 'student' ? 'student@demo.com' : 'parent@demo.com',
+                role: role,
+                points: 230,
+                totalPoints: 350,
+                usedPoints: 120
+            };
+            initializeTasks();
+            showMainApp();
+        }
+
+        // 更新用户信息显示
+        function updateUserInfo() {
+            if (currentUser) {
+                document.getElementById('user-greeting').textContent = `👋 ${currentUser.name}`;
+                document.getElementById('user-points').textContent = currentUser.points;
+                document.getElementById('total-points').textContent = currentUser.totalPoints;
+                document.getElementById('used-points').textContent = currentUser.usedPoints;
+                document.getElementById('available-points').textContent = currentUser.points;
+            }
+        }
+
+        // 更新当前日期
+        function updateCurrentDate() {
+            const today = new Date();
+            const dateStr = today.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('current-date').textContent = dateStr;
+        }
+
+        // 启动时间更新器
+        function startTimeUpdater() {
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 30000);
+        }
+
+        // 更新当前时间显示和时间轴指示器
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const currentTimeEl = document.getElementById('current-time-display');
+            if (currentTimeEl) {
+                currentTimeEl.textContent = `当前时间: ${timeStr}`;
+            }
+            
+            updateTimelineIndicator(now);
+            updateTaskStates(now);
+        }
+
+        // 更新时间轴指示器
+        function updateTimelineIndicator(now) {
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            
+            // 现在支持全天24小时
+            const totalMinutesFromStart = hour * 60 + minute;
+            const topPosition = (totalMinutesFromStart / 30) * 60;
+            
+            const indicator = document.getElementById('current-time-indicator');
+            if (indicator) {
+                indicator.style.top = `${topPosition}px`;
+                indicator.style.display = 'block';
+            }
+            
+            document.querySelectorAll('.timeline-slot').forEach((slot, index) => {
+                slot.classList.remove('current-time-slot');
+            });
+            
+            const currentSlotIndex = Math.floor(totalMinutesFromStart / 30);
+            const currentSlot = document.querySelector(`[data-index="${currentSlotIndex}"]`);
+            if (currentSlot) {
+                currentSlot.classList.add('current-time-slot');
+            }
+        }
+
+        // 更新任务状态基于当前时间
+        function updateTaskStates(now) {
+            const currentTimeStr = now.toTimeString().slice(0, 5);
+            let hasChanges = false;
+            
+            tasks.forEach(task => {
+                const oldStatus = task.status;
+                
+                if (task.status === 'planning') {
+                    if (currentTimeStr >= task.startTime && currentTimeStr < task.endTime) {
+                        task.status = 'current';
+                        hasChanges = true;
+                    } else if (currentTimeStr >= task.endTime) {
+                        task.status = 'past-incomplete';
+                        hasChanges = true;
+                    }
+                } else if (task.status === 'current') {
+                    if (currentTimeStr >= task.endTime) {
+                        task.status = 'past-incomplete';
+                        hasChanges = true;
+                    }
+                }
+            });
+            
+            if (hasChanges && currentTab === 'planning') {
+                renderTasks();
+            }
+        }
+
+        // 标签页切换
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+            });
+            
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+            event.target.closest('.tab-btn').classList.add('tab-active');
+            
+            currentTab = tabName;
+            loadTabContent();
+        }
+
+        // 加载标签页内容
+        function loadTabContent() {
+            switch(currentTab) {
+                case 'planning':
+                    loadTimeline();
+                    break;
+                case 'rewards':
+                    loadRewards();
+                    break;
+                case 'records':
+                    loadRecords();
+                    break;
+                case 'monitoring':
+                    loadMonitoring();
+                    break;
+                case 'approval':
+                    loadApproval();
+                    break;
+                case 'management':
+                    loadManagement();
+                    break;
+            }
+        }
+
+        // 家长专用功能 - 监控孩子活动
+        function loadMonitoring() {
+            const container = document.getElementById('child-activity-list');
+            container.innerHTML = '';
+            
+            const mockChildActivities = [
+                {
+                    time: '13:25',
+                    activity: '小明开始执行【阅读时间】任务',
+                    status: 'current',
+                    emoji: '📚'
+                },
+                {
+                    time: '12:45',
+                    activity: '小明完成【整理房间】任务，等待确认',
+                    status: 'pending',
+                    emoji: '🧹'
+                },
+                {
+                    time: '07:30',
+                    activity: '小明完成【晨练】任务，已确认',
+                    status: 'confirmed',
+                    emoji: '🏃‍♂️'
+                },
+                {
+                    time: '昨天 19:15',
+                    activity: '小明完成【练习钢琴】任务',
+                    status: 'confirmed',
+                    emoji: '🎹'
+                }
+            ];
+            
+            mockChildActivities.forEach(activity => {
+                const activityElement = document.createElement('div');
+                let statusColor = 'gray';
+                let statusText = '';
+                
+                switch(activity.status) {
+                    case 'current':
+                        statusColor = 'yellow';
+                        statusText = '进行中';
+                        break;
+                    case 'pending':
+                        statusColor = 'purple';
+                        statusText = '待确认';
+                        break;
+                    case 'confirmed':
+                        statusColor = 'green';
+                        statusText = '已确认';
+                        break;
+                }
+                
+                activityElement.className = 'bg-white rounded-xl p-4 card-shadow';
+                activityElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${activity.emoji}</span>
+                            <div>
+                                <p class="font-medium text-gray-800">${activity.activity}</p>
+                                <p class="text-sm text-gray-500">${activity.time}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-${statusColor}-100 text-${statusColor}-800">
+                                ${statusText}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(activityElement);
+            });
+        }
+
+        // 家长专用功能 - 任务审核确认
+        function loadApproval() {
+            const container = document.getElementById('pending-approvals');
+            container.innerHTML = '';
+            
+            const pendingTasks = tasks.filter(task => task.status === 'pending-confirm');
+            
+            if (pendingTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-4xl mb-4">✅</div>
+                        <p class="text-gray-500">暂无待审核的任务</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            pendingTasks.forEach(task => {
+                const approvalElement = document.createElement('div');
+                approvalElement.className = 'bg-white rounded-xl p-4 card-shadow';
+                approvalElement.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${task.emoji}</span>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">${task.name}</h3>
+                                <p class="text-sm text-gray-600">${task.startTime} - ${task.endTime}</p>
+                                <p class="text-sm text-purple-600">申请积分: ${task.selfPoints} ⭐</p>
+                            </div>
+                        </div>
+                        
+                        ${task.evidenceNotes ? `
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">完成说明:</h4>
+                                <p class="text-sm text-gray-600">${task.evidenceNotes}</p>
+                            </div>
+                        ` : ''}
+                        
+                        ${task.evidenceImage ? `
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="text-sm font-medium text-gray-700 mb-2">完成证据:</h4>
+                                <p class="text-sm text-gray-600">📸 ${task.evidenceImage}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex space-x-3 pt-2">
+                            <button onclick="approveTask(${task.id})" class="flex-1 py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm">
+                                ✅ 确认完成
+                            </button>
+                            <button onclick="rejectTask(${task.id})" class="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">
+                                ❌ 要求重做
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(approvalElement);
+            });
+        }
+
+        // 家长专用功能 - 积分与奖励管理
+        function loadManagement() {
+            const container = document.getElementById('management-tools');
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <!-- 积分调整 -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-semibold text-gray-800 mb-3">💰 积分调整</h3>
+                        <div class="flex items-center space-x-3">
+                            <input type="number" id="points-adjustment" placeholder="输入积分数量" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                            <button onclick="adjustPoints('add')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                                + 奖励
+                            </button>
+                            <button onclick="adjustPoints('subtract')" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                                - 扣除
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">可以因为额外表现或违规行为调整积分</p>
+                    </div>
+
+                    <!-- 自定义奖励 -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-semibold text-gray-800 mb-3">🎁 自定义奖励</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="reward-title" placeholder="奖励名称" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                            <div class="flex space-x-3">
+                                <input type="number" id="reward-cost" placeholder="所需积分" 
+                                       class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                                <button onclick="addCustomReward()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                    添加奖励
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 任务模板 -->
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-semibold text-gray-800 mb-3">📝 常用任务模板</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="addTaskTemplate('reading')" class="p-3 bg-blue-50 rounded-lg text-sm hover:bg-blue-100">
+                                📚 阅读30分钟
+                            </button>
+                            <button onclick="addTaskTemplate('exercise')" class="p-3 bg-green-50 rounded-lg text-sm hover:bg-green-100">
+                                🏃‍♂️ 运动锻炼
+                            </button>
+                            <button onclick="addTaskTemplate('homework')" class="p-3 bg-yellow-50 rounded-lg text-sm hover:bg-yellow-100">
+                                ✏️ 完成作业
+                            </button>
+                            <button onclick="addTaskTemplate('chores')" class="p-3 bg-purple-50 rounded-lg text-sm hover:bg-purple-100">
+                                🧹 家务劳动
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 家长操作函数
+        function approveTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'confirmed';
+                currentUser.points += task.selfPoints;
+                currentUser.totalPoints += task.selfPoints;
+                updateUserInfo();
+                loadApproval();
+                renderTasks();
+                showToast(`✅ 已确认 ${task.name}，孩子获得 ${task.selfPoints} 积分`);
+            }
+        }
+
+        function rejectTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'past-incomplete';
+                loadApproval();
+                renderTasks();
+                showToast(`❌ 已要求重做 ${task.name}`);
+            }
+        }
+
+        function adjustPoints(action) {
+            const pointsInput = document.getElementById('points-adjustment');
+            const points = parseInt(pointsInput.value);
+            
+            if (!points || points <= 0) {
+                showToast('请输入有效的积分数量');
+                return;
+            }
+            
+            if (action === 'add') {
+                currentUser.points += points;
+                currentUser.totalPoints += points;
+                showToast(`🎉 已奖励 ${points} 积分`);
+            } else if (action === 'subtract') {
+                if (currentUser.points >= points) {
+                    currentUser.points -= points;
+                    showToast(`⚠️ 已扣除 ${points} 积分`);
+                } else {
+                    showToast('积分余额不足');
+                    return;
+                }
+            }
+            
+            updateUserInfo();
+            pointsInput.value = '';
+        }
+
+        function addCustomReward() {
+            const title = document.getElementById('reward-title').value.trim();
+            const cost = parseInt(document.getElementById('reward-cost').value);
+            
+            if (!title) {
+                showToast('请输入奖励名称');
+                return;
+            }
+            
+            if (!cost || cost <= 0) {
+                showToast('请输入有效的积分数量');
+                return;
+            }
+            
+            // 这里可以添加到奖励列表
+            showToast(`🎁 已添加自定义奖励: ${title} (${cost}积分)`);
+            document.getElementById('reward-title').value = '';
+            document.getElementById('reward-cost').value = '';
+        }
+
+        function addTaskTemplate(type) {
+            const templates = {
+                reading: { name: '阅读30分钟', emoji: '📚', duration: 2, points: 15 },
+                exercise: { name: '运动锻炼', emoji: '🏃‍♂️', duration: 2, points: 20 },
+                homework: { name: '完成作业', emoji: '✏️', duration: 4, points: 25 },
+                chores: { name: '家务劳动', emoji: '🧹', duration: 2, points: 10 }
+            };
+            
+            const template = templates[type];
+            if (template) {
+                showToast(`📝 已添加任务模板: ${template.name}`);
+                // 这里可以自动添加到今日规划
+            }
+        }
+
+        // 加载时间轴
+        function loadTimeline() {
+            const container = document.getElementById('timeline-container');
+            container.innerHTML = '';
+            
+            timeSlots.forEach((timeSlot, index) => {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'timeline-slot';
+                slotDiv.dataset.time = timeSlot;
+                slotDiv.dataset.index = index;
+                
+                const timeLabel = document.createElement('div');
+                timeLabel.className = 'time-label';
+                timeLabel.textContent = timeSlot;
+                slotDiv.appendChild(timeLabel);
+                
+                slotDiv.addEventListener('click', (e) => {
+                    if (e.target === slotDiv && !isDragging) {
+                        createNewTask(timeSlot);
+                    }
+                });
+                
+                container.appendChild(slotDiv);
+            });
+            
+            renderTasks();
+            updateCurrentTime();
+        }
+
+        // 渲染任务
+        function renderTasks() {
+            document.querySelectorAll('.task-block').forEach(el => el.remove());
+            
+            tasks.forEach(task => {
+                const taskEl = createTaskElement(task);
+                document.getElementById('timeline-container').appendChild(taskEl);
+            });
+        }
+
+        // 创建任务元素
+        function createTaskElement(task) {
+            const taskDiv = document.createElement('div');
+            const statusClass = getTaskStatusClass(task);
+            taskDiv.className = `task-block ${statusClass}`;
+            taskDiv.dataset.taskId = task.id;
+            
+            const startIndex = timeSlots.indexOf(task.startTime);
+            const endIndex = timeSlots.indexOf(task.endTime);
+            const duration = endIndex - startIndex;
+            
+            taskDiv.style.top = `${startIndex * 60}px`;
+            taskDiv.style.height = `${duration * 60}px`;
+            
+            taskDiv.innerHTML = `
+                <div class="flex items-center justify-between h-full">
+                    <div class="flex items-center">
+                        <span class="text-lg mr-2">${task.emoji}</span>
+                        <div>
+                            <div class="font-semibold">${task.name}</div>
+                            <div class="text-xs opacity-75">${task.startTime}-${task.endTime}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        ${getTaskStatusDisplay(task)}
+                    </div>
+                </div>
+                <div class="drag-handle top"></div>
+                <div class="drag-handle bottom"></div>
+            `;
+            
+            // 任务点击事件 - 改进后的版本
+            taskDiv.addEventListener('mousedown', (e) => {
+                clickStartTime = Date.now();
+                isDragging = false;
+                
+                if (e.target.classList.contains('drag-handle')) {
+                    return; // 拖拽把手不触发点击
+                }
+                
+                setupTaskDrag(taskDiv, task, e);
+            });
+            
+            taskDiv.addEventListener('mouseup', (e) => {
+                const clickDuration = Date.now() - clickStartTime;
+                
+                // 如果没有拖拽且点击时间短，则视为点击事件
+                if (!isDragging && clickDuration < 200) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTaskClick(task);
+                }
+                
+                isDragging = false;
+            });
+            
+            // 触摸事件支持
+            taskDiv.addEventListener('touchstart', (e) => {
+                clickStartTime = Date.now();
+                isDragging = false;
+            });
+            
+            taskDiv.addEventListener('touchend', (e) => {
+                const clickDuration = Date.now() - clickStartTime;
+                
+                if (!isDragging && clickDuration < 200) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleTaskClick(task);
+                }
+                
+                isDragging = false;
+            });
+            
+            return taskDiv;
+        }
+
+        // 获取任务状态样式类
+        function getTaskStatusClass(task) {
+            const now = new Date();
+            const currentTimeStr = now.toTimeString().slice(0, 5);
+            
+            if (task.status === 'confirmed') {
+                return 'confirmed';
+            } else if (task.status === 'pending-confirm') {
+                return 'pending-confirm';
+            } else if (task.status === 'past-completed') {
+                return 'past-completed';
+            } else if (currentTimeStr >= task.endTime) {
+                return 'past-incomplete';
+            } else if (currentTimeStr >= task.startTime && currentTimeStr < task.endTime) {
+                return 'current';
+            } else {
+                return 'future';
+            }
+        }
+
+        // 获取任务状态显示
+        function getTaskStatusDisplay(task) {
+            const statusClass = getTaskStatusClass(task);
+            
+            switch(statusClass) {
+                case 'future':
+                    return '<div class="text-xs opacity-75">待执行</div>';
+                case 'current':
+                    return '<div class="text-xs font-bold">进行中</div>';
+                case 'past-incomplete':
+                    return '<div class="text-xs opacity-75">点击上传</div>';
+                case 'past-completed':
+                    return '<div class="text-xs opacity-75">已完成</div>';
+                case 'pending-confirm':
+                    return '<div class="text-xs opacity-75">待确认</div>';
+                case 'confirmed':
+                    return '<div class="text-xs font-bold">✓ 已确认</div>';
+                default:
+                    return '';
+            }
+        }
+
+        // 处理任务点击
+        function handleTaskClick(task) {
+            console.log('Task clicked:', task.name, getTaskStatusClass(task)); // 调试用
+            
+            const statusClass = getTaskStatusClass(task);
+            
+            if (statusClass === 'past-incomplete') {
+                showEvidenceModal(task);
+            } else {
+                showTaskDetail(task);
+            }
+        }
+
+        // 设置任务拖拽
+        function setupTaskDrag(taskEl, task, initialEvent) {
+            const statusClass = getTaskStatusClass(task);
+            if (statusClass === 'confirmed' || statusClass === 'current') {
+                return;
+            }
+            
+            let startY = initialEvent.clientY || (initialEvent.touches && initialEvent.touches[0].clientY);
+            let startTop = parseInt(taskEl.style.top);
+            let startHeight = parseInt(taskEl.style.height);
+            let hasDragged = false;
+            
+            // 确定拖拽模式
+            if (initialEvent.target.classList.contains('drag-handle')) {
+                if (initialEvent.target.classList.contains('top')) {
+                    dragMode = 'resize-top';
+                } else {
+                    dragMode = 'resize-bottom';
+                }
+            } else {
+                dragMode = 'move';
+            }
+            
+            function onMouseMove(e) {
+                const currentY = e.clientY || (e.touches && e.touches[0].clientY);
+                const deltaY = currentY - startY;
+                
+                if (Math.abs(deltaY) > 5 && !hasDragged) {
+                    isDragging = true;
+                    hasDragged = true;
+                }
+                
+                if (isDragging) {
+                    const slotHeight = 60;
+                    const deltaSlots = Math.round(deltaY / slotHeight);
+                    
+                    if (dragMode === 'move') {
+                        const newTop = Math.max(0, Math.min(startTop + deltaSlots * slotHeight, (timeSlots.length - 1) * slotHeight));
+                        taskEl.style.top = `${newTop}px`;
+                    } else if (dragMode === 'resize-top') {
+                        const newTop = Math.max(0, startTop + deltaSlots * slotHeight);
+                        const newHeight = Math.max(slotHeight, startHeight - deltaSlots * slotHeight);
+                        taskEl.style.top = `${newTop}px`;
+                        taskEl.style.height = `${newHeight}px`;
+                    } else if (dragMode === 'resize-bottom') {
+                        const newHeight = Math.max(slotHeight, startHeight + deltaSlots * slotHeight);
+                        taskEl.style.height = `${newHeight}px`;
+                    }
+                }
+            }
+            
+            function onMouseUp() {
+                if (isDragging && hasDragged) {
+                    updateTaskFromDOM(taskEl, task);
+                }
+                
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                document.removeEventListener('touchmove', onMouseMove);
+                document.removeEventListener('touchend', onMouseUp);
+                
+                // 延迟重置拖拽状态
+                setTimeout(() => {
+                    isDragging = false;
+                    hasDragged = false;
+                    dragMode = null;
+                }, 100);
+            }
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+            document.addEventListener('touchmove', onMouseMove);
+            document.addEventListener('touchend', onMouseUp);
+        }
+
+        // 从DOM更新任务数据
+        function updateTaskFromDOM(taskEl, task) {
+            const top = parseInt(taskEl.style.top);
+            const height = parseInt(taskEl.style.height);
+            const startSlotIndex = Math.round(top / 60);
+            const duration = Math.round(height / 60);
+            const endSlotIndex = startSlotIndex + duration;
+            
+            task.startTime = timeSlots[startSlotIndex];
+            task.endTime = timeSlots[Math.min(endSlotIndex, timeSlots.length - 1)];
+            
+            renderTasks();
+        }
+
+        // 创建新任务
+        function createNewTask(startTime) {
+            const startIndex = timeSlots.indexOf(startTime);
+            const endTime = timeSlots[Math.min(startIndex + 1, timeSlots.length - 1)];
+            
+            const newTask = {
+                id: Date.now(),
+                name: '新任务',
+                startTime: startTime,
+                endTime: endTime,
+                difficulty: 'medium',
+                selfPoints: 10,
+                status: 'planning',
+                emoji: '📝'
+            };
+            
+            tasks.push(newTask);
+            showTaskDetail(newTask);
+        }
+
+        // 显示任务详情
+        function showTaskDetail(task) {
+            const modal = document.getElementById('task-detail-modal');
+            const content = document.getElementById('task-detail-content');
+            
+            content.innerHTML = `
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">任务名称</label>
+                    <input 
+                        type="text" 
+                        id="task-name"
+                        value="${task.name}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">开始时间</label>
+                        <select id="task-start-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            ${timeSlots.map(time => `<option value="${time}" ${time === task.startTime ? 'selected' : ''}>${time}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">结束时间</label>
+                        <select id="task-end-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            ${timeSlots.map(time => `<option value="${time}" ${time === task.endTime ? 'selected' : ''}>${time}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">任务难度</label>
+                    <select id="task-difficulty" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="easy" ${task.difficulty === 'easy' ? 'selected' : ''}>简单 (基础积分)</option>
+                        <option value="medium" ${task.difficulty === 'medium' ? 'selected' : ''}>中等 (1.5倍积分)</option>
+                        <option value="hard" ${task.difficulty === 'hard' ? 'selected' : ''}>困难 (2倍积分)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">自评积分</label>
+                    <input 
+                        type="number" 
+                        id="task-self-points"
+                        value="${task.selfPoints}"
+                        min="1"
+                        max="100"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">您认为完成这个任务应该获得多少积分</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button onclick="saveTaskDetail(${task.id})" class="flex-1 py-3 px-4 bg-blue-500 text-white rounded-xl hover:bg-blue-600">
+                        💾 保存
+                    </button>
+                    <button onclick="deleteTask(${task.id})" class="px-4 py-3 bg-red-500 text-white rounded-xl hover:bg-red-600">
+                        🗑️
+                    </button>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        // 保存任务详情
+        function saveTaskDetail(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.name = document.getElementById('task-name').value;
+                task.startTime = document.getElementById('task-start-time').value;
+                task.endTime = document.getElementById('task-end-time').value;
+                task.difficulty = document.getElementById('task-difficulty').value;
+                task.selfPoints = parseInt(document.getElementById('task-self-points').value);
+                
+                renderTasks();
+                closeTaskDetail();
+                showToast('任务已保存！');
+            }
+        }
+
+        // 删除任务
+        function deleteTask(taskId) {
+            if (confirm('确定要删除这个任务吗？')) {
+                tasks = tasks.filter(t => t.id !== taskId);
+                renderTasks();
+                closeTaskDetail();
+                showToast('任务已删除');
+            }
+        }
+
+        // 关闭任务详情
+        function closeTaskDetail() {
+            document.getElementById('task-detail-modal').classList.add('hidden');
+        }
+
+        // 显示证据上传模态框
+        function showEvidenceModal(task) {
+            console.log('Opening evidence modal for task:', task.name); // 调试用
+            
+            closeTaskDetail();
+            
+            document.getElementById('evidence-task-emoji').textContent = task.emoji;
+            document.getElementById('evidence-task-name').textContent = task.name;
+            document.getElementById('evidence-task-time').textContent = `${task.startTime} - ${task.endTime}`;
+            
+            document.getElementById('actual-start-time').value = task.startTime;
+            document.getElementById('actual-end-time').value = task.endTime;
+            
+            document.getElementById('evidence-notes').value = '';
+            document.getElementById('char-counter').textContent = '0/200';
+            resetImageUpload();
+            
+            const modal = document.getElementById('evidence-modal');
+            modal.dataset.taskId = task.id;
+            modal.classList.remove('hidden');
+        }
+
+        // 关闭证据上传模态框
+        function closeEvidenceModal() {
+            document.getElementById('evidence-modal').classList.add('hidden');
+            currentImageFile = null;
+        }
+
+        // 触发图片上传
+        function triggerImageUpload() {
+            document.getElementById('image-upload').click();
+        }
+
+        // 处理图片上传
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                showToast('请选择图片文件');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('图片大小不能超过5MB');
+                return;
+            }
+            
+            currentImageFile = file;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('image-preview').src = e.target.result;
+                document.getElementById('upload-prompt').classList.add('hidden');
+                document.getElementById('image-preview-container').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 移除图片
+        function removeImage() {
+            resetImageUpload();
+        }
+
+        // 重置图片上传
+        function resetImageUpload() {
+            currentImageFile = null;
+            document.getElementById('image-upload').value = '';
+            document.getElementById('upload-prompt').classList.remove('hidden');
+            document.getElementById('image-preview-container').classList.add('hidden');
+        }
+
+        // 字符计数
+        document.addEventListener('input', function(e) {
+            if (e.target.id === 'evidence-notes') {
+                const length = e.target.value.length;
+                const counter = document.getElementById('char-counter');
+                counter.textContent = `${length}/200`;
+                
+                if (length > 200) {
+                    counter.classList.add('text-red-500');
+                    e.target.value = e.target.value.substring(0, 200);
+                    counter.textContent = '200/200';
+                } else {
+                    counter.classList.remove('text-red-500');
+                }
+            }
+        });
+
+        // 提交证据
+        function submitEvidence() {
+            const taskId = parseInt(document.getElementById('evidence-modal').dataset.taskId);
+            const task = tasks.find(t => t.id === taskId);
+            const notes = document.getElementById('evidence-notes').value.trim();
+            const startTime = document.getElementById('actual-start-time').value;
+            const endTime = document.getElementById('actual-end-time').value;
+            
+            if (!currentImageFile) {
+                showToast('请上传完成证据图片');
+                return;
+            }
+            
+            if (!notes) {
+                showToast('请填写完成说明');
+                return;
+            }
+            
+            if (notes.length < 10) {
+                showToast('完成说明至少需要10个字符');
+                return;
+            }
+            
+            if (!startTime || !endTime) {
+                showToast('请确认实际完成时间');
+                return;
+            }
+            
+            if (startTime >= endTime) {
+                showToast('结束时间必须晚于开始时间');
+                return;
+            }
+            
+            if (task) {
+                task.status = 'pending-confirm';
+                task.evidenceNotes = notes;
+                task.actualStartTime = startTime;
+                task.actualEndTime = endTime;
+                task.evidenceImage = currentImageFile.name;
+                
+                if (isDemo) {
+                    setTimeout(() => {
+                        task.status = 'confirmed';
+                        currentUser.points += task.selfPoints;
+                        currentUser.totalPoints += task.selfPoints;
+                        updateUserInfo();
+                        renderTasks();
+                        showToast(`🎉 家长已确认！获得 ${task.selfPoints} 积分`);
+                    }, 3000);
+                }
+                
+                renderTasks();
+                closeEvidenceModal();
+                showToast('证据已提交，等待家长确认...');
+            }
+        }
+
+        // 加载奖励列表
+        function loadRewards() {
+            const container = document.getElementById('rewards-list');
+            container.innerHTML = '';
+            
+            mockRewards.forEach(reward => {
+                const canAfford = currentUser && currentUser.points >= reward.cost;
+                const rewardElement = document.createElement('div');
+                rewardElement.className = 'bg-white rounded-xl p-4 card-shadow';
+                rewardElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-2xl sm:text-3xl mr-3 sm:mr-4">${reward.emoji}</span>
+                            <div>
+                                <h3 class="font-semibold text-gray-800 text-sm sm:text-base">${reward.title}</h3>
+                                <p class="text-base sm:text-lg font-bold text-blue-600">${reward.cost} ⭐</p>
+                            </div>
+                        </div>
+                        <button 
+                            onclick="redeemReward(${reward.id})" 
+                            class="touch-btn px-3 sm:px-4 py-2 ${canAfford ? 'bg-orange-500 hover:bg-orange-600' : 'bg-gray-400'} text-white rounded-lg font-medium text-xs sm:text-sm transition-all duration-200 active:scale-95"
+                            ${canAfford ? '' : 'disabled'}
+                        >
+                            ${canAfford ? '兑换' : '积分不足'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(rewardElement);
+            });
+        }
+
+        // 加载记录列表
+        function loadRecords() {
+            const container = document.getElementById('records-list');
+            container.innerHTML = '';
+            
+            mockRecords.forEach(record => {
+                const recordElement = document.createElement('div');
+                recordElement.className = 'bg-white rounded-xl p-4 card-shadow';
+                recordElement.innerHTML = `
+                    <div class="flex items-center border-l-4 border-${record.color}-500 pl-4">
+                        <span class="text-2xl sm:text-3xl mr-3 sm:mr-4">${record.emoji}</span>
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-800 text-sm sm:text-base">${record.title}</h3>
+                            <p class="text-xs sm:text-sm text-gray-600">${record.time} 完成 • 获得 ${record.points} 积分</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-${record.color}-600">+${record.points}</div>
+                            <div class="text-xs text-gray-500">积分</div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(recordElement);
+            });
+        }
+
+        // 兑换奖励
+        function redeemReward(rewardId) {
+            const reward = mockRewards.find(r => r.id === rewardId);
+            if (reward && currentUser && currentUser.points >= reward.cost) {
+                currentUser.points -= reward.cost;
+                currentUser.usedPoints += reward.cost;
+                updateUserInfo();
+                loadRewards();
+                showToast(`🎁 兑换成功！${reward.title}`);
+            }
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-90 text-white px-6 py-3 rounded-xl z-50 slide-up text-sm max-w-xs text-center';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 3000);
+        }
+
+        // 退出登录
+        function logout() {
+            currentUser = null;
+            isDemo = false;
+            tasks = [];
+            currentImageFile = null;
+            showHomepage();
+        }
+
+        // 家长专用功能 - 监控孩子活动
+        function loadMonitoring() {
+            const container = document.getElementById('child-activity-list');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const mockChildActivities = [
+                {
+                    time: '13:25',
+                    activity: '小明开始执行【阅读时间】任务',
+                    status: 'current',
+                    emoji: '📚'
+                },
+                {
+                    time: '12:45',
+                    activity: '小明完成【整理房间】任务，等待确认',
+                    status: 'pending',
+                    emoji: '🧹'
+                },
+                {
+                    time: '07:30',
+                    activity: '小明完成【晨练】任务，已确认',
+                    status: 'confirmed',
+                    emoji: '🏃‍♂️'
+                }
+            ];
+            
+            mockChildActivities.forEach(activity => {
+                let statusColor = 'gray';
+                let statusText = '';
+                
+                switch(activity.status) {
+                    case 'current':
+                        statusColor = 'yellow';
+                        statusText = '进行中';
+                        break;
+                    case 'pending':
+                        statusColor = 'purple';
+                        statusText = '待确认';
+                        break;
+                    case 'confirmed':
+                        statusColor = 'green';
+                        statusText = '已确认';
+                        break;
+                }
+                
+                const activityElement = document.createElement('div');
+                activityElement.className = 'bg-white rounded-xl p-4 card-shadow';
+                activityElement.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${activity.emoji}</span>
+                            <div>
+                                <p class="font-medium text-gray-800">${activity.activity}</p>
+                                <p class="text-sm text-gray-500">${activity.time}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-${statusColor}-100 text-${statusColor}-800">
+                                ${statusText}
+                            </span>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(activityElement);
+            });
+        }
+
+        // 家长专用功能 - 任务审核确认
+        function loadApproval() {
+            const container = document.getElementById('pending-approvals');
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const pendingTasks = tasks.filter(task => task.status === 'pending-confirm');
+            
+            if (pendingTasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <div class="text-4xl mb-4">✅</div>
+                        <p class="text-gray-500">暂无待审核的任务</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            pendingTasks.forEach(task => {
+                const approvalElement = document.createElement('div');
+                approvalElement.className = 'bg-white rounded-xl p-4 card-shadow';
+                approvalElement.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">${task.emoji}</span>
+                            <div>
+                                <h3 class="font-semibold text-gray-800">${task.name}</h3>
+                                <p class="text-sm text-gray-600">${task.startTime} - ${task.endTime}</p>
+                                <p class="text-sm text-purple-600">申请积分: ${task.selfPoints} ⭐</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3 pt-2">
+                            <button onclick="approveTask(${task.id})" class="flex-1 py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm">
+                                ✅ 确认完成
+                            </button>
+                            <button onclick="rejectTask(${task.id})" class="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">
+                                ❌ 要求重做
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(approvalElement);
+            });
+        }
+
+        // 家长专用功能 - 积分与奖励管理
+        function loadManagement() {
+            const container = document.getElementById('management-tools');
+            if (!container) return;
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="bg-white rounded-xl p-4 card-shadow">
+                        <h3 class="font-semibold text-gray-800 mb-3">💰 积分调整</h3>
+                        <div class="flex items-center space-x-3">
+                            <input type="number" id="points-adjustment" placeholder="输入积分数量" 
+                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" />
+                            <button onclick="adjustPoints('add')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">
+                                + 奖励
+                            </button>
+                            <button onclick="adjustPoints('subtract')" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                                - 扣除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 家长操作函数
+        function approveTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'confirmed';
+                currentUser.points += task.selfPoints;
+                currentUser.totalPoints += task.selfPoints;
+                updateUserInfo();
+                loadApproval();
+                renderTasks();
+                showToast(`✅ 已确认 ${task.name}，孩子获得 ${task.selfPoints} 积分`);
+            }
+        }
+
+        function rejectTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'past-incomplete';
+                loadApproval();
+                renderTasks();
+                showToast(`❌ 已要求重做 ${task.name}`);
+            }
+        }
+
+        function adjustPoints(action) {
+            const pointsInput = document.getElementById('points-adjustment');
+            const points = parseInt(pointsInput.value);
+            
+            if (!points || points <= 0) {
+                showToast('请输入有效的积分数量');
+                return;
+            }
+            
+            if (action === 'add') {
+                currentUser.points += points;
+                currentUser.totalPoints += points;
+                showToast(`🎉 已奖励 ${points} 积分`);
+            } else if (action === 'subtract') {
+                if (currentUser.points >= points) {
+                    currentUser.points -= points;
+                    showToast(`⚠️ 已扣除 ${points} 积分`);
+                } else {
+                    showToast('积分余额不足');
+                    return;
+                }
+            }
+            
+            updateUserInfo();
+            pointsInput.value = '';
+        }
+
+        // 注册和登录按钮（暂时显示提示）
+        function showRegister() {
+            showToast('注册功能开发中...');
+        }
+
+        function showLogin() {
+            showToast('登录功能开发中...');
+        }
+
+        // 家长专用功能
+        function loadMonitoring() {
+            const container = document.getElementById('child-activity-list');
+            if (!container) return;
+            const activities = [
+                { time: '13:25', activity: '小明开始执行【阅读时间】任务', status: 'current', emoji: '📚' },
+                { time: '12:45', activity: '小明完成【整理房间】任务，等待确认', status: 'pending', emoji: '🧹' }
+            ];
+            container.innerHTML = '';
+            activities.forEach(activity => {
+                let color = activity.status === 'current' ? 'yellow' : 'purple';
+                let text = activity.status === 'current' ? '进行中' : '待确认';
+                const el = document.createElement('div');
+                el.className = 'bg-white rounded-xl p-4 card-shadow';
+                el.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><span class="text-2xl mr-3">${activity.emoji}</span><div><p class="font-medium text-gray-800">${activity.activity}</p><p class="text-sm text-gray-500">${activity.time}</p></div></div><span class="px-2 py-1 rounded-full text-xs font-medium bg-${color}-100 text-${color}-800">${text}</span></div>`;
+                container.appendChild(el);
+            });
+        }
+
+        function loadApproval() {
+            const container = document.getElementById('pending-approvals');
+            if (!container) return;
+            const pendingTasks = tasks.filter(task => task.status === 'pending-confirm');
+            container.innerHTML = pendingTasks.length === 0 ? 
+                '<div class="text-center py-8"><div class="text-4xl mb-4">✅</div><p class="text-gray-500">暂无待审核的任务</p></div>' : '';
+            pendingTasks.forEach(task => {
+                const el = document.createElement('div');
+                el.className = 'bg-white rounded-xl p-4 card-shadow';
+                el.innerHTML = `<div class="space-y-4"><div class="flex items-center"><span class="text-2xl mr-3">${task.emoji}</span><div><h3 class="font-semibold text-gray-800">${task.name}</h3><p class="text-sm text-gray-600">${task.startTime} - ${task.endTime}</p><p class="text-sm text-purple-600">申请积分: ${task.selfPoints} ⭐</p></div></div><div class="flex space-x-3"><button onclick="approveTask(${task.id})" class="flex-1 py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm">✅ 确认完成</button><button onclick="rejectTask(${task.id})" class="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">❌ 要求重做</button></div></div>`;
+                container.appendChild(el);
+            });
+        }
+
+        function loadManagement() {
+            const container = document.getElementById('management-tools');
+            if (!container) return;
+            container.innerHTML = '<div class="bg-white rounded-xl p-4 card-shadow"><h3 class="font-semibold text-gray-800 mb-3">💰 积分调整</h3><div class="flex items-center space-x-3"><input type="number" id="points-adjustment" placeholder="输入积分数量" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" /><button onclick="adjustPoints(\'add\')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">+ 奖励</button><button onclick="adjustPoints(\'subtract\')" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">- 扣除</button></div></div>';
+        }
+
+        function approveTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'confirmed';
+                currentUser.points += task.selfPoints;
+                currentUser.totalPoints += task.selfPoints;
+                updateUserInfo();
+                loadApproval();
+                renderTasks();
+                showToast(`✅ 已确认 ${task.name}，孩子获得 ${task.selfPoints} 积分`);
+            }
+        }
+
+        function rejectTask(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'past-incomplete';
+                loadApproval();
+                renderTasks();
+                showToast(`❌ 已要求重做 ${task.name}`);
+            }
+        }
+
+        function adjustPoints(action) {
+            const pointsInput = document.getElementById('points-adjustment');
+            const points = parseInt(pointsInput.value);
+            if (!points || points <= 0) { showToast('请输入有效的积分数量'); return; }
+            if (action === 'add') {
+                currentUser.points += points;
+                currentUser.totalPoints += points;
+                showToast(`🎉 已奖励 ${points} 积分`);
+            } else if (action === 'subtract') {
+                if (currentUser.points >= points) {
+                    currentUser.points -= points;
+                    showToast(`⚠️ 已扣除 ${points} 积分`);
+                } else { showToast('积分余额不足'); return; }
+            }
+            updateUserInfo();
+            pointsInput.value = '';
+        }
+
+        // 页面加载时显示首页
+        document.addEventListener('DOMContentLoaded', showHomepage);
+
+        // 禁用双击缩放
+        document.addEventListener('touchstart', function (event) {
+            if (event.touches.length > 1) {
+                event.preventDefault();
+            }
+        });
+
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>

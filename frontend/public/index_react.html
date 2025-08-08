@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0" />
+    <meta name="theme-color" content="#667eea" />
+    <meta name="description" content="暑假计划助手 - 让孩子的暑假更有意义" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>暑假计划助手 - 智能时间轴版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .mobile-safe-area {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        @media (max-width: 768px) {
+            .text-4xl { font-size: 2rem; }
+            .text-3xl { font-size: 1.75rem; }
+            .text-2xl { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <noscript>您需要启用JavaScript才能运行此应用程序。</noscript>
+    <div id="root"></div>
+</body>
+</html>

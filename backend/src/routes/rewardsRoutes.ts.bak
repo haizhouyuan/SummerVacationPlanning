@@ -1,0 +1,37 @@
+import { Router } from 'express';
+import { body } from 'express-validator';
+import {
+  calculateGameTime,
+  getTodayGameTime,
+  useGameTime,
+  getSpecialRewards,
+} from '../controllers/rewardsController';
+import { authenticateToken } from '../middleware/auth';
+import { validateRequest } from '../middleware/validation';
+
+const router = Router();
+
+// Game time exchange validation
+const gameTimeValidation = [
+  body('pointsToSpend').isInt({ min: 1, max: 100 }),
+  body('gameType').optional().isIn(['normal', 'educational']),
+  body('date').optional().isISO8601().toDate(),
+];
+
+const useGameTimeValidation = [
+  body('minutesToUse').isInt({ min: 1, max: 300 }), // max 5 hours
+  body('gameSession').optional().isLength({ max: 100 }),
+];
+
+// All routes require authentication
+router.use(authenticateToken);
+
+// Game time management routes
+router.post('/game-time/calculate', gameTimeValidation, validateRequest, calculateGameTime);
+router.get('/game-time/today', getTodayGameTime);
+router.post('/game-time/use', useGameTimeValidation, validateRequest, useGameTime);
+
+// Special rewards
+router.get('/special', getSpecialRewards);
+
+export default router;

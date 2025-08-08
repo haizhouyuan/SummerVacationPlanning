@@ -1,0 +1,56 @@
+import { Router } from 'express';
+import { body } from 'express-validator';
+import {
+  createTask,
+  getTasks,
+  getTaskById,
+  updateTask,
+  deleteTask,
+  getRecommendedTasks,
+  getUserBehaviorInsights,
+} from '../controllers/taskController';
+import { authenticateToken } from '../middleware/mongoAuth';
+import { validateRequest } from '../middleware/validation';
+
+const router = Router();
+
+// Task validation
+const taskValidation = [
+  body('title').isLength({ min: 1, max: 100 }),
+  body('description').isLength({ min: 1, max: 500 }),
+  body('category').isIn(['exercise', 'reading', 'chores', 'learning', 'creativity', 'other']),
+  body('difficulty').isIn(['easy', 'medium', 'hard']),
+  body('estimatedTime').isInt({ min: 1, max: 480 }), // 1 minute to 8 hours
+  body('points').optional().isInt({ min: 1, max: 100 }),
+  body('requiresEvidence').optional().isBoolean(),
+  body('evidenceTypes').optional().isArray(),
+  body('tags').optional().isArray(),
+  body('isPublic').optional().isBoolean(),
+];
+
+const taskUpdateValidation = [
+  body('title').optional().isLength({ min: 1, max: 100 }),
+  body('description').optional().isLength({ min: 1, max: 500 }),
+  body('category').optional().isIn(['exercise', 'reading', 'chores', 'learning', 'creativity', 'other']),
+  body('difficulty').optional().isIn(['easy', 'medium', 'hard']),
+  body('estimatedTime').optional().isInt({ min: 1, max: 480 }),
+  body('points').optional().isInt({ min: 1, max: 100 }),
+  body('requiresEvidence').optional().isBoolean(),
+  body('evidenceTypes').optional().isArray(),
+  body('tags').optional().isArray(),
+  body('isPublic').optional().isBoolean(),
+];
+
+// All routes require authentication
+router.use(authenticateToken);
+
+// Task CRUD routes
+router.post('/', taskValidation, validateRequest, createTask);
+router.get('/', getTasks);
+router.get('/recommended', getRecommendedTasks); // Must come before /:taskId
+router.get('/insights', getUserBehaviorInsights);
+router.get('/:taskId', getTaskById);
+router.put('/:taskId', taskUpdateValidation, validateRequest, updateTask);
+router.delete('/:taskId', deleteTask);
+
+export default router;
