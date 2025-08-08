@@ -6,7 +6,7 @@
     "dev": "nodemon src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest run --coverage",
     "create-indexes": "node scripts/create-indexes.js",
     "db:optimize": "node scripts/create-indexes.js"
   },
@@ -37,8 +37,10 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^24.0.13",
+    "@vitest/coverage-istanbul": "^1.6.1",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^1.5.0"
   }
 }
