@@ -44,73 +44,81 @@ export enum ErrorType {
 /**
  * Create initial data state
  */
-export const createInitialDataState = <T = any>(initialData: T | null = null): DataState<T> => ({
-  data: initialData,
-  loading: {
-    isLoading: false,
-  },
-  error: {
-    hasError: false,
-    canRetry: true,
-  },
-});
+export const createInitialDataState = function<T = any>(initialData: T | null = null): DataState<T> {
+  return {
+    data: initialData,
+    loading: {
+      isLoading: false,
+    },
+    error: {
+      hasError: false,
+      canRetry: true,
+    },
+  };
+};
 
 /**
  * Update loading state
  */
-export const setLoadingState = <T>(
+export const setLoadingState = function<T>(
   currentState: DataState<T>,
   loading: Partial<LoadingState>
-): DataState<T> => ({
-  ...currentState,
-  loading: {
-    ...currentState.loading,
-    ...loading,
-  },
-  error: {
-    ...currentState.error,
-    hasError: false, // Clear errors when starting new loading
-  },
-});
+): DataState<T> {
+  return {
+    ...currentState,
+    loading: {
+      ...currentState.loading,
+      ...loading,
+    },
+    error: {
+      ...currentState.error,
+      hasError: false, // Clear errors when starting new loading
+    },
+  };
+};
 
 /**
  * Update error state
  */
-export const setErrorState = <T>(
+export const setErrorState = function<T>(
   currentState: DataState<T>,
   error: Partial<ErrorState>
-): DataState<T> => ({
-  ...currentState,
-  loading: {
-    ...currentState.loading,
-    isLoading: false, // Stop loading when error occurs
-  },
-  error: {
-    ...currentState.error,
-    hasError: true,
-    ...error,
-  },
-});
+): DataState<T> {
+  return {
+    ...currentState,
+    loading: {
+      ...currentState.loading,
+      isLoading: false, // Stop loading when error occurs
+    },
+    error: {
+      ...currentState.error,
+      hasError: true,
+      ...error,
+    },
+  };
+};
 
 /**
  * Update data state on success
  */
-export const setDataState = <T>(
+export const setDataState = function<T>(
   currentState: DataState<T>,
   data: T
-): DataState<T> => ({
-  ...currentState,
-  data,
-  loading: {
-    ...currentState.loading,
-    isLoading: false,
-  },
-  error: {
-    ...currentState.error,
-    hasError: false,
-  },
-  lastUpdated: new Date(),
-});
+): DataState<T> {
+  return {
+    ...currentState,
+    data,
+    loading: {
+      ...currentState.loading,
+      isLoading: false,
+    },
+    error: {
+      ...currentState.error,
+      hasError: false,
+    },
+    lastUpdated: new Date(),
+  };
+};
 
 /**
  * Categorize error based on error object or message
@@ -323,7 +331,7 @@ export const EmptyState: React.FC<{
 /**
  * Custom hook for managing data state with error handling
  */
-export const useDataState = <T = any>(initialData?: T) => {
+export const useDataState = function<T = any>(initialData?: T) {
   const [state, setState] = React.useState<DataState<T>>(createInitialDataState(initialData));
 
   const setLoading = React.useCallback((loading: Partial<LoadingState>) => {
@@ -355,7 +363,7 @@ export const useDataState = <T = any>(initialData?: T) => {
 /**
  * Retry logic with exponential backoff
  */
-export const withRetry = async <T>(
+export const withRetry = async function<T>(
   operation: () => Promise<T>,
   options: {
     maxRetries?: number;
@@ -363,7 +371,7 @@ export const withRetry = async <T>(
     maxDelay?: number;
     onRetry?: (attempt: number, error: any) => void;
   } = {}
-): Promise<T> => {
+): Promise<T> {
   const {
     maxRetries = 3,
     baseDelay = 1000,

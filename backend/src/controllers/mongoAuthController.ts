@@ -714,15 +714,16 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     console.error('Get dashboard stats error:', error);
     
     // Provide fallback statistics in case of database issues
+    const userInfo = req.user || { id: '', displayName: '', email: '', points: 0, currentStreak: 0, medals: {} };
     const fallbackStats = {
       user: {
-        id: req.user.id,
-        name: req.user.displayName,
-        email: req.user.email,
-        points: req.user.points || 0,
-        level: Math.floor((req.user.points || 0) / 100) + 1,
-        currentStreak: req.user.currentStreak || 0,
-        medals: req.user.medals || { bronze: false, silver: false, gold: false, diamond: false },
+        id: userInfo.id,
+        name: userInfo.displayName,
+        email: userInfo.email,
+        points: userInfo.points || 0,
+        level: Math.floor((userInfo.points || 0) / 100) + 1,
+        currentStreak: userInfo.currentStreak || 0,
+        medals: userInfo.medals || { bronze: false, silver: false, gold: false, diamond: false },
       },
       weeklyStats: {
         completed: 0,
@@ -746,8 +747,8 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       performance: {
         thisWeekCompletion: 0,
         pointsPerTask: 0,
-        streakProgress: req.user.currentStreak || 0,
-        nextLevelPoints: (Math.floor((req.user.points || 0) / 100) + 1) * 100 - (req.user.points || 0),
+        streakProgress: userInfo.currentStreak || 0,
+        nextLevelPoints: (Math.floor((userInfo.points || 0) / 100) + 1) * 100 - (userInfo.points || 0),
       }
     };
     

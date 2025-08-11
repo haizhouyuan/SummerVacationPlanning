@@ -28,6 +28,18 @@ npm run create-indexes  # Create MongoDB database indexes
 npm run db:optimize     # Optimize database with indexes
 ```
 
+### Statistics System Testing
+```bash
+# Run statistics logic validation
+node test-statistics-logic.js  # Validate core statistics calculations
+
+# Backend unit tests (requires Jest setup)
+# cd backend && npm test (test files in backend/src/__tests__/)
+
+# Frontend unit tests with coverage
+cd frontend && npm test -- --coverage --watchAll=false
+```
+
 ### End-to-End Testing (Cypress)
 ```bash
 cd frontend
