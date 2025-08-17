@@ -652,11 +652,6 @@
 
         // 根据用户角色设置界面
         function setupUserInterface() {
-            console.log("setupUserInterface called - v2.0");
-            console.log("currentUser:", currentUser);
-            const isParent = currentUser && currentUser.role === "parent";
-            console.log("isParent:", isParent);
-            alert("Debug: setupUserInterface called, isParent=" + isParent);
             console.log('setupUserInterface called');
             console.log('currentUser:', currentUser);
             const isParent = currentUser && currentUser.role === 'parent';
@@ -1954,86 +1949,6 @@
 
         function showLogin() {
             showToast('登录功能开发中...');
-        }
-
-        // 家长专用功能
-        function loadMonitoring() {
-            const container = document.getElementById('child-activity-list');
-            if (!container) return;
-            const activities = [
-                { time: '13:25', activity: '小明开始执行【阅读时间】任务', status: 'current', emoji: '📚' },
-                { time: '12:45', activity: '小明完成【整理房间】任务，等待确认', status: 'pending', emoji: '🧹' }
-            ];
-            container.innerHTML = '';
-            activities.forEach(activity => {
-                let color = activity.status === 'current' ? 'yellow' : 'purple';
-                let text = activity.status === 'current' ? '进行中' : '待确认';
-                const el = document.createElement('div');
-                el.className = 'bg-white rounded-xl p-4 card-shadow';
-                el.innerHTML = `<div class="flex items-center justify-between"><div class="flex items-center"><span class="text-2xl mr-3">${activity.emoji}</span><div><p class="font-medium text-gray-800">${activity.activity}</p><p class="text-sm text-gray-500">${activity.time}</p></div></div><span class="px-2 py-1 rounded-full text-xs font-medium bg-${color}-100 text-${color}-800">${text}</span></div>`;
-                container.appendChild(el);
-            });
-        }
-
-        function loadApproval() {
-            const container = document.getElementById('pending-approvals');
-            if (!container) return;
-            const pendingTasks = tasks.filter(task => task.status === 'pending-confirm');
-            container.innerHTML = pendingTasks.length === 0 ? 
-                '<div class="text-center py-8"><div class="text-4xl mb-4">✅</div><p class="text-gray-500">暂无待审核的任务</p></div>' : '';
-            pendingTasks.forEach(task => {
-                const el = document.createElement('div');
-                el.className = 'bg-white rounded-xl p-4 card-shadow';
-                el.innerHTML = `<div class="space-y-4"><div class="flex items-center"><span class="text-2xl mr-3">${task.emoji}</span><div><h3 class="font-semibold text-gray-800">${task.name}</h3><p class="text-sm text-gray-600">${task.startTime} - ${task.endTime}</p><p class="text-sm text-purple-600">申请积分: ${task.selfPoints} ⭐</p></div></div><div class="flex space-x-3"><button onclick="approveTask(${task.id})" class="flex-1 py-2 px-4 bg-green-500 text-white rounded-lg hover:bg-green-600 text-sm">✅ 确认完成</button><button onclick="rejectTask(${task.id})" class="flex-1 py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm">❌ 要求重做</button></div></div>`;
-                container.appendChild(el);
-            });
-        }
-
-        function loadManagement() {
-            const container = document.getElementById('management-tools');
-            if (!container) return;
-            container.innerHTML = '<div class="bg-white rounded-xl p-4 card-shadow"><h3 class="font-semibold text-gray-800 mb-3">💰 积分调整</h3><div class="flex items-center space-x-3"><input type="number" id="points-adjustment" placeholder="输入积分数量" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg" /><button onclick="adjustPoints(\'add\')" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">+ 奖励</button><button onclick="adjustPoints(\'subtract\')" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">- 扣除</button></div></div>';
-        }
-
-        function approveTask(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                task.status = 'confirmed';
-                currentUser.points += task.selfPoints;
-                currentUser.totalPoints += task.selfPoints;
-                updateUserInfo();
-                loadApproval();
-                renderTasks();
-                showToast(`✅ 已确认 ${task.name}，孩子获得 ${task.selfPoints} 积分`);
-            }
-        }
-
-        function rejectTask(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                task.status = 'past-incomplete';
-                loadApproval();
-                renderTasks();
-                showToast(`❌ 已要求重做 ${task.name}`);
-            }
-        }
-
-        function adjustPoints(action) {
-            const pointsInput = document.getElementById('points-adjustment');
-            const points = parseInt(pointsInput.value);
-            if (!points || points <= 0) { showToast('请输入有效的积分数量'); return; }
-            if (action === 'add') {
-                currentUser.points += points;
-                currentUser.totalPoints += points;
-                showToast(`🎉 已奖励 ${points} 积分`);
-            } else if (action === 'subtract') {
-                if (currentUser.points >= points) {
-                    currentUser.points -= points;
-                    showToast(`⚠️ 已扣除 ${points} 积分`);
-                } else { showToast('积分余额不足'); return; }
-            }
-            updateUserInfo();
-            pointsInput.value = '';
         }
 
         // 页面加载时显示首页

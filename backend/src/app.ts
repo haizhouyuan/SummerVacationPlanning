@@ -46,6 +46,11 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Root endpoint for quick sanity check
+app.get('/', (req, res) => {
+  res.type('text/plain').send('Summer Vacation API is running. See /health');
+});
+
 // MongoDB connection handled in server.ts
 
 // API routes

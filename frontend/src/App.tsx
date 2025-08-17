@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import LiteDashboard from './pages/LiteDashboard';
 import ParentDashboard from './pages/ParentDashboard';
 import TaskPlanning from './pages/TaskPlanning';
 import TodayTasks from './pages/TodayTasks';
@@ -84,6 +85,14 @@ const AppContent: React.FC = () => {
         path="/achievements"
         element={
           <AchievementSquare />
+        }
+      />
+      <Route
+        path="/lite"
+        element={
+          <ProtectedRoute>
+            <LiteDashboard />
+          </ProtectedRoute>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
