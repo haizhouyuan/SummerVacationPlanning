@@ -1,0 +1,4 @@
+mode: immediate
+silent: true
+branchName: 'feature/${issue.number}-${issue.title}'
+autoCloseIssue: false
