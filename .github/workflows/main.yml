@@ -1,40 +1,19 @@
-# GitHub Actions workflow to automatically create a branch when a new issue is opened
-# This workflow triggers when a new issue is opened and creates a new branch
-# based on the issue title and number. The branch is prefixed with `feature/`.
-# The `peter-evans/create-issue-branch` action automatically sanitizes
-# the issue title to form a valid branch name and creates the branch.
-
 name: Create Issue Branch
 
 on:
-  # Trigger the workflow only when a new issue is opened
   issues:
     types: [opened]
+
+permissions:
+  contents: write
+  issues: read
 
 jobs:
   create-branch:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository so that the action can create a branch against it
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Create feature branch from issue
+        uses: peter-evans/create-issue-branch@v5
         with:
-          # Fetch all history so that the branch can be created from the default branch
-          fetch-depth: 0
-
-      # Use the peter-evans/create-issue-branch action to create a branch for the new issue
-      # This action uses the issue title and number from the event payload to generate a branch name.
-      # The prefix option can be customized (here we use 'feature/') and the
-      # separator specifies how the parts of the branch name are joined.
-      - name: Create branch for issue
-        uses: peter-evans/create-issue-branch@v2
-        with:
-          # Prefix for the new branch name. Adjust if you want a different naming convention
-          prefix: "feature/"
-          # Separator between the prefix/issue title/number. Hyphen is typical
-          separator: "-"
-          # Optionally specify the default branch from which the issue branches should be created
-          # If omitted, the default branch from the repository settings is used (e.g., master)
-          # base: master
-          # Whether to overwrite an existing branch with the same name. Usually false to avoid overwriting
-          overwrite: false
+          prefix: feature/
+          separator: '-'
