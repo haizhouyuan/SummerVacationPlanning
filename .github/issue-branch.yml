@@ -1,8 +1,8 @@
 mode: immediate
 silent: true
 defaultBranch: 'master'
-branchName: 'feature/${issue.number}-${issue.title,}'
-openPR: true
+branchName: 'feature/${issue.number}-${issue.title}'
+openPR: false
 prTarget: 'master'
 prSkipCI: false
 copyIssueDescriptionToPR: true
