@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create feature branch from issue
-        uses: peter-evans/create-issue-branch@v5
+        uses: robvanderleek/create-issue-branch@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          prefix: feature/
-          separator: '-'
+          branchName: feature/${{ github.event.issue.number }}-${{ github.event.issue.title }}
+          separator: "-"
+          autoCloseIssue: false
