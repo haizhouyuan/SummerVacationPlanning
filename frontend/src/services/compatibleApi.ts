@@ -114,42 +114,220 @@ const mockTasks = [
   }
 ];
 
-const mockDailyTasks = [
-  {
-    id: '1',
+const getMockDailyTasks = () => {
+  const today = new Date();
+  const tasks = [];
+  
+  // Generate some completed tasks for the past few days
+  for (let i = 0; i < 10; i++) {
+    const pastDate = new Date(today);
+    pastDate.setDate(today.getDate() - i);
+    const dateStr = pastDate.toISOString().split('T')[0];
+    
+    // Add 1-3 completed tasks per day
+    const dailyTaskCount = Math.floor(Math.random() * 3) + 1;
+    for (let j = 0; j < dailyTaskCount; j++) {
+      const taskIndex = Math.floor(Math.random() * mockTasks.length);
+      const baseTask = mockTasks[taskIndex];
+      
+      tasks.push({
+        id: `${i * 10 + j + 1}`,
+        taskId: baseTask.id,
+        userId: 'demo-user',
+        date: dateStr,
+        status: 'completed',
+        plannedTime: `${8 + j * 2}:00`,
+        pointsEarned: baseTask.points,
+        evidenceText: `完成了${baseTask.title}`,
+        completedAt: new Date(pastDate.getTime() + (8 + j * 2) * 60 * 60 * 1000),
+        createdAt: new Date(pastDate),
+        updatedAt: new Date(pastDate),
+        task: baseTask
+      });
+    }
+  }
+  
+  // Add today's planned tasks
+  tasks.push({
+    id: 'today-1',
     taskId: '1',
     userId: 'demo-user',
-    date: new Date().toISOString().split('T')[0],
+    date: today.toISOString().split('T')[0],
     status: 'planned',
     plannedTime: '09:00',
     pointsEarned: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     task: mockTasks[0]
-  },
-  {
-    id: '2',
-    taskId: '2',
-    userId: 'demo-user',
-    date: new Date().toISOString().split('T')[0],
-    status: 'completed',
-    plannedTime: '16:00',
-    pointsEarned: 20,
-    evidenceText: '完成了30分钟跑步，感觉很棒！',
-    completedAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    task: mockTasks[1]
-  }
-];
+  });
+  
+  return tasks;
+};
+
+const mockDailyTasks = getMockDailyTasks();
 
 // 网络兼容的API服务
 export const compatibleApiService = {
-  // Dashboard statistics
-  async getDashboardStats() {
+  // Authentication methods
+  async login(credentials: { username?: string; email?: string; password?: string; role?: string }) {
+    console.log('Compatible API: Demo login with credentials:', credentials);
+    
+    // Simulate login delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const role = credentials.role || 'student';
+    const mockUser = {
+      id: role === 'student' ? 'demo-user-123' : 'demo-parent-456',
+      username: role === 'student' ? 'demo_student' : 'demo_parent',
+      email: role === 'student' ? 'student@demo.com' : 'parent@demo.com',
+      role: role,
+      displayName: role === 'student' ? '演示学生' : '演示家长',
+      points: role === 'student' ? 240 : 0,
+      level: role === 'student' ? 3 : 1,
+      currentStreak: role === 'student' ? 3 : 0,
+      medals: {
+        bronze: role === 'student',
+        silver: false,
+        gold: false,
+        diamond: false
+      },
+      children: role === 'parent' ? ['demo-user-123'] : undefined,
+      avatar: '',
+      settings: {
+        language: 'zh-CN',
+        notifications: true,
+        theme: 'light'
+      },
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date()
+    };
+
+    const token = `demo_jwt_token_${role}_${Date.now()}`;
+    
     return Promise.resolve({
       success: true,
-      data: { stats: mockDashboardStats }
+      data: {
+        user: mockUser,
+        token: token,
+        tokenType: 'Bearer',
+        expiresIn: 86400 // 24 hours
+      },
+      message: `${role === 'student' ? '学生' : '家长'}演示登录成功`
+    });
+  },
+
+  async register(userData: any) {
+    console.log('Compatible API: Demo register with data:', userData);
+    
+    // Simulate registration delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    const newUser = {
+      id: `demo-user-${Date.now()}`,
+      username: userData.username || 'demo_user',
+      email: userData.email || 'demo@example.com',
+      role: userData.role || 'student',
+      displayName: userData.displayName || '演示用户',
+      points: 0,
+      level: 1,
+      currentStreak: 0,
+      medals: { bronze: false, silver: false, gold: false, diamond: false },
+      settings: {
+        language: 'zh-CN',
+        notifications: true,
+        theme: 'light'
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const token = `demo_jwt_token_${newUser.role}_${Date.now()}`;
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        user: newUser,
+        token: token,
+        tokenType: 'Bearer',
+        expiresIn: 86400
+      },
+      message: '演示账户注册成功'
+    });
+  },
+
+  async logout() {
+    console.log('Compatible API: Demo logout');
+    
+    // Simulate logout delay
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return Promise.resolve({
+      success: true,
+      data: {},
+      message: '演示账户已登出'
+    });
+  },
+
+  async refreshToken(oldToken: string) {
+    console.log('Compatible API: Demo token refresh');
+    
+    const newToken = `demo_jwt_token_refreshed_${Date.now()}`;
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        token: newToken,
+        tokenType: 'Bearer',
+        expiresIn: 86400
+      },
+      message: '演示令牌刷新成功'
+    });
+  },
+
+  async validateToken(token: string) {
+    console.log('Compatible API: Demo token validation');
+    
+    // Always validate demo tokens as valid
+    if (token.includes('demo_jwt_token')) {
+      return Promise.resolve({
+        success: true,
+        data: { valid: true },
+        message: '演示令牌有效'
+      });
+    }
+    
+    return Promise.resolve({
+      success: false,
+      data: { valid: false },
+      message: '演示令牌无效'
+    });
+  },
+
+  // Dashboard statistics
+  async getDashboardStats() {
+    // 获取当前用户信息以提供角色相关的数据
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const userRole = localStorage.getItem('user_role') || 'student';
+    
+    console.log('🔄 Compatible API: Getting dashboard stats for role:', userRole);
+    
+    // 根据角色调整数据
+    const roleBasedStats = {
+      ...mockDashboardStats,
+      user: {
+        ...mockDashboardStats.user,
+        id: currentUser.id || (userRole === 'student' ? 'demo-user-123' : 'demo-parent-456'),
+        name: currentUser.displayName || (userRole === 'student' ? '演示学生' : '演示家长'),
+        email: currentUser.email || (userRole === 'student' ? 'student@demo.com' : 'parent@demo.com'),
+        points: currentUser.points || (userRole === 'student' ? 240 : 0),
+        level: currentUser.level || (userRole === 'student' ? 3 : 1),
+        currentStreak: currentUser.currentStreak || (userRole === 'student' ? 3 : 0),
+      }
+    };
+    
+    return Promise.resolve({
+      success: true,
+      data: { stats: roleBasedStats }
     });
   },
 
@@ -185,10 +363,65 @@ export const compatibleApiService = {
   },
 
   // Daily task management
-  async getDailyTasks(params?: { date?: string }) {
+  async getDailyTasks(params?: { 
+    date?: string; 
+    startDate?: string; 
+    endDate?: string; 
+    status?: string; 
+    limit?: number;
+    category?: string;
+  }) {
+    console.log('Compatible API: Getting daily tasks with params:', params);
+    
+    let filteredTasks = [...mockDailyTasks];
+    
+    // Apply date filtering
+    if (params?.date) {
+      filteredTasks = filteredTasks.filter(task => 
+        task.date === params.date
+      );
+    }
+    
+    // Apply date range filtering
+    if (params?.startDate && params?.endDate) {
+      filteredTasks = filteredTasks.filter(task => {
+        let taskDate: string;
+        const completedAt = (task as any).completedAt;
+        if (completedAt) {
+          if (completedAt instanceof Date) {
+            taskDate = completedAt.toISOString().split('T')[0];
+          } else if (typeof completedAt === 'string') {
+            taskDate = completedAt.split('T')[0];
+          } else {
+            taskDate = task.date;
+          }
+        } else {
+          taskDate = task.date;
+        }
+        return taskDate >= params.startDate! && taskDate <= params.endDate!;
+      });
+    }
+    
+    // Apply status filtering
+    if (params?.status) {
+      filteredTasks = filteredTasks.filter(task => task.status === params.status);
+    }
+    
+    // Apply category filtering
+    if (params?.category) {
+      filteredTasks = filteredTasks.filter(task => 
+        task.task?.category === params.category
+      );
+    }
+    
+    // Apply limit
+    if (params?.limit) {
+      filteredTasks = filteredTasks.slice(0, params.limit);
+    }
+    
     return Promise.resolve({
       success: true,
-      data: { dailyTasks: mockDailyTasks }
+      data: { dailyTasks: filteredTasks }
     });
   },
 
@@ -320,6 +553,159 @@ export const compatibleApiService = {
     });
   },
 
+  // Add getPublicDailyTasks method for compatibility
+  async getPublicDailyTasks(params?: any) {
+    console.log('Compatible API: Using getPublicDailyTasks with mock data', params);
+    
+    // Return mock data similar to getDailyTasks format
+    return Promise.resolve({
+      success: true,
+      data: {
+        dailyTasks: mockDailyTasks.slice(0, params?.limit || 10),
+        pagination: {
+          total: mockDailyTasks.length,
+          limit: params?.limit || 10,
+          offset: params?.offset || 0,
+          hasMore: false,
+        }
+      }
+    });
+  },
+
+  // Add getWeeklyStats method for compatibility
+  async getWeeklyStats(params?: any) {
+    console.log('Compatible API: Using getWeeklyStats with mock data', params);
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        userId: 'demo-user-123',
+        weekStart: params?.weekStart || new Date().toISOString().split('T')[0],
+        tasks: mockDailyTasks.slice(0, 5),
+        totalPlannedTasks: 5,
+        totalCompletedTasks: 3,
+        totalPointsEarned: 60,
+        completionRate: 60
+      }
+    });
+  },
+
+  // Add getRecommendedTasks method for compatibility
+  async getRecommendedTasks(params?: any) {
+    console.log('Compatible API: Using getRecommendedTasks with mock data', params);
+    
+    const mockRecommendations = [
+      {
+        task: mockTasks[0],
+        score: 0.95,
+        reason: '根据您的阅读习惯，这个任务非常适合您'
+      },
+      {
+        task: mockTasks[1],
+        score: 0.87,
+        reason: '数学练习有助于提升逻辑思维能力'
+      },
+      {
+        task: mockTasks[2],
+        score: 0.78,
+        reason: '适量运动有助于身体健康和学习效率'
+      }
+    ];
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        recommendations: mockRecommendations.slice(0, params?.limit || 3)
+      }
+    });
+  },
+
+  // Game time management methods
+  async getTodayGameTime() {
+    console.log('Compatible API: Getting today game time');
+    
+    const mockGameTimeStats = {
+      baseGameTime: 60,
+      bonusTimeEarned: 30,
+      totalAvailable: 90,
+      totalUsed: 20,
+      remainingTime: 70
+    };
+    
+    return Promise.resolve({
+      success: true,
+      data: { gameTimeStats: mockGameTimeStats }
+    });
+  },
+
+  async calculateGameTime(params: { pointsToSpend: number; gameType: string }) {
+    console.log('Compatible API: Calculating game time', params);
+    
+    const rate = params.gameType === 'educational' ? 10 : 5;
+    const minutesGranted = params.pointsToSpend * rate;
+    const isFreeTime = params.gameType === 'educational' && minutesGranted <= 20;
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        minutesGranted,
+        pointsSpent: isFreeTime ? 0 : params.pointsToSpend,
+        isFreeTime
+      }
+    });
+  },
+
+  async getSpecialRewards() {
+    console.log('Compatible API: Getting special rewards');
+    
+    const mockSpecialRewards = [
+      {
+        id: '1',
+        title: '游戏机时间',
+        description: '获得2小时Switch游戏时间',
+        pointsCost: 100,
+        category: 'game',
+        available: true
+      },
+      {
+        id: '2',
+        title: '户外活动',
+        description: '去游乐园玩一天',
+        pointsCost: 200,
+        category: 'experience',
+        available: false
+      },
+      {
+        id: '3',
+        title: '家庭电影夜',
+        description: '全家一起看电影+爆米花',
+        pointsCost: 50,
+        category: 'family',
+        available: true
+      }
+    ];
+    
+    return Promise.resolve({
+      success: true,
+      data: { specialRewards: mockSpecialRewards }
+    });
+  },
+
+  async createRedemption(params: { rewardTitle: string; rewardDescription: string; pointsCost: number }) {
+    console.log('Compatible API: Creating redemption', params);
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        id: Date.now().toString(),
+        ...params,
+        status: 'pending',
+        createdAt: new Date()
+      },
+      message: '兑换请求已提交'
+    });
+  },
+
   // Fallback method for any other API calls
   async makeRequest(endpoint: string, options: any = {}) {
     console.log(`Compatible API: Making request to ${endpoint}`, options);
@@ -353,8 +739,8 @@ const testApiConnection = async (timeout: number = 5000): Promise<boolean> => {
 
     // Try to connect to the actual API endpoint
     const testUrl = process.env.REACT_APP_API_URL 
-      ? `${process.env.REACT_APP_API_URL}/api/health`
-      : 'http://localhost:3000/api/health';
+      ? `${process.env.REACT_APP_API_URL}/health`
+      : 'http://localhost:5000/api/health';
 
     const response = await fetch(testUrl, {
       method: 'GET',
@@ -437,17 +823,25 @@ export const detectNetworkAndGetApiService = async (options: {
   forceRefresh?: boolean;
   timeout?: number;
 } = {}) => {
-  const { forceRefresh = false, timeout = 3000 } = options;
+  const { forceRefresh = false } = options;
 
   try {
-    // Check for explicit configuration
+    // 检查演示模式的多种方式
+    const isDemoMode = 
+      localStorage.getItem('isDemo') === 'true' ||
+      localStorage.getItem('currentUser')?.includes('demo') ||
+      localStorage.getItem('user_email')?.includes('demo') ||
+      localStorage.getItem('auth_token')?.includes('demo_jwt_token');
+
     const forceCompatibleMode = 
       process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
       localStorage.getItem('use_compatible_api') === 'true' ||
-      localStorage.getItem('api_mode') === 'compatible';
+      localStorage.getItem('api_mode') === 'compatible' ||
+      isDemoMode; // 演示模式强制使用兼容API
 
     if (forceCompatibleMode) {
-      console.log('🔄 Using compatible API service (forced by configuration)');
+      const reason = isDemoMode ? 'demo mode' : 'configuration';
+      console.log(`🔄 Using compatible API service (forced by ${reason})`);
       return compatibleApiService;
     }
 
@@ -482,14 +876,28 @@ export const detectNetworkAndGetApiService = async (options: {
  * Synchronous version for cases where async detection isn't possible
  */
 export const detectNetworkAndGetApiServiceSync = () => {
-  // Check for explicit configuration first
+  // 检查演示模式的多种方式
+  const isDemoMode = 
+    localStorage.getItem('isDemo') === 'true' ||
+    localStorage.getItem('currentUser')?.includes('demo') ||
+    localStorage.getItem('user_email')?.includes('demo') ||
+    localStorage.getItem('auth_token')?.includes('demo_jwt_token');
+
   const forceCompatibleMode = 
     process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
     localStorage.getItem('use_compatible_api') === 'true' ||
-    localStorage.getItem('api_mode') === 'compatible';
+    localStorage.getItem('api_mode') === 'compatible' ||
+    isDemoMode; // 演示模式强制使用兼容API
 
   if (forceCompatibleMode) {
-    console.log('🔄 Using compatible API service (sync - forced by configuration)');
+    const reason = isDemoMode ? 'demo mode' : 'configuration';
+    console.log(`🔄 Using compatible API service (sync - forced by ${reason})`);
+    console.log('📋 Demo mode indicators:', {
+      isDemo: localStorage.getItem('isDemo'),
+      currentUser: localStorage.getItem('currentUser')?.slice(0, 50),
+      userEmail: localStorage.getItem('user_email'),
+      authToken: localStorage.getItem('auth_token')?.slice(0, 30)
+    });
     return compatibleApiService;
   }
 

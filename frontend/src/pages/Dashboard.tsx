@@ -6,137 +6,93 @@ import PointsDisplay from '../components/PointsDisplay';
 import ProgressBar from '../components/ProgressBar';
 import CelebrationModal from '../components/CelebrationModal';
 import AchievementBadge from '../components/AchievementBadge';
-import { LoadingSpinner, ErrorDisplay, useDataState, withRetry } from '../utils/errorHandling';
 import SummerProgressTracker from '../components/SummerProgressTracker';
 import PointsHistory from '../components/PointsHistory';
 
 const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [showCelebration, setShowCelebration] = useState(false);
   const [showPointsHistory, setShowPointsHistory] = useState(false);
-  
-  // Use the new data state management hook
-  const statsState = useDataState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<any>(null);
 
   // Load dashboard statistics
-  useEffect(() => {
-    if (user) {
-      loadDashboardStats();
-    }
-  }, [user]);
-
   const loadDashboardStats = async () => {
-    statsState.setLoading({ 
-      isLoading: true, 
-      loadingMessage: '正在加载统计数据...' 
-    });
+    if (!user) return;
+    
+    setLoading(true);
+    setError(null);
 
     try {
-      const result = await withRetry(
-        async () => {
-          const apiService = detectNetworkAndGetApiServiceSync();
-          const response = await apiService.getDashboardStats() as any;
-          
-          if (!response.success) {
-            throw new Error(response.error || '加载统计数据失败');
-          }
-          
-          return response.data.stats;
-        },
-        {
-          maxRetries: 2,
-          baseDelay: 1000,
-          onRetry: (attempt, error) => {
-            console.warn(`Dashboard stats loading attempt ${attempt} failed:`, error);
-            statsState.setLoading({ 
-              isLoading: true, 
-              loadingMessage: `重试中... (${attempt}/2)` 
-            });
-          }
-        }
-      );
-
-      statsState.setData(result);
+      const apiService = detectNetworkAndGetApiServiceSync();
+      const response = await apiService.getDashboardStats() as any;
+      
+      if (!response.success) {
+        throw new Error(response.error || '加载统计数据失败');
+      }
+      
+      setStats(response.data.stats);
     } catch (error: any) {
       console.error('Error loading dashboard stats:', error);
-      statsState.setError(error, '统计数据加载', loadDashboardStats);
+      setError(error.message || '加载统计数据失败');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  useEffect(() => {
+    loadDashboardStats();
+  }, [user]);
 
   // Loading state
-  if (!user || statsState.loading.isLoading) {
+  if (!user || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-        <LoadingSpinner
-          size="lg"
-          message={statsState.loading.loadingMessage || '加载中...'}
-          className="text-center"
-        />
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">正在加载统计数据...</p>
       </div>
     );
   }
 
   // Error state
-  if (statsState.error.hasError || !statsState.data) {
+  if (error || !stats) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-        <div className="max-w-md mx-auto p-6">
-          <ErrorDisplay
-            error={statsState.error}
-            size="lg"
-            className="shadow-cartoon-lg"
-          />
+      <div className="p-6">
+        <div className="max-w-md mx-auto bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <div className="text-red-600 text-xl mb-2">⚠️</div>
+          <h3 className="text-red-800 font-semibold mb-2">加载失败</h3>
+          <p className="text-red-600 text-sm mb-4">{error || '无法加载统计数据'}</p>
+          <button 
+            onClick={loadDashboardStats}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            重试
+          </button>
         </div>
       </div>
     );
   }
 
-  const stats = statsState.data;
+  // Provide default fallback data structure to prevent rendering errors
+  const safeStats = {
+    user: {
+      level: stats?.user?.level || 1,
+      currentStreak: stats?.user?.currentStreak || 0,
+      ...stats?.user
+    },
+    weeklyStats: {
+      completed: stats?.weeklyStats?.completed || 0,
+      ...stats?.weeklyStats
+    },
+    weeklyGoal: stats?.weeklyGoal || 7,
+    achievements: stats?.achievements || [],
+    ...stats
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cartoon-light via-primary-50 to-secondary-50">
-      <div className="bg-white shadow-cartoon">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="h-12 w-12 bg-gradient-to-br from-cartoon-green to-success-400 rounded-cartoon flex items-center justify-center animate-float">
-                <span className="text-white text-xl font-bold">🏖️</span>
-              </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold text-cartoon-dark font-fun">暑假计划</h1>
-                <p className="text-sm text-cartoon-gray">让假期更精彩 ✨</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-cartoon-dark">{user.displayName}</p>
-                <p className="text-xs text-cartoon-gray">
-                  {user.role === 'student' ? '👨‍🎓 学生' : '👨‍👩‍👧‍👦 家长'} • 等级 {stats.user.level}
-                </p>
-              </div>
-              <PointsDisplay points={user.points} size="sm" />
-              <button
-                onClick={handleLogout}
-                className="bg-gradient-to-r from-cartoon-red to-danger-500 hover:from-cartoon-red hover:to-danger-600 text-white px-4 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop"
-              >
-                退出登录
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Welcome Card */}
           <div className="bg-white rounded-cartoon-lg shadow-cartoon-lg p-6 col-span-full animate-bounce-in">
@@ -168,7 +124,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-6 py-3 text-white animate-pop">
                   <span className="font-bold">
-                    🌟 等级 {stats.user.level}
+                    🌟 等级 {safeStats.user.level}
                   </span>
                 </div>
               </div>
@@ -177,8 +133,8 @@ const Dashboard: React.FC = () => {
               <div className="bg-cartoon-light rounded-cartoon p-4 max-w-md mx-auto">
                 <h3 className="text-sm font-medium text-cartoon-dark mb-2">本周进度</h3>
                 <ProgressBar 
-                  current={stats.weeklyStats.completed} 
-                  max={stats.weeklyGoal}
+                  current={safeStats.weeklyStats.completed} 
+                  max={safeStats.weeklyGoal}
                   label="任务完成"
                   size="md"
                   animated={true}
@@ -191,12 +147,6 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
             <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">🚀 快速操作</h3>
             <div className="space-y-3">
-              <button 
-                onClick={() => navigate('/today')}
-                className="w-full bg-gradient-to-r from-cartoon-green to-success-400 hover:from-success-500 hover:to-success-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                ✅ 今日任务
-              </button>
               <button 
                 onClick={() => navigate('/planning')}
                 className="w-full bg-gradient-to-r from-cartoon-blue to-primary-400 hover:from-primary-500 hover:to-primary-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
@@ -238,7 +188,7 @@ const Dashboard: React.FC = () => {
                 <span className="text-cartoon-gray">本周完成</span>
                 <span className="font-semibold text-cartoon-green flex items-center">
                   <span className="mr-1">✅</span>
-                  {stats.weeklyStats.completed} 个任务
+                  {safeStats.weeklyStats.completed} 个任务
                 </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
@@ -249,8 +199,74 @@ const Dashboard: React.FC = () => {
                 <span className="text-cartoon-gray">连续天数</span>
                 <span className="font-semibold text-cartoon-orange flex items-center">
                   <span className="mr-1">🔥</span>
-                  {stats.user.currentStreak} 天
+                  {safeStats.user.currentStreak} 天
                 </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Today's Tasks */}
+          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in col-span-full">
+            <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">✅ 今日任务</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* 示例今日任务 - 这里可以从API加载实际数据 */}
+              <div className="bg-cartoon-light rounded-cartoon p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium text-cartoon-dark">📚 完成数学作业</h4>
+                  <span className="text-xs bg-cartoon-green text-white px-2 py-1 rounded-full">未完成</span>
+                </div>
+                <p className="text-sm text-cartoon-gray mb-3">完成第3章练习题1-10</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-cartoon-purple">⭐ 20 积分</span>
+                  <button className="bg-cartoon-green hover:bg-success-500 text-white px-3 py-1 rounded-cartoon text-xs transition-colors">
+                    完成
+                  </button>
+                </div>
+              </div>
+              
+              <div className="bg-cartoon-light rounded-cartoon p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium text-cartoon-dark">🏃 晨跑30分钟</h4>
+                  <span className="text-xs bg-cartoon-orange text-white px-2 py-1 rounded-full">进行中</span>
+                </div>
+                <p className="text-sm text-cartoon-gray mb-3">在公园跑步30分钟</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-cartoon-purple">⭐ 15 积分</span>
+                  <button className="bg-cartoon-orange hover:bg-warning-500 text-white px-3 py-1 rounded-cartoon text-xs transition-colors">
+                    继续
+                  </button>
+                </div>
+              </div>
+              
+              <div className="bg-cartoon-light rounded-cartoon p-4 opacity-75">
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="font-medium text-cartoon-dark">🎸 吉他练习</h4>
+                  <span className="text-xs bg-cartoon-green text-white px-2 py-1 rounded-full">✓ 已完成</span>
+                </div>
+                <p className="text-sm text-cartoon-gray mb-3">练习新学的和弦</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-cartoon-purple">⭐ 10 积分</span>
+                  <span className="text-xs text-cartoon-green">✓ 完成</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Today's Summary */}
+            <div className="mt-6 bg-gradient-to-r from-cartoon-blue/10 to-cartoon-green/10 rounded-cartoon p-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="font-medium text-cartoon-dark">今日进度</h4>
+                  <p className="text-sm text-cartoon-gray">已完成 1/3 个任务</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-lg font-bold text-cartoon-green">10 / 45</p>
+                  <p className="text-xs text-cartoon-gray">今日积分</p>
+                </div>
+              </div>
+              <div className="mt-3">
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="bg-gradient-to-r from-cartoon-green to-success-400 h-2 rounded-full" style={{width: '33%'}}></div>
+                </div>
               </div>
             </div>
           </div>
@@ -259,8 +275,8 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
             <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">🏆 成就徽章</h3>
             <div className="grid grid-cols-3 gap-4">
-              {stats.achievements.length > 0 ? (
-                stats.achievements.map((achievement: any, index: number) => (
+              {safeStats.achievements.length > 0 ? (
+                safeStats.achievements.map((achievement: any, index: number) => (
                   <AchievementBadge
                     key={index}
                     type={achievement.type as any}
@@ -285,25 +301,24 @@ const Dashboard: React.FC = () => {
           {/* Summer Progress Tracker */}
           <SummerProgressTracker className="animate-bounce-in" />
         </div>
+
+        {/* Celebration Modal */}
+        <CelebrationModal
+          isOpen={showCelebration}
+          onClose={() => setShowCelebration(false)}
+          type="task_complete"
+          title="任务完成！"
+          message="恭喜你完成了今天的任务！"
+          points={10}
+          emoji="🎉"
+        />
+
+        {/* Points History Modal */}
+        <PointsHistory
+          isOpen={showPointsHistory}
+          onClose={() => setShowPointsHistory(false)}
+        />
       </div>
-
-      {/* Celebration Modal */}
-      <CelebrationModal
-        isOpen={showCelebration}
-        onClose={() => setShowCelebration(false)}
-        type="task_complete"
-        title="任务完成！"
-        message="恭喜你完成了今天的任务！"
-        points={10}
-        emoji="🎉"
-      />
-
-      {/* Points History Modal */}
-      <PointsHistory
-        isOpen={showPointsHistory}
-        onClose={() => setShowPointsHistory(false)}
-      />
-    </div>
   );
 };
 

@@ -184,12 +184,17 @@ const TaskPlanning: React.FC = () => {
                   <div className="space-y-2">
                     {selectedTasks.map((task) => (
                       <div key={task.id} className="flex items-center justify-between p-2 bg-primary-50 rounded-lg">
-                        <span className="text-sm text-gray-700 truncate">{task.title}</span>
+                        <div className="flex-1">
+                          <span className="text-sm text-gray-700 truncate">{task.title}</span>
+                          <div className="text-xs text-gray-500">
+                            {task.points}分 • {task.estimatedTime}分钟
+                          </div>
+                        </div>
                         <button
                           onClick={() => handleTaskSelect(task)}
-                          className="text-danger-500 hover:text-danger-700 ml-2"
+                          className="text-red-500 hover:text-red-700 ml-2 text-sm"
                         >
-                          ❌
+                          移除
                         </button>
                       </div>
                     ))}
@@ -211,7 +216,7 @@ const TaskPlanning: React.FC = () => {
                     disabled={planningTask}
                     className="w-full mt-4 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white py-2 px-4 rounded-lg font-medium transition-colors duration-200"
                   >
-                    {planningTask ? '规划中...' : '确认规划'}
+                    {planningTask ? '规划中...' : `确认规划 (${selectedTasks.length}个任务)`}
                   </button>
                 </div>
               )}
@@ -219,20 +224,33 @@ const TaskPlanning: React.FC = () => {
               {/* Today's planned tasks */}
               {dailyTasks.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="text-md font-semibold text-gray-900 mb-3">📋 今日计划</h4>
+                  <h4 className="text-md font-semibold text-gray-900 mb-3">📋 今日计划 ({dailyTasks.length})</h4>
                   <div className="space-y-2">
                     {dailyTasks.map((dailyTask) => (
                       <div key={dailyTask.id} className="p-2 bg-success-50 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-700">{dailyTask.task?.title}</span>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm text-gray-700 font-medium">{dailyTask.task?.title}</span>
                           <span className={`text-xs px-2 py-1 rounded-full ${
-                            dailyTask.status === 'completed' ? 'bg-success-100 text-success-700' :
-                            dailyTask.status === 'in_progress' ? 'bg-secondary-100 text-secondary-700' :
+                            dailyTask.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            dailyTask.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                             'bg-gray-100 text-gray-700'
                           }`}>
-                            {dailyTask.status === 'completed' ? '已完成' :
-                             dailyTask.status === 'in_progress' ? '进行中' : '计划中'}
+                            {dailyTask.status === 'completed' ? '✅已完成' :
+                             dailyTask.status === 'in_progress' ? '⏳进行中' : '📋计划中'}
                           </span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {dailyTask.task?.points}分 • {dailyTask.task?.estimatedTime}分钟
+                          {dailyTask.approvalStatus && (
+                            <span className={`ml-2 px-1 py-0.5 rounded text-xs ${
+                              dailyTask.approvalStatus === 'approved' ? 'bg-green-50 text-green-600' :
+                              dailyTask.approvalStatus === 'rejected' ? 'bg-red-50 text-red-600' :
+                              'bg-yellow-50 text-yellow-600'
+                            }`}>
+                              {dailyTask.approvalStatus === 'approved' ? '已通过' :
+                               dailyTask.approvalStatus === 'rejected' ? '已拒绝' : '待审批'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}

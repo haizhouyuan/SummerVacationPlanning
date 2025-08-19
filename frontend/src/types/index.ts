@@ -60,6 +60,12 @@ export interface DailyTask {
   notes?: string;
   isPublic?: boolean;
   pointsEarned: number;
+  // Approval system fields
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  approvedAt?: Date;
+  approvalNotes?: string;
+  bonusPoints?: number;
   createdAt: Date;
   updatedAt: Date;
   task?: Task;
