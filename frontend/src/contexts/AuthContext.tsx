@@ -94,6 +94,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Add global quickLogin function for backward compatibility
+  useEffect(() => {
+    const quickLogin = async (role: 'student' | 'parent') => {
+      try {
+        console.log('🔄 Global quickLogin called for role:', role);
+        
+        // Use demo credentials that match the existing login system
+        const demoCredentials = {
+          student: { email: 'student@example.com', password: 'testpass123' },
+          parent: { email: 'parent@example.com', password: 'testpass123' }
+        };
+
+        const credentials = demoCredentials[role];
+        await login(credentials.email, credentials.password);
+        
+        console.log('✅ Global quickLogin successful for role:', role);
+      } catch (error: any) {
+        console.error('❌ Global quickLogin failed:', error);
+        // Fallback: try to manually navigate to dashboard
+        window.location.href = '/login';
+      }
+    };
+
+    // Expose quickLogin to window object
+    (window as any).quickLogin = quickLogin;
+    
+    // Cleanup function
+    return () => {
+      delete (window as any).quickLogin;
+    };
+  }, [login]);
+
   const value: AuthContextType = {
     user,
     loading,
