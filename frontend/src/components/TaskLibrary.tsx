@@ -355,8 +355,8 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {/* Add New Task Button - visible to parents and admins */}
-            {user && (user.role === 'parent' || user.role === 'admin') && (
+            {/* Add New Task Button - visible to parents only */}
+            {user && user.role === 'parent' && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors duration-200"
