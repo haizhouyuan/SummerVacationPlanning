@@ -38,7 +38,7 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
       special: { emoji: '🏆', color: 'text-cartoon-pink', bgColor: 'bg-gradient-to-br from-cartoon-pink to-cartoon-purple' },
       medal: getMedalData(),
     };
-    return badgeMap[type];
+    return badgeMap[type] || { emoji: '🏅', color: 'text-gray-500', bgColor: 'bg-gradient-to-br from-gray-400 to-gray-600' };
   };
 
   const getMedalData = () => {
@@ -48,7 +48,7 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
       gold: { emoji: '🥇', color: 'text-yellow-400', bgColor: 'bg-gradient-to-br from-yellow-400 to-yellow-600' },
       diamond: { emoji: '💎', color: 'text-purple-400', bgColor: 'bg-gradient-to-br from-purple-400 to-purple-600' },
     };
-    return medalMap[medalType || 'bronze'];
+    return medalMap[medalType || 'bronze'] || medalMap['bronze'];
   };
 
   const getSizeClasses = () => {
@@ -78,6 +78,12 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
 
   const progressPercentage = Math.min((progress / maxProgress) * 100, 100);
   const badgeData = getBadgeData();
+
+  // Safety check to ensure badgeData is valid
+  if (!badgeData || typeof badgeData !== 'object') {
+    console.warn('AchievementBadge: Invalid badgeData for type:', type, 'medalType:', medalType);
+    return <div className="text-red-500 text-sm">Badge Error</div>;
+  }
 
   return (
     <div className={`relative ${className}`}>
