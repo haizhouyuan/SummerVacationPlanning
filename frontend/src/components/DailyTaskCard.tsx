@@ -118,6 +118,11 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
                 <span className="text-lg font-bold">{dailyTask.pointsEarned || dailyTask.task?.points || 0}</span>
                 <span className="text-sm ml-1">积分</span>
               </div>
+              {dailyTask.bonusPoints && dailyTask.bonusPoints > 0 && (
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-cartoon px-2 py-1 shadow-cartoon mt-1">
+                  <span className="text-xs font-bold">+{dailyTask.bonusPoints} 奖励</span>
+                </div>
+              )}
               {dailyTask.completedAt && (
                 <div className="text-xs text-cartoon-gray mt-1">
                   完成于 {formatTime(dailyTask.completedAt.toString())}
@@ -131,6 +136,41 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
             <p className="text-cartoon-gray text-sm mb-3 bg-cartoon-light p-3 rounded-cartoon">
               {dailyTask.task.description}
             </p>
+          )}
+
+          {/* New Evidence Format */}
+          {(dailyTask.evidenceText || (dailyTask.evidenceMedia && dailyTask.evidenceMedia.length > 0)) && (
+            <div className="mb-3">
+              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <span className="mr-2">📎</span> 提交的证据
+              </h4>
+              <div className="bg-gray-50 p-3 rounded-lg space-y-2">
+                {dailyTask.evidenceText && (
+                  <div className="bg-white p-2 rounded border">
+                    <p className="text-sm text-gray-700">{dailyTask.evidenceText}</p>
+                  </div>
+                )}
+                {dailyTask.evidenceMedia && dailyTask.evidenceMedia.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {dailyTask.evidenceMedia.map((media, index) => (
+                      <div key={index} className="bg-white p-2 rounded border text-center">
+                        {media.type === 'image' ? (
+                          <div>
+                            <div className="text-2xl mb-1">🖼️</div>
+                            <div className="text-xs text-gray-600">{media.filename}</div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-2xl mb-1">🎥</div>
+                            <div className="text-xs text-gray-600">{media.filename}</div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Evidence */}
@@ -165,6 +205,49 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
             <div className="mb-3">
               <h4 className="text-sm font-medium text-gray-700 mb-1">💭 备注:</h4>
               <p className="text-sm text-gray-600">{dailyTask.notes}</p>
+            </div>
+          )}
+
+          {/* Approval Status */}
+          {dailyTask.status === 'completed' && (
+            <div className="mb-3">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-lg border border-blue-200">
+                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  <span className="mr-2">👨‍👩‍👧‍👦</span> 审批状态
+                </h4>
+                <div className="flex items-center justify-between">
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    dailyTask.approvalStatus === 'approved' 
+                      ? 'bg-green-100 text-green-700 border border-green-200' 
+                      : dailyTask.approvalStatus === 'rejected' 
+                      ? 'bg-red-100 text-red-700 border border-red-200' 
+                      : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                  }`}>
+                    {dailyTask.approvalStatus === 'approved' 
+                      ? '✅ 家长已通过' 
+                      : dailyTask.approvalStatus === 'rejected' 
+                      ? '❌ 家长已拒绝' 
+                      : '⏳ 等待家长审批'}
+                  </span>
+                  {dailyTask.bonusPoints && dailyTask.bonusPoints > 0 && (
+                    <span className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-2 py-1 rounded-full text-xs font-bold">
+                      +{dailyTask.bonusPoints} 奖励积分
+                    </span>
+                  )}
+                </div>
+                {dailyTask.approvalNotes && (
+                  <div className="mt-2 p-2 bg-white rounded border">
+                    <p className="text-xs text-gray-600">
+                      <span className="font-medium">家长留言:</span> {dailyTask.approvalNotes}
+                    </p>
+                  </div>
+                )}
+                {dailyTask.approvedAt && (
+                  <div className="mt-1 text-xs text-gray-500">
+                    审批时间: {new Date(dailyTask.approvedAt).toLocaleString('zh-CN')}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

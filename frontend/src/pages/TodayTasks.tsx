@@ -67,15 +67,28 @@ const TodayTasks: React.FC = () => {
       if (status === 'completed') {
         const task = dailyTasks.find(dt => dt.id === dailyTaskId);
         if (task) {
+          const hasEvidence = evidenceData?.text || (evidenceData?.files && evidenceData.files.length > 0);
           const points = task.pointsEarned || task.task?.points || 0;
-          showSuccess(
-            '任务完成！', 
-            `恭喜！您获得了 ${points} 积分！`,
-            {
-              label: '查看奖励',
-              onClick: () => window.location.href = '/rewards'
-            }
-          );
+          
+          if (hasEvidence) {
+            showSuccess(
+              '任务完成！', 
+              `已提交证据，获得 ${points} 积分（待家长审批）`,
+              {
+                label: '查看进度',
+                onClick: () => window.location.reload()
+              }
+            );
+          } else {
+            showSuccess(
+              '任务完成！', 
+              `恭喜！您获得了 ${points} 积分！`,
+              {
+                label: '查看奖励',
+                onClick: () => window.location.href = '/rewards'
+              }
+            );
+          }
         }
       }
     } catch (error) {

@@ -163,7 +163,7 @@ const ParentApprovalDashboard: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getToken('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
           dailyTaskIds: Array.from(selectedTasks),

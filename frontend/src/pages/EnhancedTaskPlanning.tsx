@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, DailyTask } from '../types';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import TaskLibrary from '../components/TaskLibrary';
 import { getCurrentWeek, formatDate } from '../utils/statisticsService';
+import { LoadingSpinner, ErrorDisplay, useDataState, withRetry } from '../utils/errorHandling';
 
 interface WeeklySchedule {
   userId: string;
@@ -37,72 +38,102 @@ const EnhancedTaskPlanning: React.FC = () => {
   const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
-  const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
-  const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
   const [planningTask, setPlanningTask] = useState(false);
-  const [showAdvancedPlanning, setShowAdvancedPlanning] = useState(false);
-  const [planningMode, setPlanningMode] = useState<'simple' | 'advanced'>('simple');
+  // Removed planning mode toggle - using single simplified planning
   
-  // Advanced planning state
-  const [taskScheduleDetails, setTaskScheduleDetails] = useState<{
-    [taskId: string]: {
-      plannedTime?: string;
-      plannedEndTime?: string;
-      reminderTime?: string;
-      priority: 'low' | 'medium' | 'high';
-      timePreference?: 'morning' | 'afternoon' | 'evening' | 'flexible';
-      planningNotes?: string;
-    };
-  }>({});
+  // Use data state management hooks
+  const dailyTasksState = useDataState<DailyTask[]>([]);
+  const weeklyScheduleState = useDataState<WeeklySchedule | null>(null);
   
-  const [conflicts, setConflicts] = useState<SchedulingConflict | null>(null);
-
-  const priorityOptions = [
-    { value: 'low', label: '低优先级', color: 'bg-gray-100 text-gray-700', emoji: '⬇️' },
-    { value: 'medium', label: '中优先级', color: 'bg-yellow-100 text-yellow-700', emoji: '➡️' },
-    { value: 'high', label: '高优先级', color: 'bg-red-100 text-red-700', emoji: '⬆️' },
-  ];
-
-  const timePreferenceOptions = [
-    { value: 'morning', label: '上午', emoji: '🌅' },
-    { value: 'afternoon', label: '下午', emoji: '☀️' },
-    { value: 'evening', label: '晚上', emoji: '🌙' },
-    { value: 'flexible', label: '灵活', emoji: '🔄' },
-  ];
+  // Simplified planning - removed advanced scheduling features
 
   useEffect(() => {
-    loadDailyTasks();
-    loadWeeklySchedule();
-  }, [selectedDate]);
+    if (user) {
+      loadDailyTasks();
+      loadWeeklySchedule();
+    }
+  }, [user, selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadDailyTasks = async () => {
+    dailyTasksState.setLoading({ 
+      isLoading: true, 
+      loadingMessage: '正在加载每日任务...' 
+    });
+
     try {
-      const response = await apiService.getDailyTasks({ date: selectedDate });
-      setDailyTasks((response as any).data.dailyTasks);
+      const result = await withRetry(
+        async () => {
+          const apiService = detectNetworkAndGetApiServiceSync();
+          const response = await apiService.getDailyTasks({ date: selectedDate }) as any;
+          
+          if (!response.success) {
+            throw new Error(response.error || '加载每日任务失败');
+          }
+          
+          return response.data.dailyTasks;
+        },
+        {
+          maxRetries: 2,
+          baseDelay: 1000
+        }
+      );
+
+      dailyTasksState.setData(result);
     } catch (error: any) {
       console.error('Error loading daily tasks:', error);
-      setError(error.message || '加载每日任务失败，请重试');
+      dailyTasksState.setError(error, '每日任务加载', loadDailyTasks);
     }
   };
 
   const loadWeeklySchedule = async () => {
+    weeklyScheduleState.setLoading({ 
+      isLoading: true, 
+      loadingMessage: '正在加载周时间表...' 
+    });
+
     try {
-      const response = await fetch('/api/daily-tasks/weekly-schedule?' + new URLSearchParams({
-        weekStart: getWeekStart(selectedDate),
-      }), {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      const result = await withRetry(
+        async () => {
+          const apiService = detectNetworkAndGetApiServiceSync();
+          // Try to get weekly stats through the compatible API
+          const response = await apiService.getWeeklyStats({ 
+            weekStart: getWeekStart(selectedDate) 
+          }) as any;
+          
+          if (response.success) {
+            return response.data;
+          } else {
+            // Fallback to a mock schedule
+            return {
+              userId: user?.id,
+              weekStart: getWeekStart(selectedDate),
+              tasks: [],
+              totalPlannedTasks: 0,
+              totalCompletedTasks: 0,
+              totalPointsEarned: 0,
+              completionRate: 0
+            };
+          }
         },
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setWeeklySchedule(data.data.weeklySchedule);
-      }
-    } catch (error) {
+        {
+          maxRetries: 1,
+          baseDelay: 1000
+        }
+      );
+
+      weeklyScheduleState.setData(result);
+    } catch (error: any) {
       console.error('Error loading weekly schedule:', error);
+      // Set default data instead of error for weekly schedule
+      weeklyScheduleState.setData({
+        userId: user?.id || '',
+        weekStart: getWeekStart(selectedDate),
+        tasks: [],
+        totalPlannedTasks: 0,
+        totalCompletedTasks: 0,
+        totalPointsEarned: 0,
+        completionRate: 0
+      });
     }
   };
 
@@ -117,64 +148,14 @@ const EnhancedTaskPlanning: React.FC = () => {
     setSelectedTasks(prev => {
       const isSelected = prev.find(t => t.id === task.id);
       if (isSelected) {
-        // Remove task and its schedule details
-        const newDetails = { ...taskScheduleDetails };
-        delete newDetails[task.id];
-        setTaskScheduleDetails(newDetails);
         return prev.filter(t => t.id !== task.id);
       } else {
-        // Add task with default schedule details
-        setTaskScheduleDetails(prev => ({
-          ...prev,
-          [task.id]: {
-            priority: 'medium',
-            timePreference: 'flexible',
-          },
-        }));
         return [...prev, task];
       }
     });
   };
 
-  const handleScheduleDetailChange = (taskId: string, field: string, value: any) => {
-    setTaskScheduleDetails(prev => ({
-      ...prev,
-      [taskId]: {
-        ...prev[taskId],
-        [field]: value,
-      },
-    }));
-
-    // Check for conflicts if time-related fields are changed
-    if (field === 'plannedTime' && value) {
-      checkSchedulingConflicts(taskId, value);
-    }
-  };
-
-  const checkSchedulingConflicts = async (taskId: string, plannedTime: string) => {
-    try {
-      const task = selectedTasks.find(t => t.id === taskId);
-      if (!task) return;
-
-      const response = await fetch('/api/daily-tasks/check-conflicts?' + new URLSearchParams({
-        date: selectedDate,
-        plannedTime,
-        estimatedTime: task.estimatedTime.toString(),
-        excludeTaskId: taskId,
-      }), {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setConflicts(data.data);
-      }
-    } catch (error) {
-      console.error('Error checking conflicts:', error);
-    }
-  };
+  // Removed advanced scheduling functions for simplified planning
 
   const handlePlanTasks = async () => {
     if (selectedTasks.length === 0) return;
@@ -187,20 +168,17 @@ const EnhancedTaskPlanning: React.FC = () => {
         // Check if task is already planned for this date
         const existingTask = dailyTasks.find(dt => dt.taskId === task.id);
         if (!existingTask) {
-          const scheduleDetails = taskScheduleDetails[task.id] || {};
-          
+          const apiService = detectNetworkAndGetApiServiceSync();
           await apiService.createDailyTask({
             taskId: task.id,
             date: selectedDate,
-            ...scheduleDetails,
+            priority: 'medium', // Default priority
             notes: `计划于 ${selectedDate} 完成`,
           });
         }
       }
 
       setSelectedTasks([]);
-      setTaskScheduleDetails({});
-      setConflicts(null);
       await loadDailyTasks();
       await loadWeeklySchedule();
       
@@ -213,6 +191,9 @@ const EnhancedTaskPlanning: React.FC = () => {
     }
   };
 
+  const dailyTasks = dailyTasksState.data || [];
+  const weeklySchedule = weeklyScheduleState.data;
+  
   const isTaskPlanned = (task: Task) => {
     return dailyTasks.some(dt => dt.taskId === task.id);
   };
@@ -245,37 +226,15 @@ const EnhancedTaskPlanning: React.FC = () => {
   };
 
   if (!user) {
-    return <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 mx-auto"></div>
-        <p className="mt-4 text-lg text-gray-600">加载中...</p>
-      </div>
-    </div>;
+    return null;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
+    <div className="p-6">
       {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="h-12 w-12 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xl font-bold">📅</span>
-              </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold text-gray-900">智能任务规划</h1>
-                <p className="text-sm text-gray-600">高效管理你的每日任务安排</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-                <p className="text-xs text-gray-500">{user.points} 积分</p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-cartoon-dark mb-2 font-fun">🎯 智能任务规划</h1>
+        <p className="text-cartoon-gray">高效管理您的每日任务安排，精准时间规划</p>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -329,44 +288,10 @@ const EnhancedTaskPlanning: React.FC = () => {
                 )}
               </div>
 
-              {/* Planning Mode Toggle */}
+              {/* Task Planning Actions */}
               <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">🛠️ 规划模式</h3>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setPlanningMode('simple')}
-                    className={`w-full p-3 rounded-lg text-left transition-colors duration-200 ${
-                      planningMode === 'simple'
-                        ? 'bg-primary-100 border-2 border-primary-300'
-                        : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-xl mr-3">⚡</span>
-                      <div>
-                        <div className="font-medium">快速规划</div>
-                        <div className="text-sm text-gray-600">简单选择任务</div>
-                      </div>
-                    </div>
-                  </button>
-                  
-                  <button
-                    onClick={() => setPlanningMode('advanced')}
-                    className={`w-full p-3 rounded-lg text-left transition-colors duration-200 ${
-                      planningMode === 'advanced'
-                        ? 'bg-primary-100 border-2 border-primary-300'
-                        : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center">
-                      <span className="text-xl mr-3">🎯</span>
-                      <div>
-                        <div className="font-medium">精确规划</div>
-                        <div className="text-sm text-gray-600">设置时间和优先级</div>
-                      </div>
-                    </div>
-                  </button>
-                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">📅 任务规划</h3>
+                <p className="text-sm text-gray-600 mb-4">选择任务后点击规划按钮添加到今日计划</p>
               </div>
 
               {/* Selected Tasks Summary */}
@@ -379,11 +304,6 @@ const EnhancedTaskPlanning: React.FC = () => {
                       <div key={task.id} className="flex items-center justify-between p-2 bg-primary-50 rounded-lg">
                         <div className="flex-1 min-w-0">
                           <span className="text-sm text-gray-700 truncate block">{task.title}</span>
-                          {planningMode === 'advanced' && taskScheduleDetails[task.id]?.plannedTime && (
-                            <span className="text-xs text-gray-500">
-                              {taskScheduleDetails[task.id].plannedTime}
-                            </span>
-                          )}
                         </div>
                         <button
                           onClick={() => handleTaskSelect(task)}
@@ -406,27 +326,13 @@ const EnhancedTaskPlanning: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Conflict Warning */}
-                  {conflicts?.hasConflicts && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-start">
-                        <span className="text-red-500 mr-2">⚠️</span>
-                        <div>
-                          <div className="text-sm font-medium text-red-700">时间冲突</div>
-                          <div className="text-xs text-red-600 mt-1">
-                            {conflicts.conflict?.suggestions[0]?.details}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   <button
                     onClick={handlePlanTasks}
-                    disabled={planningTask || (conflicts?.hasConflicts && planningMode === 'advanced')}
+                    disabled={planningTask}
                     className="w-full bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors duration-200"
                   >
-                    {planningTask ? '规划中...' : '确认规划'}
+                    {planningTask ? '规划中...' : '📅 规划任务'}
                   </button>
                 </div>
               )}
@@ -466,119 +372,8 @@ const EnhancedTaskPlanning: React.FC = () => {
             </div>
           </div>
 
-          {/* Main Content - Task Library + Advanced Planning */}
+          {/* Main Content - Task Library */}
           <div className="lg:col-span-3">
-            {/* Advanced Planning Details */}
-            {planningMode === 'advanced' && selectedTasks.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">🎯 任务详细规划</h3>
-                <div className="space-y-6">
-                  {selectedTasks.map((task) => (
-                    <div key={task.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h4 className="font-medium text-gray-900">{task.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{task.description}</p>
-                        </div>
-                        <div className="text-right text-sm text-gray-500">
-                          <div>{task.points} 积分</div>
-                          <div>{task.estimatedTime} 分钟</div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {/* Planned Time */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            开始时间
-                          </label>
-                          <input
-                            type="time"
-                            value={taskScheduleDetails[task.id]?.plannedTime || ''}
-                            onChange={(e) => handleScheduleDetailChange(task.id, 'plannedTime', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          />
-                        </div>
-
-                        {/* Reminder Time */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            提醒时间
-                          </label>
-                          <input
-                            type="time"
-                            value={taskScheduleDetails[task.id]?.reminderTime || ''}
-                            onChange={(e) => handleScheduleDetailChange(task.id, 'reminderTime', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          />
-                        </div>
-
-                        {/* Priority */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            优先级
-                          </label>
-                          <div className="flex space-x-1">
-                            {priorityOptions.map((option) => (
-                              <button
-                                key={option.value}
-                                onClick={() => handleScheduleDetailChange(task.id, 'priority', option.value)}
-                                className={`flex-1 px-2 py-2 rounded-lg text-xs font-medium transition-colors duration-200 ${
-                                  taskScheduleDetails[task.id]?.priority === option.value
-                                    ? 'bg-primary-600 text-white'
-                                    : option.color
-                                }`}
-                              >
-                                <span className="mr-1">{option.emoji}</span>
-                                {option.label.replace('优先级', '')}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Time Preference */}
-                        <div className="md:col-span-2 lg:col-span-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            时间偏好
-                          </label>
-                          <div className="flex space-x-2">
-                            {timePreferenceOptions.map((option) => (
-                              <button
-                                key={option.value}
-                                onClick={() => handleScheduleDetailChange(task.id, 'timePreference', option.value)}
-                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
-                                  taskScheduleDetails[task.id]?.timePreference === option.value
-                                    ? 'bg-primary-600 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
-                              >
-                                <span className="mr-1">{option.emoji}</span>
-                                {option.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Planning Notes */}
-                        <div className="md:col-span-2 lg:col-span-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            规划备注
-                          </label>
-                          <textarea
-                            value={taskScheduleDetails[task.id]?.planningNotes || ''}
-                            onChange={(e) => handleScheduleDetailChange(task.id, 'planningNotes', e.target.value)}
-                            placeholder="为这个任务添加一些规划备注..."
-                            rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Task Library */}
             <TaskLibrary
               onTaskSelect={handleTaskSelect}
@@ -586,6 +381,49 @@ const EnhancedTaskPlanning: React.FC = () => {
               showSelectionMode={true}
               maxSelections={10}
             />
+
+            {/* Selected Tasks Summary */}
+            {selectedTasks.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-6 mt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">✅ 已选择的任务</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-sm font-medium text-gray-600">
+                      📅 {new Date(selectedDate).toLocaleDateString('zh-CN', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric',
+                        weekday: 'long'
+                      })}
+                    </span>
+                    <div className="text-sm text-gray-600">
+                      总计: {getTotalTime()} 分钟 | {getTotalPoints()} 积分
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {selectedTasks.map((task) => (
+                      <div key={task.id} className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white">
+                        <div className="flex items-center space-x-3">
+                          <div>
+                            <div className="font-medium text-gray-900">{task.title}</div>
+                            <div className="text-xs text-gray-500">
+                              {task.estimatedTime}分钟 • {task.points}积分 • {task.category}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleTaskSelect(task)}
+                          className="text-danger-500 hover:text-danger-700 ml-2 flex-shrink-0"
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
