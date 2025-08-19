@@ -184,28 +184,28 @@ const Rewards: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="h-12 w-12 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xl font-bold">🎁</span>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
+          <div className="flex justify-between items-center py-4 sm:py-6">
+            <div className="flex items-center flex-1 min-w-0">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white text-lg sm:text-xl font-bold">🎁</span>
               </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold text-gray-900">奖励中心</h1>
-                <p className="text-sm text-gray-600">用积分兑换游戏时间和特殊奖励</p>
+              <div className="ml-3 sm:ml-4 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">奖励中心</h1>
+                <p className="text-sm text-gray-600 hidden sm:block">用积分兑换游戏时间和特殊奖励</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-                <p className="text-lg font-bold text-primary-600">{user.points} 积分</p>
+                <p className="text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-none hidden sm:block">{user.displayName}</p>
+                <p className="text-base sm:text-lg font-bold text-primary-600">{user.points} 积分</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto"></div>
@@ -269,7 +269,7 @@ const Rewards: React.FC = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Normal Games */}
-                  <div className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  <div className={`p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                     gameType === 'normal' ? 'border-primary-400 bg-primary-50' : 'border-gray-200 hover:border-gray-300'
                   }`} onClick={() => setGameType('normal')}>
                     <div className="flex items-center justify-between mb-2">
@@ -286,7 +286,7 @@ const Rewards: React.FC = () => {
                   </div>
 
                   {/* Educational Games */}
-                  <div className={`p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                  <div className={`p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                     gameType === 'educational' ? 'border-secondary-400 bg-secondary-50' : 'border-gray-200 hover:border-gray-300'
                   }`} onClick={() => setGameType('educational')}>
                     <div className="flex items-center justify-between mb-2">
@@ -362,7 +362,7 @@ const Rewards: React.FC = () => {
                   {specialRewards.map((reward) => (
                     <div 
                       key={reward.id}
-                      className={`p-4 border-2 rounded-lg transition-all duration-200 ${
+                      className={`p-3 sm:p-4 border-2 rounded-lg transition-all duration-200 ${
                         reward.available ? 'border-gray-200 hover:border-primary-300' : 'border-gray-100 bg-gray-50'
                       }`}
                     >

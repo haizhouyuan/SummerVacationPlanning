@@ -54,22 +54,22 @@ const TaskCard: React.FC<TaskCardProps> = ({
     <div
       className={`
         bg-white rounded-xl shadow-sm border-2 transition-all duration-200 cursor-pointer
-        ${isSelected ? 'border-primary-400 shadow-md scale-[1.02]' : 'border-gray-200 hover:border-primary-200 hover:shadow-md'}
+        ${isSelected ? 'border-primary-400 shadow-md transform scale-[1.01] sm:scale-[1.02]' : 'border-gray-200 hover:border-primary-200 hover:shadow-md'}
         ${className}
       `}
       onClick={() => onSelect?.(task)}
     >
-      <div className="p-4">
+      <div className="p-3 sm:p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">{getCategoryEmoji(task.category)}</span>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg leading-tight">
+          <div className="flex items-start space-x-2 flex-1">
+            <span className="text-xl sm:text-2xl flex-shrink-0">{getCategoryEmoji(task.category)}</span>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-gray-900 text-sm sm:text-base lg:text-lg leading-tight truncate">
                 {task.title}
               </h3>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(task.difficulty)}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mt-1 gap-1 sm:gap-0">
+                <span className={`px-2 py-1 rounded-full text-xs font-medium self-start ${getDifficultyColor(task.difficulty)}`}>
                   {getDifficultyText(task.difficulty)}
                 </span>
                 <span className="text-xs text-gray-500">
@@ -78,16 +78,16 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="text-right">
-            <div className="flex items-center space-x-1 text-primary-600">
-              <span className="text-lg font-bold">{task.points}</span>
-              <span className="text-sm">积分</span>
+          <div className="text-right flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-1 text-primary-600">
+              <span className="text-base sm:text-lg font-bold">{task.points}</span>
+              <span className="text-xs sm:text-sm">积分</span>
             </div>
           </div>
         </div>
 
         {/* Description */}
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+        <p className="text-gray-600 text-xs sm:text-sm mb-3 line-clamp-2">
           {task.description}
         </p>
 
@@ -136,7 +136,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 e.stopPropagation();
                 onSelect?.(task);
               }}
-              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors duration-200 mr-2"
+              className="flex-1 bg-primary-600 hover:bg-primary-700 text-white py-2.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm font-medium transition-colors duration-200 mr-2 min-h-[44px] sm:min-h-[auto]"
             >
               选择任务
             </button>
@@ -147,7 +147,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   e.stopPropagation();
                   onEdit(task);
                 }}
-                className="p-2 text-gray-500 hover:text-primary-600 transition-colors duration-200"
+                className="p-3 sm:p-2 text-gray-500 hover:text-primary-600 transition-colors duration-200 min-h-[44px] sm:min-h-[auto] min-w-[44px] sm:min-w-[auto] flex items-center justify-center"
                 title="编辑任务"
               >
                 ✏️
@@ -160,7 +160,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   e.stopPropagation();
                   onDelete(task);
                 }}
-                className="p-2 text-gray-500 hover:text-danger-600 transition-colors duration-200"
+                className="p-3 sm:p-2 text-gray-500 hover:text-danger-600 transition-colors duration-200 min-h-[44px] sm:min-h-[auto] min-w-[44px] sm:min-w-[auto] flex items-center justify-center"
                 title="删除任务"
               >
                 🗑️

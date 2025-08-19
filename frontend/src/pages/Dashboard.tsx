@@ -92,25 +92,25 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="p-3 sm:p-4 md:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Welcome Card */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon-lg p-6 col-span-full animate-bounce-in">
+          <div className="bg-white rounded-cartoon-lg shadow-cartoon-lg p-4 sm:p-6 col-span-full animate-bounce-in">
             <div className="text-center">
-              <div className="text-6xl mb-4 animate-float">
+              <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 animate-float">
                 {user.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
               </div>
-              <h2 className="text-3xl font-bold text-cartoon-dark mb-2 font-fun animate-bounce-in">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cartoon-dark mb-2 font-fun animate-bounce-in px-2">
                 欢迎回来，{user.displayName}！
               </h2>
-              <p className="text-cartoon-gray mb-6 animate-bounce-in">
+              <p className="text-sm sm:text-base text-cartoon-gray mb-4 sm:mb-6 animate-bounce-in px-2">
                 {user.role === 'student' 
                   ? '准备好开始今天的冒险了吗？ 🚀' 
                   : '查看您孩子的精彩进展 📊'}
               </p>
               
               {/* Time-based greeting */}
-              <div className="inline-block bg-cartoon-blue/10 text-cartoon-blue px-4 py-2 rounded-cartoon font-medium text-sm mb-4 animate-pop">
+              <div className="inline-block bg-cartoon-blue/10 text-cartoon-blue px-3 sm:px-4 py-2 rounded-cartoon font-medium text-xs sm:text-sm mb-3 sm:mb-4 animate-pop">
                 {(() => {
                   const hour = new Date().getHours();
                   if (hour < 12) return '🌅 早上好！新的一天，新的开始！';
@@ -118,20 +118,20 @@ const Dashboard: React.FC = () => {
                   return '🌙 晚上好！今天辛苦了！';
                 })()}
               </div>
-              <div className="flex justify-center items-center space-x-4 mb-4">
-                <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-6 py-3 animate-pop">
+              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:space-x-4 mb-4">
+                <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 animate-pop">
                   <PointsDisplay points={user.points} size="md" />
                 </div>
-                <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-6 py-3 text-white animate-pop">
-                  <span className="font-bold">
+                <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 text-white animate-pop">
+                  <span className="font-bold text-sm sm:text-base">
                     🌟 等级 {safeStats.user.level}
                   </span>
                 </div>
               </div>
               
               {/* Weekly Progress */}
-              <div className="bg-cartoon-light rounded-cartoon p-4 max-w-md mx-auto">
-                <h3 className="text-sm font-medium text-cartoon-dark mb-2">本周进度</h3>
+              <div className="bg-cartoon-light rounded-cartoon p-3 sm:p-4 max-w-md mx-auto">
+                <h3 className="text-xs sm:text-sm font-medium text-cartoon-dark mb-2">本周进度</h3>
                 <ProgressBar 
                   current={safeStats.weeklyStats.completed} 
                   max={safeStats.weeklyGoal}
@@ -144,9 +144,9 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
-            <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">🚀 快速操作</h3>
-            <div className="space-y-3">
+          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6 animate-bounce-in">
+            <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">🚀 快速操作</h3>
+            <div className="space-y-2 sm:space-y-3">
               <button 
                 onClick={() => navigate('/planning')}
                 className="w-full bg-gradient-to-r from-cartoon-blue to-primary-400 hover:from-primary-500 hover:to-primary-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
