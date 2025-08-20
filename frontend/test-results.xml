@@ -1,0 +1,454 @@
+<testsuites id="" name="" tests="25" failures="23" skipped="0" errors="0" time="63.499313">
+<testsuite name="button-functionality-validation.spec.ts" timestamp="2025-08-19T12:37:14.300Z" hostname="chromium" tests="5" failures="4" skipped="0" time="97.883" errors="0">
+<testcase name="Button Functionality Validation › 1. Dashboard buttons should be responsive" classname="button-functionality-validation.spec.ts" time="17.104">
+<failure message="button-functionality-validation.spec.ts:17:7 1. Dashboard buttons should be responsive" type="FAILURE">
+<![CDATA[  [chromium] › button-functionality-validation.spec.ts:17:7 › Button Functionality Validation › 1. Dashboard buttons should be responsive 
+
+    Error: Demo login buttons not found
+
+      34 |     } else {
+      35 |       console.log('FAIL: No demo login buttons found');
+    > 36 |       throw new Error('Demo login buttons not found');
+         |             ^
+      37 |     }
+      38 |   });
+      39 |
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:36:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[FAIL: No demo login buttons found
+
+[[ATTACHMENT|test-results\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 2. Task planning should have single working button" classname="button-functionality-validation.spec.ts" time="25.143">
+<failure message="button-functionality-validation.spec.ts:40:7 2. Task planning should have single working button" type="FAILURE">
+<![CDATA[  [chromium] › button-functionality-validation.spec.ts:40:7 › Button Functionality Validation › 2. Task planning should have single working button 
+
+    Error: Timed out 5000ms waiting for expect(locator).toBeVisible()
+
+    Locator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))
+
+
+      54 |       // Look for single "规划任务" button
+      55 |       const planTaskBtn = page.getByText('规划任务').or(page.getByRole('button', { name: /规划任务/ }));
+    > 56 |       await expect(planTaskBtn).toBeVisible({ timeout: 5000 });
+         |                                 ^
+      57 |       
+      58 |       // Click to test functionality
+      59 |       await planTaskBtn.click();
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:56:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5ef6d--have-single-working-button-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5ef6d--have-single-working-button-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-5ef6d--have-single-working-button-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results\button-functionality-valid-5ef6d--have-single-working-button-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5ef6d--have-single-working-button-chromium\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5ef6d--have-single-working-button-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 3. Task library should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="17.659">
+<failure message="button-functionality-validation.spec.ts:68:7 3. Task library should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [chromium] › button-functionality-validation.spec.ts:68:7 › Button Functionality Validation › 3. Task library should not show fail to fetch errors 
+
+    Error: Task library nav not found
+
+      89 |     } else {
+      90 |       console.log('FAIL: Task library navigation not found');
+    > 91 |       throw new Error('Task library nav not found');
+         |             ^
+      92 |     }
+      93 |   });
+      94 |
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:91:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[FAIL: Task library navigation not found
+
+[[ATTACHMENT|test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="20.46">
+<system-out>
+<![CDATA[OK: No fetch errors in rewards page
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 5. Task history page should load properly" classname="button-functionality-validation.spec.ts" time="17.517">
+<failure message="button-functionality-validation.spec.ts:122:7 5. Task history page should load properly" type="FAILURE">
+<![CDATA[  [chromium] › button-functionality-validation.spec.ts:122:7 › Button Functionality Validation › 5. Task history page should load properly 
+
+    Error: Task history nav not found
+
+      152 |     } else {
+      153 |       console.log('FAIL: Task history navigation not found');
+    > 154 |       throw new Error('Task history nav not found');
+          |             ^
+      155 |     }
+      156 |   });
+      157 | });
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:154:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5def5-y-page-should-load-properly-chromium\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5def5-y-page-should-load-properly-chromium\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-5def5-y-page-should-load-properly-chromium\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[FAIL: Task history navigation not found
+
+[[ATTACHMENT|test-results\button-functionality-valid-5def5-y-page-should-load-properly-chromium\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5def5-y-page-should-load-properly-chromium\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5def5-y-page-should-load-properly-chromium\error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="button-functionality-validation.spec.ts" timestamp="2025-08-19T12:37:14.300Z" hostname="firefox" tests="5" failures="5" skipped="0" time="0.226" errors="0">
+<testcase name="Button Functionality Validation › 1. Dashboard buttons should be responsive" classname="button-functionality-validation.spec.ts" time="0.045">
+<failure message="button-functionality-validation.spec.ts:17:7 1. Dashboard buttons should be responsive" type="FAILURE">
+<![CDATA[  [firefox] › button-functionality-validation.spec.ts:17:7 › Button Functionality Validation › 1. Dashboard buttons should be responsive 
+
+    Error: browser.newContext: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 2. Task planning should have single working button" classname="button-functionality-validation.spec.ts" time="0.046">
+<failure message="button-functionality-validation.spec.ts:40:7 2. Task planning should have single working button" type="FAILURE">
+<![CDATA[  [firefox] › button-functionality-validation.spec.ts:40:7 › Button Functionality Validation › 2. Task planning should have single working button 
+
+    Error: browser.newContext: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 3. Task library should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="0.045">
+<failure message="button-functionality-validation.spec.ts:68:7 3. Task library should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [firefox] › button-functionality-validation.spec.ts:68:7 › Button Functionality Validation › 3. Task library should not show fail to fetch errors 
+
+    Error: browser.newContext: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="0.037">
+<failure message="button-functionality-validation.spec.ts:95:7 4. Points/rewards page should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [firefox] › button-functionality-validation.spec.ts:95:7 › Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors 
+
+    Error: browser.newContext: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 5. Task history page should load properly" classname="button-functionality-validation.spec.ts" time="0.053">
+<failure message="button-functionality-validation.spec.ts:122:7 5. Task history page should load properly" type="FAILURE">
+<![CDATA[  [firefox] › button-functionality-validation.spec.ts:122:7 › Button Functionality Validation › 5. Task history page should load properly 
+
+    Error: browser.newContext: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="button-functionality-validation.spec.ts" timestamp="2025-08-19T12:37:14.300Z" hostname="webkit" tests="5" failures="5" skipped="0" time="16.358" errors="0">
+<testcase name="Button Functionality Validation › 1. Dashboard buttons should be responsive" classname="button-functionality-validation.spec.ts" time="1.225">
+<failure message="button-functionality-validation.spec.ts:17:7 1. Dashboard buttons should be responsive" type="FAILURE">
+<![CDATA[  [webkit] › button-functionality-validation.spec.ts:17:7 › Button Functionality Validation › 1. Dashboard buttons should be responsive 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 2. Task planning should have single working button" classname="button-functionality-validation.spec.ts" time="2.475">
+<failure message="button-functionality-validation.spec.ts:40:7 2. Task planning should have single working button" type="FAILURE">
+<![CDATA[  [webkit] › button-functionality-validation.spec.ts:40:7 › Button Functionality Validation › 2. Task planning should have single working button 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 3. Task library should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="3.882">
+<failure message="button-functionality-validation.spec.ts:68:7 3. Task library should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [webkit] › button-functionality-validation.spec.ts:68:7 › Button Functionality Validation › 3. Task library should not show fail to fetch errors 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="4.399">
+<failure message="button-functionality-validation.spec.ts:95:7 4. Points/rewards page should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [webkit] › button-functionality-validation.spec.ts:95:7 › Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 5. Task history page should load properly" classname="button-functionality-validation.spec.ts" time="4.377">
+<failure message="button-functionality-validation.spec.ts:122:7 5. Task history page should load properly" type="FAILURE">
+<![CDATA[  [webkit] › button-functionality-validation.spec.ts:122:7 › Button Functionality Validation › 5. Task history page should load properly 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="button-functionality-validation.spec.ts" timestamp="2025-08-19T12:37:14.300Z" hostname="Mobile Chrome" tests="5" failures="4" skipped="0" time="70.266" errors="0">
+<testcase name="Button Functionality Validation › 1. Dashboard buttons should be responsive" classname="button-functionality-validation.spec.ts" time="10.676">
+<failure message="button-functionality-validation.spec.ts:17:7 1. Dashboard buttons should be responsive" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › button-functionality-validation.spec.ts:17:7 › Button Functionality Validation › 1. Dashboard buttons should be responsive 
+
+    Error: Demo login buttons not found
+
+      34 |     } else {
+      35 |       console.log('FAIL: No demo login buttons found');
+    > 36 |       throw new Error('Demo login buttons not found');
+         |             ^
+      37 |     }
+      38 |   });
+      39 |
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:36:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[FAIL: No demo login buttons found
+
+[[ATTACHMENT|test-results\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 2. Task planning should have single working button" classname="button-functionality-validation.spec.ts" time="18.062">
+<failure message="button-functionality-validation.spec.ts:40:7 2. Task planning should have single working button" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › button-functionality-validation.spec.ts:40:7 › Button Functionality Validation › 2. Task planning should have single working button 
+
+    Error: Timed out 5000ms waiting for expect(locator).toBeVisible()
+
+    Locator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))
+    Expected: visible
+    Received: <element(s) not found>
+    Call log:
+      - Expect "toBeVisible" with timeout 5000ms
+      - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))
+
+
+      54 |       // Look for single "规划任务" button
+      55 |       const planTaskBtn = page.getByText('规划任务').or(page.getByRole('button', { name: /规划任务/ }));
+    > 56 |       await expect(planTaskBtn).toBeVisible({ timeout: 5000 });
+         |                                 ^
+      57 |       
+      58 |       // Click to test functionality
+      59 |       await planTaskBtn.click();
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:56:33
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[
+[[ATTACHMENT|test-results\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 3. Task library should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="12.811">
+<failure message="button-functionality-validation.spec.ts:68:7 3. Task library should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › button-functionality-validation.spec.ts:68:7 › Button Functionality Validation › 3. Task library should not show fail to fetch errors 
+
+    Error: Task library nav not found
+
+      89 |     } else {
+      90 |       console.log('FAIL: Task library navigation not found');
+    > 91 |       throw new Error('Task library nav not found');
+         |             ^
+      92 |     }
+      93 |   });
+      94 |
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:91:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[FAIL: Task library navigation not found
+
+[[ATTACHMENT|test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\error-context.md]]
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="16.569">
+<system-out>
+<![CDATA[OK: No fetch errors in rewards page
+]]>
+</system-out>
+</testcase>
+<testcase name="Button Functionality Validation › 5. Task history page should load properly" classname="button-functionality-validation.spec.ts" time="12.148">
+<failure message="button-functionality-validation.spec.ts:122:7 5. Task history page should load properly" type="FAILURE">
+<![CDATA[  [Mobile Chrome] › button-functionality-validation.spec.ts:122:7 › Button Functionality Validation › 5. Task history page should load properly 
+
+    Error: Task history nav not found
+
+      152 |     } else {
+      153 |       console.log('FAIL: Task history navigation not found');
+    > 154 |       throw new Error('Task history nav not found');
+          |             ^
+      155 |     }
+      156 |   });
+      157 | });
+        at D:\SummerVacationPlanning\frontend\tests\button-functionality-validation.spec.ts:154:13
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ..\test-results\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\test-results\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\error-context.md
+]]>
+</failure>
+<system-out>
+<![CDATA[FAIL: Task history navigation not found
+
+[[ATTACHMENT|test-results\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\test-failed-1.png]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\video.webm]]
+
+[[ATTACHMENT|test-results\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\error-context.md]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+<testsuite name="button-functionality-validation.spec.ts" timestamp="2025-08-19T12:37:14.300Z" hostname="Mobile Safari" tests="5" failures="5" skipped="0" time="29.684" errors="0">
+<testcase name="Button Functionality Validation › 1. Dashboard buttons should be responsive" classname="button-functionality-validation.spec.ts" time="6.522">
+<failure message="button-functionality-validation.spec.ts:17:7 1. Dashboard buttons should be responsive" type="FAILURE">
+<![CDATA[  [Mobile Safari] › button-functionality-validation.spec.ts:17:7 › Button Functionality Validation › 1. Dashboard buttons should be responsive 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 2. Task planning should have single working button" classname="button-functionality-validation.spec.ts" time="6.339">
+<failure message="button-functionality-validation.spec.ts:40:7 2. Task planning should have single working button" type="FAILURE">
+<![CDATA[  [Mobile Safari] › button-functionality-validation.spec.ts:40:7 › Button Functionality Validation › 2. Task planning should have single working button 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 3. Task library should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="5.869">
+<failure message="button-functionality-validation.spec.ts:68:7 3. Task library should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [Mobile Safari] › button-functionality-validation.spec.ts:68:7 › Button Functionality Validation › 3. Task library should not show fail to fetch errors 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors" classname="button-functionality-validation.spec.ts" time="5.744">
+<failure message="button-functionality-validation.spec.ts:95:7 4. Points/rewards page should not show fail to fetch errors" type="FAILURE">
+<![CDATA[  [Mobile Safari] › button-functionality-validation.spec.ts:95:7 › Button Functionality Validation › 4. Points/rewards page should not show fail to fetch errors 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+<testcase name="Button Functionality Validation › 5. Task history page should load properly" classname="button-functionality-validation.spec.ts" time="5.21">
+<failure message="button-functionality-validation.spec.ts:122:7 5. Task history page should load properly" type="FAILURE">
+<![CDATA[  [Mobile Safari] › button-functionality-validation.spec.ts:122:7 › Button Functionality Validation › 5. Task history page should load properly 
+
+    Error: browserContext.newPage: Unknown permission: storage-access
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

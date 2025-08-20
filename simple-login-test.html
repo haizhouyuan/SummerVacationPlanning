@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录按钮测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+        }
+        .demo-btn {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            min-width: 200px;
+        }
+        .student { background: linear-gradient(135deg, #4CAF50, #45a049); }
+        .parent { background: linear-gradient(135deg, #2196F3, #1976D2); }
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .demo-btn:active {
+            transform: translateY(0);
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        .success { background: rgba(76, 175, 80, 0.3); }
+        .error { background: rgba(244, 67, 54, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 登录按钮功能测试</h1>
+        <p>如果按钮无响应，请检查浏览器控制台错误信息</p>
+        
+        <div>
+            <button class="demo-btn student" onclick="testLogin('student')">
+                👦 学生演示登录
+            </button>
+            <button class="demo-btn parent" onclick="testLogin('parent')">
+                👨‍👩‍👧‍👦 家长演示登录
+            </button>
+        </div>
+        
+        <div id="status" class="status">
+            点击按钮测试登录功能...
+        </div>
+        
+        <div style="margin-top: 20px; font-size: 14px; opacity: 0.8;">
+            <p>🔗 当前测试页面: <span id="currentUrl"></span></p>
+            <p>📡 后端API: http://localhost:5000</p>
+            <p>🌐 主应用: http://localhost:3000</p>
+        </div>
+    </div>
+
+    <script>
+        // 显示当前URL
+        document.getElementById('currentUrl').textContent = window.location.href;
+        
+        // 登录测试函数
+        async function testLogin(role) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = `🔄 正在测试 ${role} 登录...`;
+            statusDiv.className = 'status';
+            
+            try {
+                console.log(`🚀 开始 ${role} 登录测试`);
+                
+                // 模拟登录API调用
+                const credentials = {
+                    student: { email: 'student@example.com', password: 'testpass123' },
+                    parent: { email: 'parent@example.com', password: 'testpass123' }
+                };
+                
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(credentials[role])
+                });
+                
+                console.log(`📡 API响应状态: ${response.status}`);
+                const result = await response.json();
+                console.log(`📋 API响应内容:`, result);
+                
+                if (response.ok && result.success) {
+                    statusDiv.textContent = `✅ ${role} 登录成功！准备跳转到主应用...`;
+                    statusDiv.className = 'status success';
+                    
+                    // 存储token并跳转
+                    localStorage.setItem('auth_token', result.token);
+                    localStorage.setItem('user_email', credentials[role].email);
+                    localStorage.setItem('user_role', role);
+                    
+                    setTimeout(() => {
+                        window.location.href = 'http://localhost:3000/dashboard';
+                    }, 2000);
+                } else {
+                    statusDiv.textContent = `❌ 登录失败: ${result.error || '未知错误'}`;
+                    statusDiv.className = 'status error';
+                }
+                
+            } catch (error) {
+                console.error('❌ 登录错误:', error);
+                statusDiv.textContent = `❌ 网络错误: ${error.message}`;
+                statusDiv.className = 'status error';
+            }
+        }
+        
+        // 页面加载时检查连接
+        window.onload = async function() {
+            try {
+                const response = await fetch('http://localhost:5000/health');
+                if (response.ok) {
+                    console.log('✅ 后端连接正常');
+                } else {
+                    console.warn('⚠️ 后端响应异常:', response.status);
+                }
+            } catch (error) {
+                console.error('❌ 后端无法连接:', error);
+            }
+        };
+    </script>
+</body>
+</html>

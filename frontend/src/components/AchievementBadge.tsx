@@ -79,6 +79,12 @@ const AchievementBadge: React.FC<AchievementBadgeProps> = ({
   const progressPercentage = Math.min((progress / maxProgress) * 100, 100);
   const badgeData = getBadgeData();
 
+  // Safety check to ensure badgeData is valid
+  if (!badgeData || typeof badgeData !== 'object') {
+    console.warn('AchievementBadge: Invalid badgeData for type:', type, 'medalType:', medalType);
+    return <div className="text-red-500 text-sm">Badge Error</div>;
+  }
+
   return (
     <div className={`relative ${className}`}>
       {/* Badge container */}

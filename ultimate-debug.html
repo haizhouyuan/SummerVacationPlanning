@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终极调试 - 按钮点击问题</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+            line-height: 1.6;
+        }
+        .debug-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .test-btn {
+            display: block;
+            margin: 10px 0;
+            padding: 15px 20px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+        }
+        .test-btn:hover {
+            background: #0056b3;
+            border-color: #0056b3;
+        }
+        .log-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔍 终极按钮调试工具</h1>
+    <p>这个页面将帮助我们找出为什么按钮点击没有响应</p>
+
+    <div class="debug-section">
+        <h2>📝 步骤1：基础JavaScript测试</h2>
+        <p>测试最基本的JavaScript功能是否工作</p>
+        <button class="test-btn" onclick="basicTest()">点击测试基础功能</button>
+        <div id="basicResult" class="status info">等待测试...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🖱️ 步骤2：事件监听测试</h2>
+        <p>测试不同的事件绑定方式</p>
+        <button class="test-btn" id="eventTest1">onclick属性测试</button>
+        <button class="test-btn" id="eventTest2">addEventListener测试</button>
+        <button class="test-btn" id="eventTest3">jQuery风格测试</button>
+        <div id="eventResult" class="status info">等待测试...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🌐 步骤3：网络和控制台检查</h2>
+        <p>检查浏览器环境和网络状态</p>
+        <button class="test-btn" onclick="environmentTest()">检查浏览器环境</button>
+        <div id="envResult" class="status info">等待测试...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>🎯 步骤4：模拟原始问题</h2>
+        <p>复制原来的quickLogin按钮行为</p>
+        <button class="test-btn" onclick="quickLogin('student')">模拟学生登录</button>
+        <button class="test-btn" onclick="quickLogin('parent')">模拟家长登录</button>
+        <div id="quickResult" class="status info">等待测试...</div>
+    </div>
+
+    <div class="debug-section">
+        <h2>📋 调试日志</h2>
+        <button onclick="clearLog()" style="float: right; padding: 5px 10px; font-size: 12px;">清除日志</button>
+        <div id="logArea" class="log-area">日志将显示在这里...\n</div>
+    </div>
+
+    <script>
+        // 日志函数
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logArea = document.getElementById('logArea');
+            const prefix = type === 'error' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : 'ℹ️';
+            logArea.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('logArea').textContent = '日志已清除...\n';
+        }
+
+        // 1. 基础JavaScript测试
+        function basicTest() {
+            log('开始基础功能测试');
+            const resultDiv = document.getElementById('basicResult');
+            
+            try {
+                // 测试基本JavaScript功能
+                const testArray = [1, 2, 3];
+                const testSum = testArray.reduce((a, b) => a + b, 0);
+                log(`数组计算测试: ${testSum} (期望: 6)`);
+                
+                // 测试DOM操作
+                const testDiv = document.createElement('div');
+                testDiv.textContent = 'Test';
+                log('DOM创建测试: 成功');
+                
+                // 测试localStorage
+                localStorage.setItem('test', 'value');
+                const testValue = localStorage.getItem('test');
+                log(`localStorage测试: ${testValue}`);
+                localStorage.removeItem('test');
+                
+                // 测试setTimeout
+                setTimeout(() => {
+                    log('异步函数测试: setTimeout工作正常');
+                }, 100);
+                
+                resultDiv.textContent = '✅ 基础JavaScript功能正常';
+                resultDiv.className = 'status success';
+                log('基础功能测试完成');
+                
+            } catch (error) {
+                log(`基础功能测试失败: ${error.message}`, 'error');
+                resultDiv.textContent = `❌ 基础功能异常: ${error.message}`;
+                resultDiv.className = 'status error';
+            }
+        }
+
+        // 2. 事件测试
+        function setupEventTests() {
+            log('设置事件监听器测试');
+            const resultDiv = document.getElementById('eventResult');
+            
+            // onclick属性测试
+            document.getElementById('eventTest1').onclick = function() {
+                log('onclick属性事件触发成功', 'success');
+                resultDiv.textContent = '✅ onclick属性工作正常';
+                resultDiv.className = 'status success';
+            };
+            
+            // addEventListener测试
+            document.getElementById('eventTest2').addEventListener('click', function() {
+                log('addEventListener事件触发成功', 'success');
+                resultDiv.textContent = '✅ addEventListener工作正常';
+                resultDiv.className = 'status success';
+            });
+            
+            // 备用事件测试
+            const btn3 = document.getElementById('eventTest3');
+            btn3.addEventListener('click', function(e) {
+                log('备用事件监听器触发', 'success');
+                log(`事件对象: ${e.type}, 目标: ${e.target.tagName}`, 'info');
+                resultDiv.textContent = '✅ 备用事件监听工作正常';
+                resultDiv.className = 'status success';
+            });
+        }
+
+        // 3. 环境检查
+        function environmentTest() {
+            log('开始环境检查');
+            const resultDiv = document.getElementById('envResult');
+            let issues = [];
+            
+            try {
+                // 浏览器信息
+                log(`浏览器: ${navigator.userAgent}`, 'info');
+                log(`当前URL: ${window.location.href}`, 'info');
+                log(`协议: ${window.location.protocol}`, 'info');
+                
+                // JavaScript功能检查
+                if (typeof fetch === 'undefined') {
+                    issues.push('fetch API不可用');
+                } else {
+                    log('fetch API可用');
+                }
+                
+                if (typeof localStorage === 'undefined') {
+                    issues.push('localStorage不可用');
+                } else {
+                    log('localStorage可用');
+                }
+                
+                // 控制台错误检查
+                const originalConsoleError = console.error;
+                let errorCount = 0;
+                console.error = function(...args) {
+                    errorCount++;
+                    originalConsoleError.apply(console, args);
+                };
+                
+                setTimeout(() => {
+                    console.error = originalConsoleError;
+                    if (errorCount > 0) {
+                        log(`检测到 ${errorCount} 个控制台错误`, 'warning');
+                        issues.push(`${errorCount}个控制台错误`);
+                    } else {
+                        log('没有检测到控制台错误');
+                    }
+                    
+                    // 显示结果
+                    if (issues.length === 0) {
+                        resultDiv.textContent = '✅ 浏览器环境正常';
+                        resultDiv.className = 'status success';
+                    } else {
+                        resultDiv.textContent = `⚠️ 发现问题: ${issues.join(', ')}`;
+                        resultDiv.className = 'status warning';
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                log(`环境检查失败: ${error.message}`, 'error');
+                resultDiv.textContent = `❌ 环境检查失败: ${error.message}`;
+                resultDiv.className = 'status error';
+            }
+        }
+
+        // 4. 模拟quickLogin
+        function quickLogin(role) {
+            log(`quickLogin函数被调用，角色: ${role}`, 'success');
+            const resultDiv = document.getElementById('quickResult');
+            
+            try {
+                log('开始模拟登录流程');
+                
+                // 模拟原始逻辑
+                const credentials = {
+                    student: { email: 'student@example.com', password: 'testpass123' },
+                    parent: { email: 'parent@example.com', password: 'testpass123' }
+                };
+                
+                const cred = credentials[role];
+                log(`使用凭据: ${cred.email}`);
+                
+                // 模拟设置localStorage
+                localStorage.setItem('auth_token', `demo-token-${role}-${Date.now()}`);
+                localStorage.setItem('user_email', cred.email);
+                localStorage.setItem('user_role', role);
+                log('模拟用户信息已设置');
+                
+                resultDiv.textContent = `✅ ${role}登录模拟成功！`;
+                resultDiv.className = 'status success';
+                
+                // 模拟跳转（但不实际跳转）
+                log('模拟跳转到dashboard（本页面不会实际跳转）');
+                setTimeout(() => {
+                    alert(`模拟${role}登录成功！\n\n如果这个alert能显示，说明JavaScript基本功能正常。\n\n实际应用中应该会跳转到dashboard页面。`);
+                }, 1000);
+                
+            } catch (error) {
+                log(`quickLogin模拟失败: ${error.message}`, 'error');
+                resultDiv.textContent = `❌ 模拟登录失败: ${error.message}`;
+                resultDiv.className = 'status error';
+            }
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            log('页面加载完成，开始初始化');
+            setupEventTests();
+            log('事件测试器设置完成');
+            
+            // 检查页面中是否有覆盖层或阻挡元素
+            const body = document.body;
+            const computedStyle = window.getComputedStyle(body);
+            log(`body的pointer-events: ${computedStyle.pointerEvents}`);
+            
+            // 检查是否有全屏覆盖层
+            const allElements = document.querySelectorAll('*');
+            let overlayCount = 0;
+            allElements.forEach(el => {
+                const style = window.getComputedStyle(el);
+                if (style.position === 'fixed' && style.zIndex > 1000) {
+                    overlayCount++;
+                    log(`发现可能的覆盖层: ${el.tagName}.${el.className}`, 'warning');
+                }
+            });
+            
+            if (overlayCount === 0) {
+                log('没有检测到覆盖层元素');
+            }
+            
+            log('初始化完成，请开始测试');
+        });
+
+        // 全局错误捕获
+        window.addEventListener('error', function(e) {
+            log(`全局错误: ${e.message} 在 ${e.filename}:${e.lineno}`, 'error');
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            log(`未处理的Promise错误: ${e.reason}`, 'error');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直接访问 - 暑假规划系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .logo {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .steps {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .direct-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .link-card {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .link-card:hover {
+            transform: translateY(-3px);
+            text-decoration: none;
+            color: white;
+        }
+        .link-card.parent {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+        .link-card .icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        .link-card .title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .link-card .desc {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .manual-steps {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+        }
+        .code-box {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .debug-info {
+            background: #f1f3f4;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">⚠️</div>
+            <h1>JavaScript被禁用或阻止</h1>
+            <p style="color: #666;">检测到按钮和键盘事件无法响应</p>
+        </div>
+
+        <div class="alert">
+            <strong>🚨 问题诊断：</strong><br>
+            由于JavaScript功能被禁用、被安全软件阻止，或者浏览器设置限制，所有交互按钮都无法正常工作。
+        </div>
+
+        <div class="steps">
+            <h3>📋 解决方案（请依次尝试）：</h3>
+            
+            <div class="step">
+                <strong>方案1：直接链接访问</strong><br>
+                点击下方链接直接跳转到系统：
+            </div>
+            
+            <div class="direct-links">
+                <a href="http://localhost:3000/dashboard" class="link-card">
+                    <div class="icon">👦</div>
+                    <div class="title">学生模式</div>
+                    <div class="desc">直接进入学生仪表板</div>
+                </a>
+                <a href="http://localhost:3000/dashboard" class="link-card parent">
+                    <div class="icon">👨‍👩‍👧‍👦</div>
+                    <div class="title">家长模式</div>
+                    <div class="desc">直接进入家长仪表板</div>
+                </a>
+            </div>
+            
+            <div class="step">
+                <strong>方案2：手动输入地址</strong><br>
+                在浏览器地址栏输入：
+                <div class="code-box">http://localhost:3000/dashboard</div>
+            </div>
+            
+            <div class="step">
+                <strong>方案3：启用JavaScript</strong><br>
+                • Chrome：设置 → 隐私设置和安全性 → 网站设置 → JavaScript → 允许<br>
+                • Edge：设置 → Cookie和网站权限 → JavaScript → 允许<br>
+                • Firefox：地址栏输入 about:config → javascript.enabled → true
+            </div>
+            
+            <div class="step">
+                <strong>方案4：检查安全软件</strong><br>
+                • 暂时关闭360、电脑管家等安全软件<br>
+                • 检查浏览器插件（如广告拦截器）是否阻止了JavaScript<br>
+                • 尝试使用浏览器的无痕/隐私模式
+            </div>
+        </div>
+
+        <div class="manual-steps">
+            <h3>🔧 手动设置用户信息（高级用户）：</h3>
+            <p>如果直接访问dashboard显示未登录，请：</p>
+            <ol>
+                <li>按F12打开开发者工具</li>
+                <li>切换到"控制台(Console)"标签</li>
+                <li>粘贴以下代码并按回车：</li>
+            </ol>
+            <div class="code-box">
+localStorage.setItem('auth_token', 'demo-token-student-' + Date.now());
+localStorage.setItem('user_email', 'student@example.com');
+localStorage.setItem('user_role', 'student');
+localStorage.setItem('user_display_name', '演示学生');
+window.location.href = 'http://localhost:3000/dashboard';
+            </div>
+        </div>
+
+        <div class="debug-info">
+            <h4>🔍 技术信息：</h4>
+            <p><strong>当前地址：</strong> <span id="currentUrl">获取中...</span></p>
+            <p><strong>JavaScript状态：</strong> <span id="jsStatus">检测中...</span></p>
+            <p><strong>localStorage支持：</strong> <span id="storageStatus">检测中...</span></p>
+            <p><strong>建议浏览器：</strong> Chrome、Edge、Firefox最新版本</p>
+            
+            <noscript>
+                <p style="color: red;"><strong>❌ JavaScript已被禁用</strong> - 这是问题的根本原因</p>
+            </noscript>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; color: #666;">
+            <p>🎯 <strong>最简单的解决方案：点击上方的"学生模式"或"家长模式"链接</strong></p>
+        </div>
+    </div>
+
+    <script>
+        // 这段脚本只有在JavaScript启用时才会运行
+        document.getElementById('currentUrl').textContent = window.location.href;
+        document.getElementById('jsStatus').textContent = '✅ JavaScript正常';
+        document.getElementById('storageStatus').textContent = typeof(Storage) !== "undefined" ? '✅ localStorage支持' : '❌ localStorage不支持';
+        
+        // 自动检测并设置用户信息
+        if (typeof(Storage) !== "undefined") {
+            // 如果JavaScript能运行到这里，说明功能正常，直接设置演示用户
+            setTimeout(() => {
+                if (confirm('检测到JavaScript正常工作。是否自动设置演示学生账户并跳转？')) {
+                    localStorage.setItem('auth_token', 'demo-token-student-' + Date.now());
+                    localStorage.setItem('user_email', 'student@example.com');
+                    localStorage.setItem('user_role', 'student');
+                    localStorage.setItem('user_display_name', '演示学生');
+                    window.location.href = 'http://localhost:3000/dashboard';
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

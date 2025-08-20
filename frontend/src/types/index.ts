@@ -104,7 +104,9 @@ export interface ApiResponse<T = any> {
 
 export interface AuthContextType {
   user: User | null;
+  currentUser: User | null;
   loading: boolean;
+  isDemo: boolean | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, displayName: string, role: 'student' | 'parent', parentEmail?: string) => Promise<void>;
   logout: () => Promise<void>;

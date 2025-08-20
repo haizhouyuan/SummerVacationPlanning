@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 
 interface SummerProgressTrackerProps {
   className?: string;
@@ -53,6 +53,7 @@ const SummerProgressTracker: React.FC<SummerProgressTrackerProps> = ({ className
       const progressPercentage = Math.min(100, Math.round((daysElapsed / totalDays) * 100));
 
       // Get tasks and statistics from API
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.getDashboardStats() as any;
       if (response.success) {
         const stats = response.data.stats;

@@ -1,6 +1,17 @@
 import { User, ApiResponse } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL}/api` : 'http://47.120.74.212/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://47.120.74.212/api';
+
+// 安全移除DOM元素的工具函数
+const safeRemoveElement = (element: Element | null | undefined) => {
+  if (element && element.parentNode) {
+    try {
+      element.parentNode.removeChild(element);
+    } catch (error) {
+      console.warn('Failed to remove element safely:', error);
+    }
+  }
+};
 
 // 网络兼容的认证服务 - 使用iframe和表单提交绕过fetch限制
 export const compatibleAuthService = {
@@ -83,23 +94,23 @@ export const compatibleAuthService = {
               reject(new Error('登录处理失败'));
             }
             
-            // 清理DOM
-            document.body.removeChild(form);
-            document.body.removeChild(iframe);
+            // 安全清理DOM
+            safeRemoveElement(form);
+            safeRemoveElement(iframe);
           }, 1000);
         } catch (error) {
           reject(new Error('网络请求失败'));
-          // 清理DOM
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
+          // 安全清理DOM
+          safeRemoveElement(form);
+          safeRemoveElement(iframe);
         }
       };
       
       iframe.onerror = () => {
         reject(new Error('网络连接失败'));
-        // 清理DOM
-        document.body.removeChild(form);
-        document.body.removeChild(iframe);
+        // 安全清理DOM
+        safeRemoveElement(form);
+        safeRemoveElement(iframe);
       };
       
       // 提交表单
@@ -166,16 +177,17 @@ export const compatibleAuthService = {
           
           resolve(mockResponse);
           
-          // 清理DOM
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
+          // 安全清理DOM
+          safeRemoveElement(form);
+          safeRemoveElement(iframe);
         }, 1000);
       };
       
       iframe.onerror = () => {
         reject(new Error('注册失败'));
-        document.body.removeChild(form);
-        document.body.removeChild(iframe);
+        // 安全清理DOM
+        safeRemoveElement(form);
+        safeRemoveElement(iframe);
       };
       
       form.submit();

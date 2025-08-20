@@ -25,7 +25,7 @@ class MongoDB {
   private db!: Db;
   
   constructor() {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/summer_app';
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/summer-vacation';
     this.client = new MongoClient(mongoUri);
   }
 

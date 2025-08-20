@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { body } from 'express-validator';
 import { register, login, getProfile, updateProfile, getChildren, getChildStats, getDashboardStats, getFamilyLeaderboard, getPointsHistory } from '../controllers/mongoAuthController';
 import { authenticateToken } from '../middleware/mongoAuth';
@@ -29,7 +29,10 @@ const updateProfileValidation = [
 
 // Public routes
 router.post('/register', registerValidation, validateRequest, register);
-router.post('/login', loginValidation, validateRequest, login);
+router.post('/login', (req: Request, res: Response, next: NextFunction) => {
+  console.log('🚀 Login route hit:', req.body);
+  next();
+}, loginValidation, validateRequest, login);
 
 // Protected routes
 router.get('/profile', authenticateToken, getProfile);

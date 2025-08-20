@@ -1,0 +1,19 @@
+{
+  "LOG": true,
+  "PROXY_URL": "",
+  "Providers": [
+    {
+      "name": "moonshot",
+      "api_base_url": "https://api.moonshot.ai/anthropic",
+      "api_key": "sk-6NEAJXkU1GIB9acZFuESpvNUdlM6alLtZXeqsSun9O6nUzHt",
+      "models": ["moonshotai/Kimi-K2-Instruct"],
+      "transformer": { "use": ["anthropic"] }
+    }
+  ],
+  "Router": {
+    "default": "moonshot,moonshotai/Kimi-K2-Instruct",
+    "think":   "moonshot,moonshotai/Kimi-K2-Instruct",
+    "longContextThreshold": 60000
+  },
+  "API_TIMEOUT_MS": 600000
+} 

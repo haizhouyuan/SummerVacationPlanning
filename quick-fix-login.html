@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速登录测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success { background: #dff0d8; color: #3c763d; }
+        .error { background: #f2dede; color: #a94442; }
+        .info { background: #d9edf7; color: #31708f; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 快速登录修复测试</h1>
+        
+        <div id="status" class="status info">
+            点击按钮开始测试...
+        </div>
+        
+        <button onclick="directLogin()">🚀 直接跳转到仪表板</button>
+        <button onclick="testApiConnection()">🌐 测试API连接</button>
+        <button onclick="simulateLogin()">👤 模拟登录流程</button>
+        
+        <div style="margin-top: 20px;">
+            <h3>📋 调试信息：</h3>
+            <div id="debug"></div>
+        </div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        const debugDiv = document.getElementById('debug');
+        
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        function addDebug(message) {
+            const p = document.createElement('p');
+            p.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            debugDiv.appendChild(p);
+            console.log(message);
+        }
+        
+        // 直接跳转到仪表板（绕过登录）
+        function directLogin() {
+            updateStatus('🔄 正在设置演示用户信息...', 'info');
+            
+            // 直接设置localStorage中的用户信息
+            localStorage.setItem('auth_token', 'demo-token-' + Date.now());
+            localStorage.setItem('user_email', 'student@example.com');
+            localStorage.setItem('user_role', 'student');
+            localStorage.setItem('user_display_name', '演示学生');
+            
+            addDebug('✅ 用户信息已设置到localStorage');
+            
+            updateStatus('✅ 演示用户设置完成，即将跳转...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'http://localhost:3000/dashboard';
+            }, 2000);
+        }
+        
+        // 测试API连接
+        async function testApiConnection() {
+            updateStatus('🌐 正在测试API连接...', 'info');
+            addDebug('开始API连接测试...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/health', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus('✅ API连接正常', 'success');
+                    addDebug(`API响应: ${JSON.stringify(data)}`);
+                } else {
+                    updateStatus(`⚠️ API响应异常: ${response.status}`, 'error');
+                    addDebug(`API错误状态: ${response.status}`);
+                }
+            } catch (error) {
+                updateStatus(`❌ API连接失败: ${error.message}`, 'error');
+                addDebug(`API连接错误: ${error.message}`);
+            }
+        }
+        
+        // 模拟完整登录流程
+        async function simulateLogin() {
+            updateStatus('👤 开始模拟登录...', 'info');
+            addDebug('开始登录流程模拟...');
+            
+            try {
+                // 直接设置用户信息，模拟成功登录
+                const mockUser = {
+                    id: 'demo-user-id',
+                    email: 'student@example.com',
+                    displayName: '演示学生',
+                    role: 'student',
+                    points: 150,
+                    currentStreak: 3,
+                    medals: {
+                        bronze: true,
+                        silver: false,
+                        gold: false,
+                        diamond: false
+                    }
+                };
+                
+                const mockToken = 'demo-token-' + Date.now();
+                
+                // 设置到localStorage
+                localStorage.setItem('auth_token', mockToken);
+                localStorage.setItem('user_email', mockUser.email);
+                localStorage.setItem('user_role', mockUser.role);
+                localStorage.setItem('user_display_name', mockUser.displayName);
+                
+                updateStatus('✅ 登录模拟成功！', 'success');
+                addDebug('模拟登录完成，用户信息已存储');
+                
+                // 验证存储
+                const storedToken = localStorage.getItem('auth_token');
+                const storedEmail = localStorage.getItem('user_email');
+                addDebug(`存储验证 - Token: ${storedToken ? '存在' : '无'}, Email: ${storedEmail}`);
+                
+                setTimeout(() => {
+                    updateStatus('🚀 即将跳转到仪表板...', 'info');
+                    window.location.href = 'http://localhost:3000/dashboard';
+                }, 3000);
+                
+            } catch (error) {
+                updateStatus(`❌ 登录模拟失败: ${error.message}`, 'error');
+                addDebug(`登录错误: ${error.message}`);
+            }
+        }
+        
+        // 页面加载时显示信息
+        window.onload = function() {
+            addDebug('页面加载完成');
+            addDebug('当前URL: ' + window.location.href);
+            addDebug('localStorage中的令牌: ' + (localStorage.getItem('auth_token') || '无'));
+        };
+    </script>
+</body>
+</html>

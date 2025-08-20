@@ -1,0 +1,1481 @@
+{
+  "config": {
+    "configFile": "D:\\SummerVacationPlanning\\frontend\\playwright.config.ts",
+    "rootDir": "D:/SummerVacationPlanning/frontend/tests",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 10
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/SummerVacationPlanning/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 10
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/SummerVacationPlanning/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/SummerVacationPlanning/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 10
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "D:/SummerVacationPlanning/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/SummerVacationPlanning/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 10
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "D:/SummerVacationPlanning/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/SummerVacationPlanning/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 10
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "D:/SummerVacationPlanning/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "D:/SummerVacationPlanning/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 10
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "D:/SummerVacationPlanning/frontend/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.2",
+    "workers": 10,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "button-functionality-validation.spec.ts",
+      "file": "button-functionality-validation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Button Functionality Validation",
+          "file": "button-functionality-validation.spec.ts",
+          "line": 3,
+          "column": 6,
+          "specs": [
+            {
+              "title": "1. Dashboard buttons should be responsive",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 17104,
+                      "error": {
+                        "message": "Error: Demo login buttons not found",
+                        "stack": "Error: Demo login buttons not found\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:36:13",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 13,
+                          "line": 36
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 34 |\u001b[39m     } \u001b[36melse\u001b[39m {\n \u001b[90m 35 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m'FAIL: No demo login buttons found'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 36 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Demo login buttons not found'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 37 |\u001b[39m     }\n \u001b[90m 38 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 13,
+                            "line": 36
+                          },
+                          "message": "Error: Demo login buttons not found\n\n  34 |     } else {\n  35 |       console.log('FAIL: No demo login buttons found');\n> 36 |       throw new Error('Demo login buttons not found');\n     |             ^\n  37 |     }\n  38 |   });\n  39 |\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:36:13"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "FAIL: No demo login buttons found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:16.758Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-d195c-uttons-should-be-responsive-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 13,
+                        "line": 36
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-ce74c432ac2cbc8d745c",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "2. Task planning should have single working button",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 25143,
+                      "error": {
+                        "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\u001b[22m\n",
+                        "stack": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\u001b[22m\n\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:56:33",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 33,
+                          "line": 56
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 54 |\u001b[39m       \u001b[90m// Look for single \"规划任务\" button\u001b[39m\n \u001b[90m 55 |\u001b[39m       \u001b[36mconst\u001b[39m planTaskBtn \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByText(\u001b[32m'规划任务'\u001b[39m)\u001b[33m.\u001b[39mor(page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/规划任务/\u001b[39m }))\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 56 |\u001b[39m       \u001b[36mawait\u001b[39m expect(planTaskBtn)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 57 |\u001b[39m       \n \u001b[90m 58 |\u001b[39m       \u001b[90m// Click to test functionality\u001b[39m\n \u001b[90m 59 |\u001b[39m       \u001b[36mawait\u001b[39m planTaskBtn\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 33,
+                            "line": 56
+                          },
+                          "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\u001b[22m\n\n\n  54 |       // Look for single \"规划任务\" button\n  55 |       const planTaskBtn = page.getByText('规划任务').or(page.getByRole('button', { name: /规划任务/ }));\n> 56 |       await expect(planTaskBtn).toBeVisible({ timeout: 5000 });\n     |                                 ^\n  57 |       \n  58 |       // Click to test functionality\n  59 |       await planTaskBtn.click();\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:56:33"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:16.772Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5ef6d--have-single-working-button-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5ef6d--have-single-working-button-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5ef6d--have-single-working-button-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 33,
+                        "line": 56
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-380132b1ca4b120fb17e",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "3. Task library should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 2,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 17659,
+                      "error": {
+                        "message": "Error: Task library nav not found",
+                        "stack": "Error: Task library nav not found\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:91:13",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 13,
+                          "line": 91
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 89 |\u001b[39m     } \u001b[36melse\u001b[39m {\n \u001b[90m 90 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m'FAIL: Task library navigation not found'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 91 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Task library nav not found'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 92 |\u001b[39m     }\n \u001b[90m 93 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 94 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 13,
+                            "line": 91
+                          },
+                          "message": "Error: Task library nav not found\n\n  89 |     } else {\n  90 |       console.log('FAIL: Task library navigation not found');\n> 91 |       throw new Error('Task library nav not found');\n     |             ^\n  92 |     }\n  93 |   });\n  94 |\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:91:13"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "FAIL: Task library navigation not found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:16.814Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 13,
+                        "line": 91
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-c0c75713449039904621",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 68,
+              "column": 7
+            },
+            {
+              "title": "4. Points/rewards page should not show fail to fetch errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 3,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 20460,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "OK: No fetch errors in rewards page\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:16.743Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-4d63624297b4a7c1c930",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "5. Task history page should load properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 4,
+                      "parallelIndex": 4,
+                      "status": "failed",
+                      "duration": 17517,
+                      "error": {
+                        "message": "Error: Task history nav not found",
+                        "stack": "Error: Task history nav not found\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:154:13",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 13,
+                          "line": 154
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 152 |\u001b[39m     } \u001b[36melse\u001b[39m {\n \u001b[90m 153 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m'FAIL: Task history navigation not found'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 154 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Task history nav not found'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 155 |\u001b[39m     }\n \u001b[90m 156 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 157 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 13,
+                            "line": 154
+                          },
+                          "message": "Error: Task history nav not found\n\n  152 |     } else {\n  153 |       console.log('FAIL: Task history navigation not found');\n> 154 |       throw new Error('Task history nav not found');\n      |             ^\n  155 |     }\n  156 |   });\n  157 | });\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:154:13"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "FAIL: Task history navigation not found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:17.039Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5def5-y-page-should-load-properly-chromium\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5def5-y-page-should-load-properly-chromium\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5def5-y-page-should-load-properly-chromium\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 13,
+                        "line": 154
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-b52429932589544d4e3a",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 122,
+              "column": 7
+            },
+            {
+              "title": "1. Dashboard buttons should be responsive",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 5,
+                      "parallelIndex": 5,
+                      "status": "failed",
+                      "duration": 45,
+                      "error": {
+                        "message": "Error: browser.newContext: Unknown permission: storage-access",
+                        "stack": "Error: browser.newContext: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browser.newContext: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:16.829Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-23df451de8da92e12398",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "2. Task planning should have single working button",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 6,
+                      "status": "failed",
+                      "duration": 46,
+                      "error": {
+                        "message": "Error: browser.newContext: Unknown permission: storage-access",
+                        "stack": "Error: browser.newContext: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browser.newContext: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:16.957Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-52d0d1233938b84a829b",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "3. Task library should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 7,
+                      "parallelIndex": 7,
+                      "status": "failed",
+                      "duration": 45,
+                      "error": {
+                        "message": "Error: browser.newContext: Unknown permission: storage-access",
+                        "stack": "Error: browser.newContext: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browser.newContext: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:17.087Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-b8831b202057cc48d3a8",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 68,
+              "column": 7
+            },
+            {
+              "title": "4. Points/rewards page should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 8,
+                      "parallelIndex": 8,
+                      "status": "failed",
+                      "duration": 37,
+                      "error": {
+                        "message": "Error: browser.newContext: Unknown permission: storage-access",
+                        "stack": "Error: browser.newContext: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browser.newContext: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:17.227Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-dc143ff861f3ac204109",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "5. Task history page should load properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "firefox",
+                  "projectName": "firefox",
+                  "results": [
+                    {
+                      "workerIndex": 9,
+                      "parallelIndex": 9,
+                      "status": "failed",
+                      "duration": 53,
+                      "error": {
+                        "message": "Error: browser.newContext: Unknown permission: storage-access",
+                        "stack": "Error: browser.newContext: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browser.newContext: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:17.202Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-13e4da85ffc4f7ec3f68",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 122,
+              "column": 7
+            },
+            {
+              "title": "1. Dashboard buttons should be responsive",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 10,
+                      "parallelIndex": 6,
+                      "status": "failed",
+                      "duration": 1225,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:42.256Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-10d80d5456b52ee0effe",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "2. Task planning should have single working button",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 11,
+                      "parallelIndex": 3,
+                      "status": "failed",
+                      "duration": 2475,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:45.688Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-f6b06d334c568cb95411",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "3. Task library should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 12,
+                      "parallelIndex": 5,
+                      "status": "failed",
+                      "duration": 3882,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:46.291Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-00136179cf857d42f600",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 68,
+              "column": 7
+            },
+            {
+              "title": "4. Points/rewards page should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 8,
+                      "status": "failed",
+                      "duration": 4399,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:46.556Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-3457309f8d9e338520a6",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "5. Task history page should load properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 14,
+                      "parallelIndex": 7,
+                      "status": "failed",
+                      "duration": 4377,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:46.694Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-9f9b84a245e57d876d27",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 122,
+              "column": 7
+            },
+            {
+              "title": "1. Dashboard buttons should be responsive",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 15,
+                      "parallelIndex": 6,
+                      "status": "failed",
+                      "duration": 10676,
+                      "error": {
+                        "message": "Error: Demo login buttons not found",
+                        "stack": "Error: Demo login buttons not found\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:36:13",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 13,
+                          "line": 36
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 34 |\u001b[39m     } \u001b[36melse\u001b[39m {\n \u001b[90m 35 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m'FAIL: No demo login buttons found'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 36 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Demo login buttons not found'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 37 |\u001b[39m     }\n \u001b[90m 38 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 39 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 13,
+                            "line": 36
+                          },
+                          "message": "Error: Demo login buttons not found\n\n  34 |     } else {\n  35 |       console.log('FAIL: No demo login buttons found');\n> 36 |       throw new Error('Demo login buttons not found');\n     |             ^\n  37 |     }\n  38 |   });\n  39 |\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:36:13"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "FAIL: No demo login buttons found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:46.835Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-d195c-uttons-should-be-responsive-Mobile-Chrome\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 13,
+                        "line": 36
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-a85badd675da24e19eb2",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "2. Task planning should have single working button",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 16,
+                      "parallelIndex": 9,
+                      "status": "failed",
+                      "duration": 18062,
+                      "error": {
+                        "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\u001b[22m\n",
+                        "stack": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\u001b[22m\n\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:56:33",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 33,
+                          "line": 56
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 54 |\u001b[39m       \u001b[90m// Look for single \"规划任务\" button\u001b[39m\n \u001b[90m 55 |\u001b[39m       \u001b[36mconst\u001b[39m planTaskBtn \u001b[33m=\u001b[39m page\u001b[33m.\u001b[39mgetByText(\u001b[32m'规划任务'\u001b[39m)\u001b[33m.\u001b[39mor(page\u001b[33m.\u001b[39mgetByRole(\u001b[32m'button'\u001b[39m\u001b[33m,\u001b[39m { name\u001b[33m:\u001b[39m \u001b[35m/规划任务/\u001b[39m }))\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 56 |\u001b[39m       \u001b[36mawait\u001b[39m expect(planTaskBtn)\u001b[33m.\u001b[39mtoBeVisible({ timeout\u001b[33m:\u001b[39m \u001b[35m5000\u001b[39m })\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m                                 \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 57 |\u001b[39m       \n \u001b[90m 58 |\u001b[39m       \u001b[90m// Click to test functionality\u001b[39m\n \u001b[90m 59 |\u001b[39m       \u001b[36mawait\u001b[39m planTaskBtn\u001b[33m.\u001b[39mclick()\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 33,
+                            "line": 56
+                          },
+                          "message": "Error: \u001b[31mTimed out 5000ms waiting for \u001b[39m\u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m()\u001b[22m\n\nLocator: getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\nExpected: visible\nReceived: <element(s) not found>\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 5000ms\u001b[22m\n\u001b[2m  - waiting for getByText('规划任务').or(getByRole('button', { name: /规划任务/ }))\u001b[22m\n\n\n  54 |       // Look for single \"规划任务\" button\n  55 |       const planTaskBtn = page.getByText('规划任务').or(page.getByRole('button', { name: /规划任务/ }));\n> 56 |       await expect(planTaskBtn).toBeVisible({ timeout: 5000 });\n     |                                 ^\n  57 |       \n  58 |       // Click to test functionality\n  59 |       await planTaskBtn.click();\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:56:33"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:46.957Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5ef6d--have-single-working-button-Mobile-Chrome\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 33,
+                        "line": 56
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-074d9508c8023abef075",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "3. Task library should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 17,
+                      "parallelIndex": 1,
+                      "status": "failed",
+                      "duration": 12811,
+                      "error": {
+                        "message": "Error: Task library nav not found",
+                        "stack": "Error: Task library nav not found\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:91:13",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 13,
+                          "line": 91
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 89 |\u001b[39m     } \u001b[36melse\u001b[39m {\n \u001b[90m 90 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m'FAIL: Task library navigation not found'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 91 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Task library nav not found'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 92 |\u001b[39m     }\n \u001b[90m 93 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 94 |\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 13,
+                            "line": 91
+                          },
+                          "message": "Error: Task library nav not found\n\n  89 |     } else {\n  90 |       console.log('FAIL: Task library navigation not found');\n> 91 |       throw new Error('Task library nav not found');\n     |             ^\n  92 |     }\n  93 |   });\n  94 |\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:91:13"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "FAIL: Task library navigation not found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:52.508Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-376b5-t-show-fail-to-fetch-errors-Mobile-Chrome\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 13,
+                        "line": 91
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-66ddf9efc726ed2a477a",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 68,
+              "column": 7
+            },
+            {
+              "title": "4. Points/rewards page should not show fail to fetch errors",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 18,
+                      "parallelIndex": 3,
+                      "status": "passed",
+                      "duration": 16569,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "OK: No fetch errors in rewards page\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:52.904Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-60b399404a9d9b1c358b",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "5. Task history page should load properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Chrome",
+                  "projectName": "Mobile Chrome",
+                  "results": [
+                    {
+                      "workerIndex": 19,
+                      "parallelIndex": 5,
+                      "status": "failed",
+                      "duration": 12148,
+                      "error": {
+                        "message": "Error: Task history nav not found",
+                        "stack": "Error: Task history nav not found\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:154:13",
+                        "location": {
+                          "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                          "column": 13,
+                          "line": 154
+                        },
+                        "snippet": "\u001b[0m \u001b[90m 152 |\u001b[39m     } \u001b[36melse\u001b[39m {\n \u001b[90m 153 |\u001b[39m       console\u001b[33m.\u001b[39mlog(\u001b[32m'FAIL: Task history navigation not found'\u001b[39m)\u001b[33m;\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 154 |\u001b[39m       \u001b[36mthrow\u001b[39m \u001b[36mnew\u001b[39m \u001b[33mError\u001b[39m(\u001b[32m'Task history nav not found'\u001b[39m)\u001b[33m;\u001b[39m\n \u001b[90m     |\u001b[39m             \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 155 |\u001b[39m     }\n \u001b[90m 156 |\u001b[39m   })\u001b[33m;\u001b[39m\n \u001b[90m 157 |\u001b[39m })\u001b[33m;\u001b[39m\u001b[0m"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                            "column": 13,
+                            "line": 154
+                          },
+                          "message": "Error: Task history nav not found\n\n  152 |     } else {\n  153 |       console.log('FAIL: Task history navigation not found');\n> 154 |       throw new Error('Task history nav not found');\n      |             ^\n  155 |     }\n  156 |   });\n  157 | });\n    at D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts:154:13"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "FAIL: Task history navigation not found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:56.235Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\\test-failed-1.png"
+                        },
+                        {
+                          "name": "video",
+                          "contentType": "video/webm",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\\video.webm"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "D:\\SummerVacationPlanning\\frontend\\test-results\\button-functionality-valid-5def5-y-page-should-load-properly-Mobile-Chrome\\error-context.md"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "D:\\SummerVacationPlanning\\frontend\\tests\\button-functionality-validation.spec.ts",
+                        "column": 13,
+                        "line": 154
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-d2d3f395e3ae6ac7fff8",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 122,
+              "column": 7
+            },
+            {
+              "title": "1. Dashboard buttons should be responsive",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 20,
+                      "parallelIndex": 8,
+                      "status": "failed",
+                      "duration": 6522,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:37:57.966Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-36a4482ab21536d748d9",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 17,
+              "column": 7
+            },
+            {
+              "title": "2. Task planning should have single working button",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 21,
+                      "parallelIndex": 7,
+                      "status": "failed",
+                      "duration": 6339,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:38:00.241Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-4d96f64c795d77246acf",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 40,
+              "column": 7
+            },
+            {
+              "title": "3. Task library should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 22,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 5869,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:38:02.167Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-1ee80db84b4def13a47e",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 68,
+              "column": 7
+            },
+            {
+              "title": "4. Points/rewards page should not show fail to fetch errors",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 23,
+                      "parallelIndex": 2,
+                      "status": "failed",
+                      "duration": 5744,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:38:03.923Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-f8fbebfd347dca058dbe",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "5. Task history page should load properly",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "Mobile Safari",
+                  "projectName": "Mobile Safari",
+                  "results": [
+                    {
+                      "workerIndex": 24,
+                      "parallelIndex": 4,
+                      "status": "failed",
+                      "duration": 5210,
+                      "error": {
+                        "message": "Error: browserContext.newPage: Unknown permission: storage-access",
+                        "stack": "Error: browserContext.newPage: Unknown permission: storage-access"
+                      },
+                      "errors": [
+                        {
+                          "message": "Error: browserContext.newPage: Unknown permission: storage-access"
+                        }
+                      ],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2025-08-19T12:38:04.399Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "55b67c1d77fd83119fc0-4b5b5ed1e9a414314384",
+              "file": "button-functionality-validation.spec.ts",
+              "line": 122,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2025-08-19T12:37:14.095Z",
+    "duration": 63499.313,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 23,
+    "flaky": 0
+  }
+}

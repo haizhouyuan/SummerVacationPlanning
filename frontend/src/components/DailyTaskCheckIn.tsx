@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { DailyTask, Task } from '../types';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import EvidenceModal from './EvidenceModal';
 
 interface DailyTaskCheckInProps {
@@ -48,6 +48,7 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
   const loadDailyPointsInfo = async () => {
     try {
       // Try to get current daily points from the user's stats
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.getDashboardStats();
       if (response.success && response.data.dailyPoints !== undefined) {
         setDailyPointsInfo({
@@ -65,6 +66,7 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
     try {
       setLoading(true);
       setError('');
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.getDailyTasks({ date: selectedDate });
       setDailyTasks((response as any).data.dailyTasks || []);
     } catch (error: any) {
@@ -88,6 +90,7 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
         return;
       }
 
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.updateDailyTaskStatus(
         dailyTask.id,
         updateData
@@ -131,6 +134,7 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
         isPublic: evidenceData.isPublic,
       };
 
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.updateDailyTaskStatus(
         selectedTask.id,
         updateData

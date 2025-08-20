@@ -145,20 +145,44 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
+  console.log('🔥 LOGIN FUNCTION CALLED!'); // 首行日志
   try {
     const { email, password } = req.body;
+    console.log('🔐 Login attempt for:', email, 'Password length:', password?.length);
+    console.log('💾 Collections available:', !!collections);
+    console.log('👥 Users collection:', !!collections?.users);
 
     if (!email || !password) {
+      console.log('❌ Missing email or password');
       return res.status(400).json({
         success: false,
         error: 'Email and password are required',
       });
     }
 
+    if (!collections || !collections.users) {
+      console.log('❌ Database collections not initialized');
+      return res.status(500).json({
+        success: false,
+        error: 'Database connection error',
+      });
+    }
+
     // Find user by email
+    console.log('🔍 Searching for user...');
     const user = await collections.users.findOne({ email });
+    console.log('👤 User found:', user ? 'Yes' : 'No');
+    
+    if (user) {
+      console.log('👤 User details:', {
+        email: user.email,
+        role: user.role,
+        hasPassword: !!user.password
+      });
+    }
 
     if (!user) {
+      console.log('❌ User not found in database');
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials',
@@ -166,9 +190,12 @@ export const login = async (req: Request, res: Response) => {
     }
 
     // Check password
+    console.log('🔑 Checking password...');
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log('✅ Password valid:', isPasswordValid);
 
     if (!isPasswordValid) {
+      console.log('❌ Password validation failed');
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials',
