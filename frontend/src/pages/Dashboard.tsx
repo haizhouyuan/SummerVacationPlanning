@@ -20,7 +20,8 @@ const Dashboard: React.FC = () => {
 
   // Load dashboard statistics
   const loadDashboardStats = async () => {
-    if (!user) return;
+    const isDemoMode = localStorage.getItem('isDemo') === 'true';
+    if (!user && !isDemoMode) return;
     
     setLoading(true);
     setError(null);
@@ -46,8 +47,20 @@ const Dashboard: React.FC = () => {
     loadDashboardStats();
   }, [user]);
 
-  // Loading state
-  if (!user || loading) {
+  // Check if in demo mode
+  const isDemoMode = localStorage.getItem('isDemo') === 'true';
+  
+  // Create demo user data if in demo mode and no user
+  const currentUser = user || (isDemoMode ? {
+    id: 'demo-user-123',
+    displayName: localStorage.getItem('user_role') === 'parent' ? '演示家长' : '演示学生',
+    role: localStorage.getItem('user_role') || 'student',
+    points: 150,
+    email: localStorage.getItem('user_email') || 'student@example.com'
+  } : null);
+  
+  // Loading state (but not for demo mode)
+  if ((!currentUser && !isDemoMode) || loading) {
     return (
       <div className="p-6 text-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto mb-4"></div>
@@ -98,13 +111,13 @@ const Dashboard: React.FC = () => {
           <div className="bg-white rounded-cartoon-lg shadow-cartoon-lg p-6 col-span-full animate-bounce-in">
             <div className="text-center">
               <div className="text-6xl mb-4 animate-float">
-                {user.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
+                {currentUser?.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
               </div>
               <h2 className="text-3xl font-bold text-cartoon-dark mb-2 font-fun animate-bounce-in">
-                欢迎回来，{user.displayName}！
+                欢迎回来，{currentUser?.displayName}！
               </h2>
               <p className="text-cartoon-gray mb-6 animate-bounce-in">
-                {user.role === 'student' 
+                {currentUser?.role === 'student' 
                   ? '准备好开始今天的冒险了吗？ 🚀' 
                   : '查看您孩子的精彩进展 📊'}
               </p>
@@ -120,7 +133,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex justify-center items-center space-x-4 mb-4">
                 <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-6 py-3 animate-pop">
-                  <PointsDisplay points={user.points} size="md" />
+                  <PointsDisplay points={currentUser?.points || 0} size="md" />
                 </div>
                 <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-6 py-3 text-white animate-pop">
                   <span className="font-bold">
@@ -193,7 +206,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
                 <span className="text-cartoon-gray">累计积分</span>
-                <PointsDisplay points={user.points} size="sm" showLabel={false} />
+                <PointsDisplay points={currentUser?.points || 0} size="sm" showLabel={false} />
               </div>
               <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
                 <span className="text-cartoon-gray">连续天数</span>
