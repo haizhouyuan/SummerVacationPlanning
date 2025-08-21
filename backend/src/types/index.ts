@@ -38,6 +38,15 @@ export interface Task {
   tags: string[];
   createdBy: string; // User ID
   isPublic: boolean;
+  // Extended fields for A2
+  priority?: 'low' | 'medium' | 'high';
+  timePreference?: 'morning' | 'afternoon' | 'evening' | 'flexible';
+  isRecurring?: boolean;
+  recurringPattern?: {
+    type: 'daily' | 'weekly' | 'custom';
+    daysOfWeek?: number[];
+    interval?: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -227,4 +236,30 @@ export interface UserPointsLimit {
   accumulatedPoints: number; // Saved points from previous days
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Points Transaction System for clawback tracking
+export interface PointsTransaction {
+  id: string;
+  userId: string;
+  dailyTaskId?: string; // Reference to daily task if applicable
+  type: 'earn' | 'clawback' | 'bonus' | 'redemption';
+  amount: number; // Positive for earn/bonus, negative for clawback/redemption
+  reason: string; // Description of why points were gained/lost
+  approvedBy?: string; // Parent ID for approvals/rejections
+  previousTotal: number; // User's points before this transaction
+  newTotal: number; // User's points after this transaction
+  metadata?: {
+    activityType?: string;
+    originalPoints?: number;
+    taskTitle?: string;
+    approvalNotes?: string;
+  };
+  createdAt: Date;
+}
+
+// Enhanced DailyTask interface with clawback tracking
+export interface DailyTaskWithClawback extends DailyTask {
+  pointsClawback?: number; // Points that were clawed back due to rejection
+  transactionHistory?: string[]; // Array of transaction IDs
 }

@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { collections, mongodb } from '../config/mongodb';
-import { DailyTask, Task } from '../types';
+import { DailyTask, Task, PointsTransaction } from '../types';
 import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
 import { calculateConfigurablePoints } from './pointsConfigController';
@@ -805,14 +805,123 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
           if (bonusPointsValue > 0) {
             updates.bonusPoints = bonusPointsValue;
           }
+          
+          // Create transaction records for approved points
+          if (actualPointsAwarded > 0) {
+            await createPointsTransaction(
+              dailyTask.userId,
+              'earn',
+              actualPointsAwarded,
+              `Points earned from approved task: ${task?.title || 'Unknown Task'}`,
+              {
+                dailyTaskId,
+                approvedBy: req.user.id,
+                activityType: task?.activity || 'general',
+                originalPoints: actualPointsAwarded,
+                taskTitle: task?.title,
+                approvalNotes: approvalNotes || 'Task approved by parent'
+              }
+            );
+          }
+          
+          // Create separate transaction for bonus points if any
+          if (bonusPointsValue > 0) {
+            await createPointsTransaction(
+              dailyTask.userId,
+              'bonus',
+              bonusPointsValue,
+              `Bonus points awarded for task: ${task?.title || 'Unknown Task'}`,
+              {
+                dailyTaskId,
+                approvedBy: req.user.id,
+                activityType: task?.activity || 'general',
+                originalPoints: basePoints,
+                taskTitle: task?.title,
+                approvalNotes: approvalNotes || 'Bonus points awarded by parent'
+              }
+            );
+          }
         }
       }
     }
 
-    // If rejecting, we might want to deduct points or mark task as incomplete
+    // If rejecting, handle points clawback and task status
     if (action === 'reject') {
-      // Optionally revert the task status
-      updates.status = 'in_progress'; // or keep as completed but rejected
+      // Clawback points if they were already awarded
+      const currentPointsEarned = dailyTask.pointsEarned || 0;
+      
+      if (currentPointsEarned > 0) {
+        // Use transaction to ensure atomic operations for clawback
+        const session = mongodb['client'].startSession();
+        try {
+          await session.withTransaction(async () => {
+            const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+            const activity = task?.activity || 'general';
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Get user points limit record
+            const userPointsLimit = await collections.userPointsLimits.findOne({
+              userId: dailyTask.userId,
+              date: today,
+            });
+
+            if (userPointsLimit) {
+              const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
+              const newActivityPoints = Math.max(0, currentActivityPoints - currentPointsEarned);
+              const newTotalDailyPoints = Math.max(0, (userPointsLimit.totalDailyPoints || 0) - currentPointsEarned);
+
+              // Update user points limit
+              await collections.userPointsLimits.updateOne(
+                { userId: dailyTask.userId, date: today },
+                {
+                  $set: {
+                    [`activityPoints.${activity}`]: newActivityPoints,
+                    totalDailyPoints: newTotalDailyPoints,
+                    updatedAt: new Date(),
+                  }
+                },
+                { session }
+              );
+            }
+            
+            // Deduct points from user's total
+            await collections.users.updateOne(
+              { _id: new ObjectId(dailyTask.userId) },
+              { 
+                $inc: { points: -currentPointsEarned },
+                $set: { updatedAt: new Date() }
+              },
+              { session }
+            );
+          });
+        } finally {
+          await session.endSession();
+        }
+        
+        // Record the clawback in updates
+        updates.pointsClawback = currentPointsEarned;
+        updates.pointsEarned = 0; // Reset points to 0 after clawback
+        
+        // Create transaction record for clawback
+        const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+        await createPointsTransaction(
+          dailyTask.userId,
+          'clawback',
+          currentPointsEarned,
+          `Points clawed back due to task rejection: ${task?.title || 'Unknown Task'}`,
+          {
+            dailyTaskId,
+            approvedBy: req.user.id,
+            activityType: task?.activity || 'general',
+            originalPoints: currentPointsEarned,
+            taskTitle: task?.title,
+            approvalNotes: approvalNotes || 'Task rejected by parent'
+          }
+        );
+      }
+      
+      // Revert the task status to allow re-submission
+      updates.status = 'in_progress';
     }
 
     await collections.dailyTasks.updateOne(
@@ -1175,8 +1284,82 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
           }
         }
 
-        // If rejecting, optionally revert task status
+        // If rejecting, handle points clawback and task status
         if (action === 'reject') {
+          // Clawback points if they were already awarded
+          const currentPointsEarned = dailyTask.pointsEarned || 0;
+          
+          if (currentPointsEarned > 0) {
+            // Use transaction to ensure atomic operations for clawback
+            const session = mongodb['client'].startSession();
+            try {
+              await session.withTransaction(async () => {
+                const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+                const activity = task?.activity || 'general';
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Get user points limit record
+                const userPointsLimit = await collections.userPointsLimits.findOne({
+                  userId: dailyTask.userId,
+                  date: today,
+                });
+
+                if (userPointsLimit) {
+                  const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
+                  const newActivityPoints = Math.max(0, currentActivityPoints - currentPointsEarned);
+                  const newTotalDailyPoints = Math.max(0, (userPointsLimit.totalDailyPoints || 0) - currentPointsEarned);
+
+                  // Update user points limit
+                  await collections.userPointsLimits.updateOne(
+                    { userId: dailyTask.userId, date: today },
+                    {
+                      $set: {
+                        [`activityPoints.${activity}`]: newActivityPoints,
+                        totalDailyPoints: newTotalDailyPoints,
+                        updatedAt: new Date(),
+                      }
+                    },
+                    { session }
+                  );
+                }
+                
+                // Deduct points from user's total
+                await collections.users.updateOne(
+                  { _id: new ObjectId(dailyTask.userId) },
+                  { 
+                    $inc: { points: -currentPointsEarned },
+                    $set: { updatedAt: new Date() }
+                  },
+                  { session }
+                );
+              });
+            } finally {
+              await session.endSession();
+            }
+            
+            // Record the clawback in updates
+            updates.pointsClawback = currentPointsEarned;
+            updates.pointsEarned = 0; // Reset points to 0 after clawback
+            
+            // Create transaction record for clawback
+            const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+            await createPointsTransaction(
+              dailyTask.userId,
+              'clawback',
+              currentPointsEarned,
+              `Points clawed back due to task rejection: ${task?.title || 'Unknown Task'}`,
+              {
+                dailyTaskId,
+                approvedBy: req.user.id,
+                activityType: task?.activity || 'general',
+                originalPoints: currentPointsEarned,
+                taskTitle: task?.title,
+                approvalNotes: approvalNotes || 'Task rejected by parent'
+              }
+            );
+          }
+          
+          // Revert the task status to allow re-submission
           updates.status = 'in_progress';
         }
 
@@ -1212,6 +1395,144 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to batch approve tasks',
+    });
+  }
+};
+
+/**
+ * Helper function to create a points transaction record
+ */
+async function createPointsTransaction(
+  userId: string,
+  type: 'earn' | 'clawback' | 'bonus' | 'redemption',
+  amount: number,
+  reason: string,
+  metadata?: {
+    dailyTaskId?: string;
+    approvedBy?: string;
+    activityType?: string;
+    originalPoints?: number;
+    taskTitle?: string;
+    approvalNotes?: string;
+  }
+): Promise<string> {
+  try {
+    // Get current user points for transaction record
+    const user = await collections.users.findOne({ _id: new ObjectId(userId) });
+    const previousTotal = user?.points || 0;
+    const newTotal = previousTotal + (type === 'clawback' ? -amount : amount);
+
+    const transactionData: Omit<PointsTransaction, 'id'> = {
+      userId,
+      dailyTaskId: metadata?.dailyTaskId,
+      type,
+      amount: type === 'clawback' ? -amount : amount,
+      reason,
+      approvedBy: metadata?.approvedBy,
+      previousTotal,
+      newTotal,
+      metadata,
+      createdAt: new Date(),
+    };
+
+    const result = await collections.pointsTransactions.insertOne(transactionData);
+    return result.insertedId.toString();
+  } catch (error) {
+    console.error('Error creating points transaction:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get points transaction history for a user
+ */
+export const getPointsTransactionHistory = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    const { userId, type, startDate, endDate, limit = 50, offset = 0 } = req.query;
+    const targetUserId = (userId as string) || req.user.id;
+
+    // Check if user can access the requested user's data
+    if (targetUserId !== req.user.id) {
+      if (req.user.role !== 'parent' || !req.user.children?.includes(targetUserId)) {
+        return res.status(403).json({
+          success: false,
+          error: 'Access denied',
+        });
+      }
+    }
+
+    let query: any = { userId: targetUserId };
+
+    // Apply filters
+    if (type && type !== 'all') {
+      query.type = type;
+    }
+    if (startDate && endDate) {
+      query.createdAt = { 
+        $gte: new Date(startDate as string), 
+        $lte: new Date(endDate as string) 
+      };
+    } else if (startDate) {
+      query.createdAt = { $gte: new Date(startDate as string) };
+    } else if (endDate) {
+      query.createdAt = { $lte: new Date(endDate as string) };
+    }
+
+    const transactions = await collections.pointsTransactions
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip(parseInt(offset as string))
+      .limit(parseInt(limit as string))
+      .toArray();
+
+    const total = await collections.pointsTransactions.countDocuments(query);
+
+    // Calculate summary statistics
+    const allTransactions = await collections.pointsTransactions.find({ userId: targetUserId }).toArray();
+    
+    const earnedTransactions = allTransactions.filter((t: any) => t.type === 'earn');
+    const bonusTransactions = allTransactions.filter((t: any) => t.type === 'bonus');
+    const clawbackTransactions = allTransactions.filter((t: any) => t.type === 'clawback');
+    const redemptionTransactions = allTransactions.filter((t: any) => t.type === 'redemption');
+    
+    const summary = {
+      totalTransactions: allTransactions.length,
+      totalEarned: earnedTransactions.reduce((sum: number, t: any) => sum + t.amount, 0),
+      totalBonus: bonusTransactions.reduce((sum: number, t: any) => sum + t.amount, 0),
+      totalClawback: Math.abs(clawbackTransactions.reduce((sum: number, t: any) => sum + t.amount, 0)),
+      totalRedemption: Math.abs(redemptionTransactions.reduce((sum: number, t: any) => sum + t.amount, 0)),
+    };
+
+    const transactionsWithId = transactions.map((transaction: any) => ({
+      ...transaction,
+      id: transaction._id.toString(),
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transactions: transactionsWithId,
+        summary,
+        pagination: {
+          total,
+          limit: parseInt(limit as string),
+          offset: parseInt(offset as string),
+          hasMore: (parseInt(offset as string) + parseInt(limit as string)) < total,
+        }
+      },
+    });
+  } catch (error: any) {
+    console.error('Get points transaction history error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get points transaction history',
     });
   }
 };

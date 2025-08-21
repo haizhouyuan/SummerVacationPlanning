@@ -12,6 +12,7 @@ import {
   getWeeklySchedule,
   checkSchedulingConflicts,
   batchApproveTask,
+  getPointsTransactionHistory,
 } from '../controllers/dailyTaskController';
 import { upload, uploadEvidence } from '../controllers/evidenceController';
 import { authenticateToken } from '../middleware/mongoAuth';
@@ -24,6 +25,10 @@ const dailyTaskValidation = [
   body('taskId').isString().isLength({ min: 1 }),
   body('date').isISO8601().toDate(),
   body('plannedTime').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('plannedEndTime').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('reminderTime').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('priority').optional().isIn(['low', 'medium', 'high']),
+  body('planningNotes').optional().isLength({ max: 200 }),
   body('notes').optional().isLength({ max: 200 }),
 ];
 
@@ -34,6 +39,11 @@ const dailyTaskUpdateValidation = [
   body('evidenceMedia').optional().isArray(),
   body('isPublic').optional().isBoolean(),
   body('notes').optional().isLength({ max: 200 }),
+  body('plannedTime').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('plannedEndTime').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('reminderTime').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/),
+  body('priority').optional().isIn(['low', 'medium', 'high']),
+  body('planningNotes').optional().isLength({ max: 200 }),
 ];
 
 const approvalValidation = [
@@ -74,5 +84,8 @@ router.post('/batch-approve', batchApprovalValidation, validateRequest, batchApp
 // 增强的任务计划接口
 router.get('/weekly-schedule', getWeeklySchedule);
 router.get('/check-conflicts', checkSchedulingConflicts);
+
+// 积分交易历史接口
+router.get('/points-history', getPointsTransactionHistory);
 
 export default router;
