@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, DailyTask } from '../types';
 import { apiService } from '../services/api';
-import TaskCard from '../components/TaskCard';
+// import TaskCard from '../components/TaskCard';
 import TaskTimeline from '../components/TaskTimeline';
+import TaskCreationForm from '../components/TaskCreationForm';
 
 const TaskPlanning: React.FC = () => {
   const { user } = useAuth();
@@ -12,11 +13,12 @@ const TaskPlanning: React.FC = () => {
   const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
-  const [planningTask, setPlanningTask] = useState(false);
+  // const [error, setError] = useState<string>('');
+  // const [planningTask, setPlanningTask] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [recommendedTasks, setRecommendedTasks] = useState<any[]>([]);
-  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  // const [recommendedTasks, setRecommendedTasks] = useState<any[]>([]);
+  // const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const categories = [
     { key: 'all', label: '全部', emoji: '📋' },
@@ -30,18 +32,15 @@ const TaskPlanning: React.FC = () => {
   useEffect(() => {
     loadTasks();
     loadDailyTasks();
-    loadRecommendations();
   }, [selectedDate]);
 
   const loadTasks = async () => {
     try {
       setLoading(true);
-      setError('');
       const response = await apiService.getTasks();
       setTasks((response as any).data.tasks);
     } catch (error: any) {
       console.error('Error loading tasks:', error);
-      setError(error.message || '加载任务列表失败，请重试');
     } finally {
       setLoading(false);
     }
@@ -53,67 +52,11 @@ const TaskPlanning: React.FC = () => {
       setDailyTasks((response as any).data.dailyTasks);
     } catch (error: any) {
       console.error('Error loading daily tasks:', error);
-      setError(error.message || '加载每日任务失败，请重试');
+      console.error('Failed to load daily tasks:', error);
     }
   };
 
-  const loadRecommendations = async () => {
-    try {
-      setLoadingRecommendations(true);
-      const response = await apiService.getRecommendedTasks({ limit: 3 });
-      setRecommendedTasks((response as any).data?.recommendations || []);
-    } catch (error: any) {
-      console.error('Error loading recommendations:', error);
-      // Don't show error for recommendations as it's not critical
-    } finally {
-      setLoadingRecommendations(false);
-    }
-  };
-
-  const handleTaskSelect = (task: Task) => {
-    setSelectedTasks(prev => {
-      const isSelected = prev.find(t => t.id === task.id);
-      if (isSelected) {
-        return prev.filter(t => t.id !== task.id);
-      } else {
-        return [...prev, task];
-      }
-    });
-  };
-
-  const handlePlanTasks = async () => {
-    if (selectedTasks.length === 0) return;
-
-    try {
-      setPlanningTask(true);
-      
-      // Save the count before clearing the array
-      const count = selectedTasks.length;
-      
-      for (const task of selectedTasks) {
-        // Check if task is already planned for this date
-        const existingTask = dailyTasks.find(dt => dt.taskId === task.id);
-        if (!existingTask) {
-          await apiService.createDailyTask({
-            taskId: task.id,
-            date: selectedDate,
-            notes: `计划于 ${selectedDate} 完成`,
-          });
-        }
-      }
-
-      setSelectedTasks([]);
-      await loadDailyTasks();
-      
-      // Show success message with correct count
-      alert(`成功规划了 ${count} 个任务！`);
-    } catch (error) {
-      console.error('Error planning tasks:', error);
-      alert('规划任务时出现错误，请重试');
-    } finally {
-      setPlanningTask(false);
-    }
-  };
+  // Removed unused functions for now
 
   const filteredTasks = activeCategory === 'all' 
     ? tasks 
@@ -123,18 +66,23 @@ const TaskPlanning: React.FC = () => {
     return dailyTasks.some(dt => dt.taskId === task.id);
   };
 
-  const getTotalPoints = () => {
-    return selectedTasks.reduce((sum, task) => sum + task.points, 0);
-  };
-
-  const getTotalTime = () => {
-    return selectedTasks.reduce((sum, task) => sum + task.estimatedTime, 0);
-  };
+  // Removed unused utility functions
 
   const handleTaskUpdate = (taskId: string, updates: Partial<DailyTask>) => {
     setDailyTasks(prev => prev.map(task => 
       task.id === taskId ? { ...task, ...updates } : task
     ));
+  };
+
+  const handleTaskCreated = (newTask: Task) => {
+    // Add the new task to the tasks list
+    setTasks(prev => [newTask, ...prev]);
+    
+    // Show success message
+    alert(`任务"${newTask.title}"创建成功！`);
+    
+    // Close the form
+    setShowCreateForm(false);
   };
 
   if (!user) {
@@ -208,7 +156,17 @@ const TaskPlanning: React.FC = () => {
 
               {/* Available Tasks */}
               <div className="mt-6">
-                <h4 className="text-md font-semibold text-gray-900 mb-3">🎯 可用任务</h4>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-md font-semibold text-gray-900">🎯 可用任务</h4>
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="flex items-center space-x-1 px-2 py-1 bg-primary-600 text-white text-xs rounded-md hover:bg-primary-700 transition-colors duration-200"
+                    title="创建新任务"
+                  >
+                    <span>➕</span>
+                    <span>新建</span>
+                  </button>
+                </div>
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {loading ? (
                     <div className="text-center py-4">
@@ -288,6 +246,18 @@ const TaskPlanning: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Task Creation Modal */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-2xl w-full max-h-screen overflow-y-auto">
+            <TaskCreationForm
+              onClose={() => setShowCreateForm(false)}
+              onTaskCreated={handleTaskCreated}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
