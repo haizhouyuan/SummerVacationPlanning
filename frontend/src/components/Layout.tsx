@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PointsDisplay from './PointsDisplay';
+import NotificationBadge from './NotificationBadge';
+import { usePendingApprovalCount } from '../hooks/usePendingApprovalCount';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -13,6 +15,7 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { pendingCount } = usePendingApprovalCount();
 
   const handleLogout = async () => {
     try {
@@ -30,6 +33,13 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
       icon: '🏠',
       description: '总览和统计'
     },
+    ...(user?.role === 'parent' ? [{
+      path: '/task-approval', 
+      name: '任务审批', 
+      icon: '✅',
+      description: '审核孩子提交的任务',
+      notificationCount: pendingCount
+    }] : []),
     { 
       path: '/planning', 
       name: '任务规划', 
@@ -89,19 +99,24 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
             {/* Center - Navigation for all screens */}
             <div className="hidden md:flex items-center space-x-2">
               {navigationItems.map((item) => (
-                <button
+                <NotificationBadge 
                   key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className={`px-4 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 ${
-                    isCurrentPath(item.path)
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-cartoon'
-                      : 'text-cartoon-gray hover:text-cartoon-dark hover:bg-cartoon-light'
-                  }`}
-                  title={item.description}
+                  count={item.notificationCount || 0}
+                  size="sm"
                 >
-                  <span className="mr-2">{item.icon}</span>
-                  {item.name}
-                </button>
+                  <button
+                    onClick={() => navigate(item.path)}
+                    className={`px-4 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 ${
+                      isCurrentPath(item.path)
+                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-cartoon'
+                        : 'text-cartoon-gray hover:text-cartoon-dark hover:bg-cartoon-light'
+                    }`}
+                    title={item.description}
+                  >
+                    <span className="mr-2">{item.icon}</span>
+                    {item.name}
+                  </button>
+                </NotificationBadge>
               ))}
             </div>
 
@@ -144,21 +159,27 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
                 <PointsDisplay points={user.points} size="md" />
               </div>
               {navigationItems.map((item) => (
-                <button
+                <NotificationBadge 
                   key={item.path}
-                  onClick={() => {
-                    navigate(item.path);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3 py-3 rounded-cartoon transition-all duration-200 min-h-[48px] flex items-center ${
-                    isCurrentPath(item.path)
-                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
-                      : 'text-cartoon-gray hover:text-cartoon-dark hover:bg-cartoon-light'
-                  }`}
+                  count={item.notificationCount || 0}
+                  size="md"
+                  className="relative"
                 >
-                  <span className="mr-3 text-lg">{item.icon}</span>
-                  <span className="font-medium">{item.name}</span>
-                </button>
+                  <button
+                    onClick={() => {
+                      navigate(item.path);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3 py-3 rounded-cartoon transition-all duration-200 min-h-[48px] flex items-center ${
+                      isCurrentPath(item.path)
+                        ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white'
+                        : 'text-cartoon-gray hover:text-cartoon-dark hover:bg-cartoon-light'
+                    }`}
+                  >
+                    <span className="mr-3 text-lg">{item.icon}</span>
+                    <span className="font-medium">{item.name}</span>
+                  </button>
+                </NotificationBadge>
               ))}
             </div>
           </div>

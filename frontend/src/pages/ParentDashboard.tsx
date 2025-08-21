@@ -11,6 +11,8 @@ import DailyTaskCard from '../components/DailyTaskCard';
 import FamilyManagement from '../components/FamilyManagement';
 import TaskApprovalWorkflow from '../components/TaskApprovalWorkflow';
 import FamilyLeaderboard from '../components/FamilyLeaderboard';
+import NotificationBadge from '../components/NotificationBadge';
+import { usePendingApprovalCount } from '../hooks/usePendingApprovalCount';
 
 interface Child {
   id: string;
@@ -46,6 +48,7 @@ const ParentDashboard: React.FC = () => {
   const [showTaskApproval, setShowTaskApproval] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
+  const { pendingCount } = usePendingApprovalCount();
 
 
   const [children, setChildren] = useState<Child[]>([]);
@@ -173,12 +176,14 @@ const ParentDashboard: React.FC = () => {
             <div className="flex items-center space-x-4">
               {/* Management Actions */}
               <div className="flex space-x-2">
-                <button
-                  onClick={() => setShowTaskApproval(true)}
-                  className="bg-gradient-to-r from-cartoon-orange to-secondary-400 hover:from-secondary-500 hover:to-secondary-600 text-white px-3 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
-                >
-                  ✅ 任务审批
-                </button>
+                <NotificationBadge count={pendingCount} size="sm">
+                  <button
+                    onClick={() => navigate('/task-approval')}
+                    className="bg-gradient-to-r from-cartoon-orange to-secondary-400 hover:from-secondary-500 hover:to-secondary-600 text-white px-3 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
+                  >
+                    ✅ 任务审批
+                  </button>
+                </NotificationBadge>
                 <button
                   onClick={() => setShowFamilyManagement(true)}
                   className="bg-gradient-to-r from-cartoon-purple to-primary-400 hover:from-primary-500 hover:to-primary-600 text-white px-3 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
