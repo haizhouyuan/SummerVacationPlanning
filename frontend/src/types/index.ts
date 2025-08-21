@@ -23,6 +23,7 @@ export interface Task {
   title: string;
   description: string;
   category: 'exercise' | 'reading' | 'chores' | 'learning' | 'creativity' | 'other';
+  activity: string; // Standardized activity identifier for points calculation
   difficulty: 'easy' | 'medium' | 'hard';
   estimatedTime: number;
   points: number;
@@ -112,4 +113,40 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   updateProfile: (displayName?: string, avatar?: string) => Promise<void>;
   refreshUser: () => Promise<void>;
+}
+
+export interface GameTimeConfig {
+  id: string;
+  baseGameTimeMinutes: number;
+  pointsToMinutesRatio: number;
+  educationalGameBonus: number;
+  dailyGameTimeLimit: number;
+  freeEducationalMinutes: number;
+  weeklyAccumulationLimit: number;
+  dailyPointsLimit: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface PointsRule {
+  id: string;
+  category: Task['category'];
+  activity: string;
+  basePoints: number;
+  bonusRules?: {
+    type: 'word_count' | 'duration' | 'quality' | 'completion';
+    threshold: number;
+    bonusPoints: number;
+    maxBonus?: number;
+  }[];
+  dailyLimit?: number;
+  multipliers?: {
+    difficulty?: { [key: string]: number };
+    quality?: { [key: string]: number };
+    medal?: { [key: string]: number };
+  };
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

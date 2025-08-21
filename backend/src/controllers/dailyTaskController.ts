@@ -203,16 +203,10 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
             difficulty: task.difficulty,
           };
 
-          // Use configurable points calculation
+          // Use configurable points calculation with task.activity
           const pointsResult = await calculateConfigurablePoints(
             task.category,
-            task.title.toLowerCase().includes('日记') ? 'diary' : 
-            task.title.toLowerCase().includes('数学') ? 'math_video' : 
-            task.title.toLowerCase().includes('奥数') ? 'olympiad_problem' :
-            task.title.toLowerCase().includes('编程') ? 'programming_game' :
-            task.title.toLowerCase().includes('音乐') ? 'music_practice' :
-            task.title.toLowerCase().includes('运动') ? 'general_exercise' :
-            task.title.toLowerCase().includes('家务') ? 'chores' : 'general',
+            task.activity || 'general', // Use the standardized activity field
             baseData,
             req.user.medals
           );
@@ -220,9 +214,17 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           updates.pointsEarned = pointsResult.totalPoints;
           updates.completedAt = new Date();
           
+          // For tasks requiring evidence/approval, set status as pending approval
+          if (task.requiresEvidence) {
+            updates.approvalStatus = 'pending';
+          }
+          
           // Check daily limits before adding points
           const today = new Date().toISOString().split('T')[0];
-          const GLOBAL_DAILY_POINTS_LIMIT = 20; // 全局每日积分上限
+          
+          // Get configurable daily points limit
+          const gameTimeConfig = await collections.gameTimeConfigs.findOne({ isActive: true });
+          const GLOBAL_DAILY_POINTS_LIMIT = gameTimeConfig?.dailyPointsLimit || 20;
           
           let userPointsLimit = await collections.userPointsLimits.findOne({
             userId: req.user.id,
@@ -266,14 +268,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           }
 
           // Check activity daily limit if applicable
-          const activityKey = task.category + '_' + task.title.substring(0, 20);
-          const activity = task.title.toLowerCase().includes('日记') ? 'diary' : 
-                          task.title.toLowerCase().includes('数学') ? 'math_video' : 
-                          task.title.toLowerCase().includes('奥数') ? 'olympiad_problem' :
-                          task.title.toLowerCase().includes('编程') ? 'programming_game' :
-                          task.title.toLowerCase().includes('音乐') ? 'music_practice' :
-                          task.title.toLowerCase().includes('运动') ? 'general_exercise' :
-                          task.title.toLowerCase().includes('家务') ? 'chores' : 'general';
+          const activity = task.activity || 'general';
 
           const pointsRule = await collections.pointsRules.findOne({
             activity,
@@ -281,7 +276,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           });
 
           if (pointsRule && pointsRule.dailyLimit) {
-            const currentActivityPoints = userPointsLimit.activityPoints[activityKey] || 0;
+            const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
             const activityRemainingPoints = pointsRule.dailyLimit - currentActivityPoints;
             
             if (activityRemainingPoints <= 0) {
@@ -293,20 +288,20 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
             }
           }
 
-          // Update points tracking and award points only if any points remain
-          if (actualPointsAwarded > 0) {
+          // Update points tracking and award points only if task doesn't require approval or is already approved
+          if (actualPointsAwarded > 0 && (!task.requiresEvidence || dailyTask.approvalStatus === 'approved')) {
             // Use transaction to ensure atomic operations
             const session = mongodb['client'].startSession();
             try {
               await session.withTransaction(async () => {
-                const currentActivityPoints = userPointsLimit.activityPoints[activityKey] || 0;
+                const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
                 
                 // Update user points limit
                 await collections.userPointsLimits.updateOne(
                   { userId: req.user!.id, date: today },
                   {
                     $set: {
-                      [`activityPoints.${activityKey}`]: currentActivityPoints + actualPointsAwarded,
+                      [`activityPoints.${activity}`]: currentActivityPoints + actualPointsAwarded,
                       totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + actualPointsAwarded,
                       updatedAt: new Date(),
                     }
@@ -327,6 +322,9 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
             } finally {
               await session.endSession();
             }
+          } else if (task.requiresEvidence && actualPointsAwarded > 0) {
+            // For approval-required tasks, store points but don't award them yet
+            actualPointsAwarded = 0; // Don't award points until approved
           }
 
           // Update the points earned in the task record
@@ -704,19 +702,111 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
       updatedAt: new Date(),
     };
 
-    // If approving and bonus points are provided, add them
-    if (action === 'approve' && bonusPoints && bonusPoints > 0) {
-      const currentPoints = dailyTask.pointsEarned || 0;
-      updates.pointsEarned = currentPoints + parseInt(bonusPoints);
-      
-      // Add bonus points to user's total
-      await collections.users.updateOne(
-        { _id: new ObjectId(dailyTask.userId) },
-        { 
-          $inc: { points: parseInt(bonusPoints) },
-          $set: { updatedAt: new Date() }
+    // If approving, award the original points plus any bonus points
+    if (action === 'approve') {
+      const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+      if (task) {
+        const basePoints = dailyTask.pointsEarned || 0;
+        const bonusPointsValue = bonusPoints ? parseInt(bonusPoints) : 0;
+        const totalPointsToAward = basePoints + bonusPointsValue;
+        
+        if (totalPointsToAward > 0) {
+          // Check daily limits again when approving
+          const today = new Date().toISOString().split('T')[0];
+          const gameTimeConfig = await collections.gameTimeConfigs.findOne({ isActive: true });
+          const GLOBAL_DAILY_POINTS_LIMIT = gameTimeConfig?.dailyPointsLimit || 20;
+          
+          let userPointsLimit = await collections.userPointsLimits.findOne({
+            userId: dailyTask.userId,
+            date: today,
+          });
+
+          if (!userPointsLimit) {
+            const baseGameTime = gameTimeConfig?.baseGameTimeMinutes || 30;
+            userPointsLimit = {
+              userId: dailyTask.userId,
+              date: today,
+              activityPoints: {},
+              totalDailyPoints: 0,
+              gameTimeUsed: 0,
+              gameTimeAvailable: baseGameTime,
+              accumulatedPoints: 0,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            };
+            const result = await collections.userPointsLimits.insertOne(userPointsLimit);
+            userPointsLimit.id = result.insertedId.toString();
+          }
+
+          const activity = task.activity || 'general';
+          const currentTotalPoints = userPointsLimit.totalDailyPoints || 0;
+          let actualPointsAwarded = totalPointsToAward;
+
+          // Apply global daily limit
+          if (currentTotalPoints >= GLOBAL_DAILY_POINTS_LIMIT) {
+            actualPointsAwarded = 0;
+          } else if (currentTotalPoints + totalPointsToAward > GLOBAL_DAILY_POINTS_LIMIT) {
+            actualPointsAwarded = GLOBAL_DAILY_POINTS_LIMIT - currentTotalPoints;
+          }
+
+          // Check activity daily limit
+          const pointsRule = await collections.pointsRules.findOne({
+            activity,
+            isActive: true,
+          });
+
+          if (pointsRule && pointsRule.dailyLimit) {
+            const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
+            const activityRemainingPoints = pointsRule.dailyLimit - currentActivityPoints;
+            
+            if (activityRemainingPoints <= 0) {
+              actualPointsAwarded = 0;
+            } else if (actualPointsAwarded > activityRemainingPoints) {
+              actualPointsAwarded = activityRemainingPoints;
+            }
+          }
+
+          if (actualPointsAwarded > 0) {
+            // Use transaction to ensure atomic operations
+            const session = mongodb['client'].startSession();
+            try {
+              await session.withTransaction(async () => {
+                const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
+                
+                // Update user points limit
+                await collections.userPointsLimits.updateOne(
+                  { userId: dailyTask.userId, date: today },
+                  {
+                    $set: {
+                      [`activityPoints.${activity}`]: currentActivityPoints + actualPointsAwarded,
+                      totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + actualPointsAwarded,
+                      updatedAt: new Date(),
+                    }
+                  },
+                  { session }
+                );
+                
+                // Update user's total points
+                await collections.users.updateOne(
+                  { _id: new ObjectId(dailyTask.userId) },
+                  { 
+                    $inc: { points: actualPointsAwarded },
+                    $set: { updatedAt: new Date() }
+                  },
+                  { session }
+                );
+              });
+            } finally {
+              await session.endSession();
+            }
+          }
+
+          updates.pointsEarned = actualPointsAwarded;
+          if (bonusPointsValue > 0) {
+            updates.bonusPoints = bonusPointsValue;
+          }
         }
-      );
+      }
     }
 
     // If rejecting, we might want to deduct points or mark task as incomplete

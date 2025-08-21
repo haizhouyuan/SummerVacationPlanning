@@ -203,6 +203,7 @@ export const createGameTimeConfig = async (req: AuthRequest, res: Response) => {
       dailyGameTimeLimit = 120,
       freeEducationalMinutes = 20,
       weeklyAccumulationLimit = 100,
+      dailyPointsLimit = 20,
       isActive = true,
     } = req.body;
 
@@ -219,6 +220,7 @@ export const createGameTimeConfig = async (req: AuthRequest, res: Response) => {
       dailyGameTimeLimit,
       freeEducationalMinutes,
       weeklyAccumulationLimit,
+      dailyPointsLimit,
       isActive,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -735,6 +737,7 @@ export const initializeDefaultPointsRules = async (req: AuthRequest, res: Respon
       dailyGameTimeLimit: 120,
       freeEducationalMinutes: 20,
       weeklyAccumulationLimit: 100,
+      dailyPointsLimit: 20,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),

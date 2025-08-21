@@ -16,6 +16,34 @@ const TaskPlanning: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [recommendedTasks, setRecommendedTasks] = useState<any[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [showCustomTaskForm, setShowCustomTaskForm] = useState(false);
+  const [customTaskData, setCustomTaskData] = useState({
+    title: '',
+    description: '',
+    category: 'other' as Task['category'],
+    activity: '',
+    difficulty: 'medium' as Task['difficulty'],
+    estimatedTime: 30,
+    points: 1,
+    requiresEvidence: false,
+    evidenceTypes: [] as ('text' | 'photo' | 'video')[],
+    tags: [] as string[],
+  });
+  const [showScheduleForm, setShowScheduleForm] = useState(false);
+  const [scheduleData, setScheduleData] = useState({
+    plannedTime: '',
+    plannedEndTime: '',
+    reminderTime: '',
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    timePreference: 'flexible' as 'morning' | 'afternoon' | 'evening' | 'flexible',
+    isRecurring: false,
+    recurringPattern: {
+      type: 'daily' as 'daily' | 'weekly' | 'custom',
+      daysOfWeek: [] as number[],
+      interval: 1,
+    },
+    planningNotes: '',
+  });
 
   const categories = [
     { key: 'all', label: '全部', emoji: '📋' },
@@ -83,6 +111,12 @@ const TaskPlanning: React.FC = () => {
   const handlePlanTasks = async () => {
     if (selectedTasks.length === 0) return;
 
+    // If user wants to schedule with specific time, show schedule form
+    if (selectedTasks.length === 1 && !showScheduleForm) {
+      setShowScheduleForm(true);
+      return;
+    }
+
     try {
       setPlanningTask(true);
       
@@ -93,15 +127,39 @@ const TaskPlanning: React.FC = () => {
         // Check if task is already planned for this date
         const existingTask = dailyTasks.find(dt => dt.taskId === task.id);
         if (!existingTask) {
-          await apiService.createDailyTask({
+          const taskSchedule = {
             taskId: task.id,
             date: selectedDate,
-            notes: `计划于 ${selectedDate} 完成`,
-          });
+            notes: scheduleData.planningNotes || `计划于 ${selectedDate} 完成`,
+            plannedTime: scheduleData.plannedTime || undefined,
+            plannedEndTime: scheduleData.plannedEndTime || undefined,
+            reminderTime: scheduleData.reminderTime || undefined,
+            priority: scheduleData.priority,
+            timePreference: scheduleData.timePreference,
+            isRecurring: scheduleData.isRecurring,
+            recurringPattern: scheduleData.isRecurring ? scheduleData.recurringPattern : undefined,
+          };
+          
+          await apiService.createDailyTask(taskSchedule);
         }
       }
 
       setSelectedTasks([]);
+      setShowScheduleForm(false);
+      setScheduleData({
+        plannedTime: '',
+        plannedEndTime: '',
+        reminderTime: '',
+        priority: 'medium',
+        timePreference: 'flexible',
+        isRecurring: false,
+        recurringPattern: {
+          type: 'daily',
+          daysOfWeek: [],
+          interval: 1,
+        },
+        planningNotes: '',
+      });
       await loadDailyTasks();
       
       // Show success message with correct count
@@ -128,6 +186,52 @@ const TaskPlanning: React.FC = () => {
 
   const getTotalTime = () => {
     return selectedTasks.reduce((sum, task) => sum + task.estimatedTime, 0);
+  };
+
+  const handleCreateCustomTask = async () => {
+    try {
+      if (!customTaskData.title || !customTaskData.description || !customTaskData.activity) {
+        alert('请填写任务名称、描述和活动类型');
+        return;
+      }
+
+      const taskPayload = {
+        ...customTaskData,
+        isPublic: false, // Student-created tasks are private by default
+      };
+
+      const response: any = await apiService.createTask(taskPayload);
+      
+      if (response.success) {
+        alert('自定义任务创建成功！');
+        setShowCustomTaskForm(false);
+        setCustomTaskData({
+          title: '',
+          description: '',
+          category: 'other',
+          activity: '',
+          difficulty: 'medium',
+          estimatedTime: 30,
+          points: 1,
+          requiresEvidence: false,
+          evidenceTypes: [],
+          tags: [],
+        });
+        await loadTasks(); // Reload tasks to include the new custom task
+      } else {
+        alert(response.error || '创建任务失败');
+      }
+    } catch (error) {
+      console.error('Error creating custom task:', error);
+      alert('创建任务时出现错误，请重试');
+    }
+  };
+
+  const updateCustomTaskData = (field: string, value: any) => {
+    setCustomTaskData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   if (!user) {
@@ -211,12 +315,113 @@ const TaskPlanning: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Time Planning Form */}
+                  {showScheduleForm && selectedTasks.length === 1 && (
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <h5 className="text-sm font-semibold text-gray-900 mb-3">⏰ 时间规划</h5>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">开始时间</label>
+                          <input
+                            type="time"
+                            value={scheduleData.plannedTime}
+                            onChange={(e) => setScheduleData(prev => ({ ...prev, plannedTime: e.target.value }))}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">结束时间 (可选)</label>
+                          <input
+                            type="time"
+                            value={scheduleData.plannedEndTime}
+                            onChange={(e) => setScheduleData(prev => ({ ...prev, plannedEndTime: e.target.value }))}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">优先级</label>
+                          <select
+                            value={scheduleData.priority}
+                            onChange={(e) => setScheduleData(prev => ({ ...prev, priority: e.target.value as any }))}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          >
+                            <option value="low">低</option>
+                            <option value="medium">中</option>
+                            <option value="high">高</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={scheduleData.isRecurring}
+                              onChange={(e) => setScheduleData(prev => ({ ...prev, isRecurring: e.target.checked }))}
+                              className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                            />
+                            <span className="text-xs text-gray-700">重复任务</span>
+                          </label>
+                        </div>
+                        
+                        {scheduleData.isRecurring && (
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">重复频率</label>
+                            <select
+                              value={scheduleData.recurringPattern.type}
+                              onChange={(e) => setScheduleData(prev => ({ 
+                                ...prev, 
+                                recurringPattern: { ...prev.recurringPattern, type: e.target.value as any }
+                              }))}
+                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            >
+                              <option value="daily">每天</option>
+                              <option value="weekly">每周</option>
+                              <option value="custom">自定义</option>
+                            </select>
+                          </div>
+                        )}
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">备注</label>
+                          <textarea
+                            value={scheduleData.planningNotes}
+                            onChange={(e) => setScheduleData(prev => ({ ...prev, planningNotes: e.target.value }))}
+                            placeholder="添加计划备注..."
+                            rows={2}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500"
+                          />
+                        </div>
+                        
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={handlePlanTasks}
+                            disabled={planningTask}
+                            className="flex-1 bg-primary-600 text-white py-2 px-3 rounded text-sm hover:bg-primary-700 disabled:opacity-50"
+                          >
+                            确认
+                          </button>
+                          <button
+                            onClick={() => setShowScheduleForm(false)}
+                            className="flex-1 bg-gray-200 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-300"
+                          >
+                            取消
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     onClick={handlePlanTasks}
                     disabled={planningTask}
                     className="w-full mt-4 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white py-3 sm:py-2 px-4 rounded-lg font-medium transition-colors duration-200 min-h-[48px] sm:min-h-[auto]"
                   >
-                    {planningTask ? '规划中...' : `确认规划 (${selectedTasks.length}个任务)`}
+                    {planningTask ? '规划中...' : 
+                     selectedTasks.length === 1 && !showScheduleForm ? `设置时间规划 (${selectedTasks.length}个任务)` :
+                     `确认规划 (${selectedTasks.length}个任务)`}
                   </button>
                 </div>
               )}
@@ -264,7 +469,7 @@ const TaskPlanning: React.FC = () => {
           <div className="lg:col-span-3">
             {/* Category Filter */}
             <div className="bg-white rounded-xl shadow-sm p-3 sm:p-4 mb-4 sm:mb-6">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mb-3">
                 {categories.map((category) => (
                   <button
                     key={category.key}
@@ -280,7 +485,148 @@ const TaskPlanning: React.FC = () => {
                   </button>
                 ))}
               </div>
+              
+              {/* Custom Task Button */}
+              {user?.role === 'student' && (
+                <div className="pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => setShowCustomTaskForm(!showCustomTaskForm)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors duration-200"
+                  >
+                    <span>➕</span>
+                    <span className="text-sm font-medium">自定义任务</span>
+                  </button>
+                </div>
+              )}
             </div>
+
+            {/* Custom Task Form */}
+            {showCustomTaskForm && user?.role === 'student' && (
+              <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">✨ 创建自定义任务</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">任务名称</label>
+                    <input
+                      type="text"
+                      value={customTaskData.title}
+                      onChange={(e) => updateCustomTaskData('title', e.target.value)}
+                      placeholder="请输入任务名称"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">任务描述</label>
+                    <textarea
+                      value={customTaskData.description}
+                      onChange={(e) => updateCustomTaskData('description', e.target.value)}
+                      placeholder="请描述任务的具体内容和要求"
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">任务类别</label>
+                    <select
+                      value={customTaskData.category}
+                      onChange={(e) => updateCustomTaskData('category', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="reading">阅读</option>
+                      <option value="learning">学习</option>
+                      <option value="exercise">运动</option>
+                      <option value="creativity">创意</option>
+                      <option value="chores">家务</option>
+                      <option value="other">其他</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">活动类型</label>
+                    <input
+                      type="text"
+                      value={customTaskData.activity}
+                      onChange={(e) => updateCustomTaskData('activity', e.target.value)}
+                      placeholder="如: reading_custom, exercise_custom"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">难度等级</label>
+                    <select
+                      value={customTaskData.difficulty}
+                      onChange={(e) => updateCustomTaskData('difficulty', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="easy">简单</option>
+                      <option value="medium">中等</option>
+                      <option value="hard">困难</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">预估时间(分钟)</label>
+                    <input
+                      type="number"
+                      value={customTaskData.estimatedTime}
+                      onChange={(e) => updateCustomTaskData('estimatedTime', parseInt(e.target.value) || 30)}
+                      min={5}
+                      max={300}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">建议积分</label>
+                    <input
+                      type="number"
+                      value={customTaskData.points}
+                      onChange={(e) => updateCustomTaskData('points', parseInt(e.target.value) || 1)}
+                      min={1}
+                      max={50}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={customTaskData.requiresEvidence}
+                        onChange={(e) => updateCustomTaskData('requiresEvidence', e.target.checked)}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-gray-700">需要提交证据</span>
+                    </label>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={handleCreateCustomTask}
+                    className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors duration-200"
+                  >
+                    创建任务
+                  </button>
+                  <button
+                    onClick={() => setShowCustomTaskForm(false)}
+                    className="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-200"
+                  >
+                    取消
+                  </button>
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    💡 <strong>提示：</strong>自定义任务将仅对您可见。家长可以在管理界面中查看和调整您创建的任务规则。
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Intelligent Recommendations */}
             {recommendedTasks.length > 0 && (

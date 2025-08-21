@@ -18,6 +18,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       title,
       description,
       category,
+      activity,
       difficulty,
       estimatedTime,
       points,
@@ -28,10 +29,10 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     } = req.body;
 
     // Validate required fields
-    if (!title || !description || !category || !difficulty || !estimatedTime) {
+    if (!title || !description || !category || !activity || !difficulty || !estimatedTime) {
       return res.status(400).json({
         success: false,
-        error: 'Title, description, category, difficulty, and estimated time are required',
+        error: 'Title, description, category, activity, difficulty, and estimated time are required',
       });
     }
 
@@ -42,6 +43,7 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       title,
       description,
       category,
+      activity,
       difficulty,
       estimatedTime,
       points: calculatedPoints,
@@ -79,7 +81,7 @@ export const getTasks = async (req: AuthRequest, res: Response) => {
         error: 'User not authenticated',
       });
     }
-
+    
     const {
       category,
       difficulty,

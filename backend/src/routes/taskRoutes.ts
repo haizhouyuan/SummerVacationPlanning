@@ -19,6 +19,7 @@ const taskValidation = [
   body('title').isLength({ min: 1, max: 100 }),
   body('description').isLength({ min: 1, max: 500 }),
   body('category').isIn(['exercise', 'reading', 'chores', 'learning', 'creativity', 'other']),
+  body('activity').isLength({ min: 1, max: 100 }),
   body('difficulty').isIn(['easy', 'medium', 'hard']),
   body('estimatedTime').isInt({ min: 1, max: 480 }), // 1 minute to 8 hours
   body('points').optional().isInt({ min: 1, max: 100 }),
@@ -32,6 +33,7 @@ const taskUpdateValidation = [
   body('title').optional().isLength({ min: 1, max: 100 }),
   body('description').optional().isLength({ min: 1, max: 500 }),
   body('category').optional().isIn(['exercise', 'reading', 'chores', 'learning', 'creativity', 'other']),
+  body('activity').optional().isLength({ min: 1, max: 100 }),
   body('difficulty').optional().isIn(['easy', 'medium', 'hard']),
   body('estimatedTime').optional().isInt({ min: 1, max: 480 }),
   body('points').optional().isInt({ min: 1, max: 100 }),

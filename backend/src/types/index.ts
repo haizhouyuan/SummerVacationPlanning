@@ -29,6 +29,7 @@ export interface Task {
   title: string;
   description: string;
   category: 'exercise' | 'reading' | 'chores' | 'learning' | 'creativity' | 'other';
+  activity: string; // Standardized activity identifier for points calculation
   difficulty: 'easy' | 'medium' | 'hard';
   estimatedTime: number; // in minutes
   points: number;
@@ -209,6 +210,7 @@ export interface GameTimeConfig {
   dailyGameTimeLimit: number; // Max total game time per day
   freeEducationalMinutes: number; // Free daily minutes for educational games
   weeklyAccumulationLimit: number; // Max accumulated points that can be stored
+  dailyPointsLimit: number; // Max daily points limit across all activities
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;

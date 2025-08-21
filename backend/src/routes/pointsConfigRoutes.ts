@@ -45,6 +45,7 @@ const gameTimeConfigValidation = [
   body('dailyGameTimeLimit').optional().isInt({ min: 30, max: 480 }),
   body('freeEducationalMinutes').optional().isInt({ min: 0, max: 60 }),
   body('weeklyAccumulationLimit').optional().isInt({ min: 0, max: 500 }),
+  body('dailyPointsLimit').optional().isInt({ min: 5, max: 100 }),
 ];
 
 // Daily points limit check validation

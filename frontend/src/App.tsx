@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import LiteDashboard from './pages/LiteDashboard';
 import ParentDashboard from './pages/ParentDashboard';
 import TaskPlanning from './pages/TaskPlanning';
+import TaskSchedule from './pages/TaskSchedule';
 import TodayTasks from './pages/TodayTasks';
 import Rewards from './pages/Rewards';
 import AchievementSquare from './pages/AchievementSquare';
@@ -62,6 +63,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <TaskPlanning />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/schedule"
+        element={
+          <ProtectedRoute>
+            <TaskSchedule />
           </ProtectedRoute>
         }
       />

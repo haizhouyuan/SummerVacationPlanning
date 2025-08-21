@@ -66,6 +66,10 @@ class ApiService {
     return this.request(`/daily-tasks${queryParams ? `?${queryParams}` : ''}`);
   }
 
+  async getWeeklySchedule(weekStart: string) {
+    return this.request(`/daily-tasks/weekly/${weekStart}`);
+  }
+
   async createDailyTask(dailyTaskData: any) {
     return this.request('/daily-tasks', {
       method: 'POST',
