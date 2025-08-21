@@ -17,16 +17,18 @@ const router = Router();
 // Task validation
 const taskValidation = [
   body('title').isLength({ min: 1, max: 100 }),
-  body('description').isLength({ min: 1, max: 500 }),
+  body('description').optional().isLength({ min: 0, max: 500 }),
   body('category').isIn(['exercise', 'reading', 'chores', 'learning', 'creativity', 'other']),
   body('activity').isLength({ min: 1, max: 100 }),
-  body('difficulty').isIn(['easy', 'medium', 'hard']),
-  body('estimatedTime').isInt({ min: 1, max: 480 }), // 1 minute to 8 hours
+  body('difficulty').optional().isIn(['easy', 'medium', 'hard']),
+  body('estimatedTime').optional().isInt({ min: 1, max: 480 }), // 1 minute to 8 hours
   body('points').optional().isInt({ min: 1, max: 100 }),
   body('requiresEvidence').optional().isBoolean(),
   body('evidenceTypes').optional().isArray(),
   body('tags').optional().isArray(),
   body('isPublic').optional().isBoolean(),
+  body('priority').optional().isIn(['low', 'medium', 'high']),
+  body('timePreference').optional().isIn(['morning', 'afternoon', 'evening', 'flexible']),
 ];
 
 const taskUpdateValidation = [
@@ -41,6 +43,8 @@ const taskUpdateValidation = [
   body('evidenceTypes').optional().isArray(),
   body('tags').optional().isArray(),
   body('isPublic').optional().isBoolean(),
+  body('priority').optional().isIn(['low', 'medium', 'high']),
+  body('timePreference').optional().isIn(['morning', 'afternoon', 'evening', 'flexible']),
 ];
 
 // All routes require authentication
