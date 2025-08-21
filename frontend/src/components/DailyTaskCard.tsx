@@ -110,22 +110,78 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
                       ⏰ {dailyTask.plannedTime}
                     </span>
                   )}
+                  {dailyTask.priority && (
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                      dailyTask.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      dailyTask.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-green-100 text-green-700'
+                    }`}>
+                      {dailyTask.priority === 'high' ? '高' :
+                       dailyTask.priority === 'medium' ? '中' : '低'}优先级
+                    </span>
+                  )}
+                  {dailyTask.timePreference && (
+                    <span className="text-xs text-cartoon-gray flex items-center">
+                      <span className="mr-1">
+                        {dailyTask.timePreference === 'morning' ? '🌅' :
+                         dailyTask.timePreference === 'afternoon' ? '☀️' :
+                         dailyTask.timePreference === 'evening' ? '🌙' : '⏰'}
+                      </span>
+                      {dailyTask.timePreference === 'morning' ? '上午' :
+                       dailyTask.timePreference === 'afternoon' ? '下午' :
+                       dailyTask.timePreference === 'evening' ? '晚上' : '灵活'}
+                    </span>
+                  )}
+                  {dailyTask.isRecurring && (
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                      🔄 重复任务
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
             <div className="text-right">
-              <div className="bg-gradient-to-r from-cartoon-green to-success-400 text-white rounded-cartoon px-3 py-1 shadow-cartoon">
-                <span className="text-lg font-bold">{dailyTask.pointsEarned || dailyTask.task?.points || 0}</span>
-                <span className="text-sm ml-1">积分</span>
-              </div>
+              {/* Points Display with Approval Status */}
+              {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'pending' ? (
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-cartoon px-3 py-1 shadow-cartoon">
+                  <span className="text-lg font-bold">{dailyTask.pointsEarned || 0}</span>
+                  <span className="text-sm ml-1">积分</span>
+                  <div className="text-xs mt-0.5">待审批</div>
+                </div>
+              ) : dailyTask.status === 'completed' && dailyTask.approvalStatus === 'rejected' ? (
+                <div className="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-cartoon px-3 py-1 shadow-cartoon">
+                  <span className="text-lg font-bold">0</span>
+                  <span className="text-sm ml-1">积分</span>
+                  <div className="text-xs mt-0.5">已拒绝</div>
+                </div>
+              ) : (
+                <div className="bg-gradient-to-r from-cartoon-green to-success-400 text-white rounded-cartoon px-3 py-1 shadow-cartoon">
+                  <span className="text-lg font-bold">{dailyTask.pointsEarned || dailyTask.task?.points || 0}</span>
+                  <span className="text-sm ml-1">积分</span>
+                  {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'approved' && (
+                    <div className="text-xs mt-0.5">已获得</div>
+                  )}
+                </div>
+              )}
+              
+              {/* Bonus Points */}
               {dailyTask.bonusPoints && dailyTask.bonusPoints > 0 && (
                 <div className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white rounded-cartoon px-2 py-1 shadow-cartoon mt-1">
                   <span className="text-xs font-bold">+{dailyTask.bonusPoints} 奖励</span>
                 </div>
               )}
+              
+              {/* Completion Time */}
               {dailyTask.completedAt && (
                 <div className="text-xs text-cartoon-gray mt-1">
                   完成于 {formatTime(dailyTask.completedAt.toString())}
+                </div>
+              )}
+              
+              {/* Approval Notes */}
+              {dailyTask.approvalStatus === 'rejected' && dailyTask.approvalNotes && (
+                <div className="text-xs text-red-600 mt-1 max-w-32">
+                  拒绝原因: {dailyTask.approvalNotes}
                 </div>
               )}
             </div>

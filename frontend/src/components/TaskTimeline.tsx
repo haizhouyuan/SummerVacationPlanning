@@ -1,521 +1,542 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useState } from 'react';
 import { DailyTask } from '../types';
-import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
-import { LoadingSpinner, ErrorDisplay, useDataState, withRetry } from '../utils/errorHandling';
-import Calendar from './Calendar';
-
-interface TimelineEvent {
-  id: string;
-  title: string;
-  description?: string;
-  time: string;
-  endTime?: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'overdue';
-  category: string;
-  points: number;
-  priority?: 'low' | 'medium' | 'high';
-  type: 'task' | 'milestone' | 'reminder' | 'break';
-  task?: DailyTask;
-}
+import { apiService } from '../services/api';
+import TaskCategoryIcon from './TaskCategoryIcon';
+import EvidenceModal from './EvidenceModal';
 
 interface TaskTimelineProps {
-  selectedDate?: string;
-  showDatePicker?: boolean;
-  compact?: boolean;
-  className?: string;
+  date: string;
+  dailyTasks: DailyTask[];
+  onTaskUpdate?: (taskId: string, updates: Partial<DailyTask>) => void;
+  onRefresh?: () => void;
+}
+
+interface TimeSlot {
+  time: string;
+  hour: number;
+  minute: number;
+  displayTime: string;
+}
+
+interface ConflictInfo {
+  hasConflicts: boolean;
+  conflict: {
+    timeSlot: string;
+    conflictingTasks: {
+      taskId: string;
+      title: string;
+      plannedTime: string;
+      estimatedTime: number;
+    }[];
+  } | null;
 }
 
 const TaskTimeline: React.FC<TaskTimelineProps> = ({
-  selectedDate = new Date().toISOString().split('T')[0],
-  showDatePicker = true,
-  compact = false,
-  className = ''
+  date,
+  dailyTasks,
+  onTaskUpdate,
+  onRefresh,
 }) => {
-  const { user } = useAuth();
-  const [currentDate, setCurrentDate] = useState(selectedDate);
-  const [viewMode, setViewMode] = useState<'day' | 'week'>('day');
-  const [currentTime, setCurrentTime] = useState(new Date());
-  
-  const timelineState = useDataState<TimelineEvent[]>([]);
+  const [draggedTask, setDraggedTask] = useState<DailyTask | null>(null);
+  const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
+  const [conflictInfo, setConflictInfo] = useState<ConflictInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
+  const [quickCreateTime, setQuickCreateTime] = useState<string>('');
+  const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [quickTaskDuration, setQuickTaskDuration] = useState(30);
+  const [showEvidenceModal, setShowEvidenceModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null);
+  const [resizingTask, setResizingTask] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      loadTimelineData();
+  // Generate time slots from 00:00 to 23:30 (every 30 minutes)
+  const generateTimeSlots = (): TimeSlot[] => {
+    const slots: TimeSlot[] = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 30) {
+        const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const displayTime = `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+        slots.push({ time, hour, minute, displayTime });
+      }
     }
-  }, [user, currentDate, viewMode]);
+    return slots;
+  };
 
-  // Update current time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 60000);
+  const timeSlots = generateTimeSlots();
 
-    return () => clearInterval(timer);
-  }, []);
+  // Get tasks that are already scheduled with time
+  const scheduledTasks = dailyTasks.filter(task => task.plannedTime);
 
-  const loadTimelineData = async () => {
-    timelineState.setLoading({
-      isLoading: true,
-      loadingMessage: '正在加载时间轴数据...'
-    });
+  // Calculate end time based on start time and estimated duration
+  const calculateEndTime = (startTime: string, durationMinutes: number): string => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startDate = new Date();
+    startDate.setHours(hours, minutes, 0, 0);
+    
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+    return `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  // Check if a time slot conflicts with existing tasks
+  const checkTimeConflict = async (startTime: string, estimatedTime: number, excludeTaskId?: string) => {
+    try {
+      const response = await apiService.checkSchedulingConflicts({
+        date,
+        plannedTime: startTime,
+        estimatedTime: estimatedTime.toString(),
+        excludeTaskId,
+      });
+      return (response as any).data;
+    } catch (error) {
+      console.error('Error checking conflicts:', error);
+      return { hasConflicts: false, conflict: null };
+    }
+  };
+
+
+  // Handle drag over time slot
+  const handleDragOver = (e: React.DragEvent, timeSlot: string) => {
+    e.preventDefault();
+    setDragOverSlot(timeSlot);
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  // Handle drag leave
+  const handleDragLeave = () => {
+    setDragOverSlot(null);
+    setConflictInfo(null);
+  };
+
+  // Handle drop on time slot
+  const handleDrop = async (e: React.DragEvent, timeSlot: string) => {
+    e.preventDefault();
+    setDragOverSlot(null);
+    
+    try {
+      // Check if it's a new task from TaskPlanning sidebar or existing dailyTask
+      const jsonData = e.dataTransfer.getData('application/json');
+      const textData = e.dataTransfer.getData('text/plain');
+      
+      if (jsonData) {
+        // New task from TaskPlanning sidebar
+        const task = JSON.parse(jsonData);
+        const estimatedTime = task.estimatedTime || 30;
+        const endTime = calculateEndTime(timeSlot, estimatedTime);
+
+        setLoading(true);
+
+        // Check for conflicts
+        const conflictData = await checkTimeConflict(timeSlot, estimatedTime);
+        
+        if (conflictData.hasConflicts) {
+          setConflictInfo(conflictData);
+          setLoading(false);
+          return;
+        }
+
+        // Create new daily task with scheduled time
+        await apiService.createDailyTask({
+          taskId: task.id,
+          date: date,
+          plannedTime: timeSlot,
+          plannedEndTime: endTime,
+        });
+
+        onRefresh?.();
+        
+      } else if (textData && draggedTask) {
+        // Existing daily task being rescheduled
+        const estimatedTime = draggedTask.task?.estimatedTime || 30;
+        const endTime = calculateEndTime(timeSlot, estimatedTime);
+
+        setLoading(true);
+
+        // Check for conflicts
+        const conflictData = await checkTimeConflict(timeSlot, estimatedTime, draggedTask.id);
+        
+        if (conflictData.hasConflicts) {
+          setConflictInfo(conflictData);
+          setLoading(false);
+          return;
+        }
+
+        // Update the task with new time
+        const updates = {
+          plannedTime: timeSlot,
+          plannedEndTime: endTime,
+        };
+
+        await apiService.updateDailyTask(draggedTask.id, updates);
+        
+        // Call parent callback to refresh data
+        onTaskUpdate?.(draggedTask.id, updates);
+        onRefresh?.();
+      }
+      
+    } catch (error) {
+      console.error('Error handling task drop:', error);
+    } finally {
+      setLoading(false);
+      setDraggedTask(null);
+    }
+  };
+
+  // Remove task from timeline (move back to unscheduled)
+  const handleRemoveFromTimeline = async (task: DailyTask) => {
+    try {
+      const updates = {
+        plannedTime: undefined,
+        plannedEndTime: undefined,
+      };
+
+      await apiService.updateDailyTask(task.id, updates);
+      onTaskUpdate?.(task.id, updates);
+      onRefresh?.();
+    } catch (error) {
+      console.error('Error removing task from timeline:', error);
+    }
+  };
+
+  // Handle time slot click to create new task
+  const handleTimeSlotClick = (timeSlot: string) => {
+    setQuickCreateTime(timeSlot);
+    setShowQuickCreate(true);
+    setQuickTaskTitle('');
+    setQuickTaskDuration(30);
+  };
+
+  // Handle quick task creation
+  const handleQuickTaskCreate = async () => {
+    if (!quickTaskTitle.trim()) return;
 
     try {
-      const result = await withRetry(
-        async () => {
-          const apiService = detectNetworkAndGetApiServiceSync();
-          
-          if (viewMode === 'day') {
-            // Load single day tasks
-            const response = await apiService.getDailyTasks({ 
-              date: currentDate
-            }) as any;
-            
-            if (!response.success) {
-              throw new Error(response.error || '加载时间轴数据失败');
-            }
-            
-            return convertDailyTasksToTimeline(response.data.dailyTasks);
-          } else {
-            // Load week view
-            const weekStart = getWeekStart(currentDate);
-            const weekDays = getWeekDays(weekStart);
-            
-            const weekData = await Promise.all(
-              weekDays.map(async (day) => {
-                const response = await apiService.getDailyTasks({ 
-                  date: day.date
-                }) as any;
-                
-                return {
-                  date: day.date,
-                  tasks: response.success ? response.data.dailyTasks : []
-                };
-              })
-            );
-            
-            return convertWeekDataToTimeline(weekData);
-          }
-        },
-        {
-          maxRetries: 2,
-          baseDelay: 1000,
-          onRetry: (attempt, error) => {
-            console.warn(`Timeline loading attempt ${attempt} failed:`, error);
-            timelineState.setLoading({
-              isLoading: true,
-              loadingMessage: `重试中... (${attempt}/2)`
-            });
-          }
-        }
-      );
-
-      timelineState.setData(result);
-    } catch (error: any) {
-      console.error('Error loading timeline:', error);
-      timelineState.setError(error, '时间轴数据加载', loadTimelineData);
-    }
-  };
-
-  const convertDailyTasksToTimeline = (dailyTasks: DailyTask[]): TimelineEvent[] => {
-    const events: TimelineEvent[] = [];
-    
-    // Add morning milestone
-    events.push({
-      id: 'morning-start',
-      title: '🌅 新的一天开始',
-      time: '06:00',
-      status: 'completed',
-      category: 'milestone',
-      points: 0,
-      type: 'milestone'
-    });
-
-    // Convert daily tasks to timeline events
-    dailyTasks.forEach((dailyTask) => {
-      if (dailyTask.task) {
-        const startTime = dailyTask.plannedTime || getDefaultTimeForCategory(dailyTask.task.category);
-        const endTime = dailyTask.plannedEndTime || addMinutesToTime(startTime, dailyTask.task.estimatedTime);
-        
-        events.push({
-          id: dailyTask.id,
-          title: dailyTask.task.title,
-          description: dailyTask.task.description,
-          time: startTime,
-          endTime: endTime,
-          status: getTimelineStatus(dailyTask),
-          category: dailyTask.task.category,
-          points: dailyTask.pointsEarned || dailyTask.task.points,
-          priority: dailyTask.priority as any,
-          type: 'task',
-          task: dailyTask
-        });
-      }
-    });
-
-    // Add study breaks
-    const studyTasks = events.filter(e => e.category === 'study' || e.category === 'learning');
-    studyTasks.forEach((task, index) => {
-      if (index > 0 && task.endTime) {
-        const breakTime = addMinutesToTime(task.endTime, 0);
-        events.push({
-          id: `break-${task.id}`,
-          title: '☕ 学习休息',
-          time: breakTime,
-          endTime: addMinutesToTime(breakTime, 15),
-          status: 'pending',
-          category: 'break',
-          points: 0,
-          type: 'break'
-        });
-      }
-    });
-
-    // Add evening milestone
-    events.push({
-      id: 'evening-end',
-      title: '🌙 今日总结',
-      time: '21:00',
-      status: 'pending',
-      category: 'milestone',
-      points: 0,
-      type: 'milestone'
-    });
-
-    // Sort by time
-    return events.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
-  };
-
-  const convertWeekDataToTimeline = (weekData: any[]): TimelineEvent[] => {
-    // For week view, show daily summaries
-    const events: TimelineEvent[] = [];
-    
-    weekData.forEach((dayData) => {
-      const tasksCount = dayData.tasks.length;
-      const completedCount = dayData.tasks.filter((t: DailyTask) => t.status === 'completed').length;
-      const totalPoints = dayData.tasks.reduce((sum: number, t: DailyTask) => 
-        sum + (t.pointsEarned || t.task?.points || 0), 0);
+      setLoading(true);
       
-      events.push({
-        id: `day-${dayData.date}`,
-        title: `📅 ${formatDateChinese(dayData.date)}`,
-        description: `${completedCount}/${tasksCount} 个任务完成，获得 ${totalPoints} 积分`,
-        time: '09:00',
-        status: completedCount === tasksCount && tasksCount > 0 ? 'completed' : 
-               completedCount > 0 ? 'in_progress' : 'pending',
-        category: 'daily-summary',
-        points: totalPoints,
-        type: 'milestone'
+      // First create the task
+      const newTaskResponse = await apiService.createTask({
+        title: quickTaskTitle,
+        description: `快速创建的任务：${quickTaskTitle}`,
+        category: 'other' as const,
+        difficulty: 'medium' as const,
+        estimatedTime: quickTaskDuration,
+        requiresEvidence: false,
+      }) as any;
+
+      // Then create the daily task with scheduled time
+      const endTime = calculateEndTime(quickCreateTime, quickTaskDuration);
+      const createdTaskId = newTaskResponse.data?.task?.id || newTaskResponse.data?.id || newTaskResponse.id;
+      await apiService.createDailyTask({
+        taskId: createdTaskId,
+        date: date,
+        plannedTime: quickCreateTime,
+        plannedEndTime: endTime,
       });
-    });
 
-    return events;
-  };
-
-  const getTimelineStatus = (dailyTask: DailyTask): TimelineEvent['status'] => {
-    if (dailyTask.status === 'completed') return 'completed';
-    if (dailyTask.status === 'in_progress') return 'in_progress';
-    
-    // Check if overdue
-    const now = new Date();
-    const taskDate = new Date(dailyTask.date);
-    const taskTime = dailyTask.plannedTime;
-    
-    if (taskTime && taskDate.toDateString() === now.toDateString()) {
-      const taskDateTime = new Date(`${dailyTask.date}T${taskTime}`);
-      if (now > taskDateTime) return 'overdue';
+      // Reset form and refresh
+      setShowQuickCreate(false);
+      onRefresh?.();
+    } catch (error) {
+      console.error('Error creating quick task:', error);
+    } finally {
+      setLoading(false);
     }
-    
-    return 'pending';
   };
 
-  // Helper functions
-  const getDefaultTimeForCategory = (category: string): string => {
-    const categoryTimes: { [key: string]: string } = {
-      'study': '09:00',
-      'learning': '09:00',
-      'exercise': '07:00',
-      'housework': '10:00',
-      'reading': '20:00',
-      'hobby': '15:00',
-      'creativity': '16:00'
+  // Handle task click for evidence upload
+  const handleTaskClick = (task: DailyTask) => {
+    setSelectedTask(task);
+    setShowEvidenceModal(true);
+  };
+
+  // Handle evidence submission
+  const handleEvidenceSubmit = async (evidenceData: {
+    evidenceText: string;
+    evidenceMedia: any[];
+    notes: string;
+    isPublic: boolean;
+  }) => {
+    if (!selectedTask) return;
+
+    try {
+      setLoading(true);
+      await apiService.updateDailyTask(selectedTask.id, {
+        evidenceText: evidenceData.evidenceText,
+        evidenceMedia: evidenceData.evidenceMedia,
+        notes: evidenceData.notes,
+        status: 'completed' as const,
+      });
+      setShowEvidenceModal(false);
+      setSelectedTask(null);
+      onRefresh?.();
+    } catch (error) {
+      console.error('Error submitting evidence:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get task style based on its position on timeline
+  const getTaskStyle = (task: DailyTask): React.CSSProperties => {
+    if (!task.plannedTime) return {};
+    
+    const [hours, minutes] = task.plannedTime.split(':').map(Number);
+    const startMinutes = hours * 60 + minutes; // Minutes from 00:00
+    const duration = task.task?.estimatedTime || 30;
+    
+    return {
+      top: `${(startMinutes / 30) * 32}px`, // 32px per 30min slot (reduced for 24h view)
+      height: `${Math.max((duration / 30) * 32, 32)}px`, // Minimum 32px height
     };
-    return categoryTimes[category] || '14:00';
   };
 
-  const addMinutesToTime = (time: string, minutes: number): string => {
-    const [hours, mins] = time.split(':').map(Number);
-    const totalMinutes = hours * 60 + mins + minutes;
-    const newHours = Math.floor(totalMinutes / 60) % 24;
-    const newMins = totalMinutes % 60;
-    return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
-  };
-
-  const timeToMinutes = (time: string): number => {
-    const [hours, mins] = time.split(':').map(Number);
-    return hours * 60 + mins;
-  };
-
-  const formatDateChinese = (date: string): string => {
-    return new Date(date).toLocaleDateString('zh-CN', {
-      month: 'short',
-      day: 'numeric',
-      weekday: 'short'
-    });
-  };
-
-  const getWeekStart = (date: string): string => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday as first day
-    const monday = new Date(d.setDate(diff));
-    return monday.toISOString().split('T')[0];
-  };
-
-  const getWeekDays = (weekStart: string): { date: string; dayName: string }[] => {
-    const days = [];
-    const start = new Date(weekStart);
-    
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(start);
-      date.setDate(start.getDate() + i);
-      days.push({
-        date: date.toISOString().split('T')[0],
-        dayName: date.toLocaleDateString('zh-CN', { weekday: 'short' })
-      });
-    }
-    
-    return days;
-  };
-
-  const getCurrentTimePosition = (): number => {
-    const now = currentTime;
-    const minutes = now.getHours() * 60 + now.getMinutes();
-    return Math.max(0, Math.min(100, (minutes - 360) / (1260 - 360) * 100)); // 6:00 to 21:00 range
-  };
-
-  const getStatusColor = (status: TimelineEvent['status']) => {
-    switch (status) {
-      case 'completed': return 'text-cartoon-green bg-cartoon-green/10 border-cartoon-green';
-      case 'in_progress': return 'text-cartoon-blue bg-cartoon-blue/10 border-cartoon-blue';
-      case 'overdue': return 'text-cartoon-red bg-cartoon-red/10 border-cartoon-red';
-      default: return 'text-cartoon-gray bg-cartoon-light border-cartoon-light';
-    }
-  };
-
-  const getPriorityColor = (priority?: string) => {
+  // Get priority color
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'border-l-cartoon-red';
-      case 'medium': return 'border-l-cartoon-orange';
-      case 'low': return 'border-l-cartoon-green';
-      default: return 'border-l-cartoon-light';
+      case 'high':
+        return 'border-l-red-500 bg-red-50';
+      case 'medium':
+        return 'border-l-yellow-500 bg-yellow-50';
+      case 'low':
+        return 'border-l-green-500 bg-green-50';
+      default:
+        return 'border-l-gray-500 bg-gray-50';
     }
   };
-
-  const getTypeIcon = (type: TimelineEvent['type']) => {
-    switch (type) {
-      case 'task': return '📝';
-      case 'milestone': return '🎯';
-      case 'reminder': return '⏰';
-      case 'break': return '☕';
-      default: return '📋';
-    }
-  };
-
-  if (!user) {
-    return null;
-  }
-
-  const events = timelineState.data || [];
-  const isToday = currentDate === new Date().toISOString().split('T')[0];
 
   return (
-    <div className={`bg-white rounded-cartoon-lg shadow-cartoon p-6 ${className}`}>
+    <div className="bg-white rounded-xl shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-cartoon-dark font-fun">
-            ⏰ 任务时间轴
-          </h2>
-          <p className="text-sm text-cartoon-gray">
-            {viewMode === 'day' ? '今日任务安排' : '本周进度概览'}
-          </p>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          {/* View Mode Toggle */}
-          <div className="flex bg-cartoon-light rounded-cartoon p-1">
-            <button
-              onClick={() => setViewMode('day')}
-              className={`px-3 py-1 rounded-cartoon text-sm font-medium transition-colors ${
-                viewMode === 'day' 
-                  ? 'bg-cartoon-blue text-white' 
-                  : 'text-cartoon-gray hover:text-cartoon-dark'
-              }`}
-            >
-              日视图
-            </button>
-            <button
-              onClick={() => setViewMode('week')}
-              className={`px-3 py-1 rounded-cartoon text-sm font-medium transition-colors ${
-                viewMode === 'week' 
-                  ? 'bg-cartoon-blue text-white' 
-                  : 'text-cartoon-gray hover:text-cartoon-dark'
-              }`}
-            >
-              周视图
-            </button>
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center">
+          <span className="text-2xl mr-3">📅</span>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">时间轴视图</h2>
+            <p className="text-sm text-gray-600">
+              拖拽任务到时间轴安排您的一天 - {date}
+            </p>
           </div>
-
-          {/* Date Picker */}
-          {showDatePicker && (
-            <div className="relative">
-              <Calendar
-                selectedDate={currentDate}
-                onDateChange={setCurrentDate}
-                className="absolute right-0 top-0 z-10 min-w-[300px]"
-                compactMode={true}
-                showToday={true}
-              />
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Loading State */}
-      {timelineState.loading.isLoading && (
-        <div className="text-center py-12">
-          <LoadingSpinner
-            size="lg"
-            message={timelineState.loading.loadingMessage}
-            className="text-center"
-          />
-        </div>
-      )}
+      <div className="p-6">
+        {/* Timeline */}
+        <div>
+            <div className="relative bg-gray-50 rounded-lg p-4 min-h-96">
+              {/* Time Labels */}
+              <div className="flex">
+                <div className="w-20 flex-shrink-0">
+                  {timeSlots.filter((_, index) => index % 2 === 0).map((slot) => (
+                    <div
+                      key={slot.time}
+                      className="h-16 flex items-center text-xs text-gray-600 font-medium"
+                    >
+                      {slot.displayTime}
+                    </div>
+                  ))}
+                </div>
 
-      {/* Error State */}
-      {timelineState.error.hasError && (
-        <div className="mb-6">
-          <ErrorDisplay
-            error={timelineState.error}
-            size="md"
-            className="text-center"
-          />
-        </div>
-      )}
+                {/* Timeline Grid */}
+                <div className="flex-1 relative">
+                  {/* Time Slots */}
+                  {timeSlots.map((slot, index) => (
+                    <div
+                      key={slot.time}
+                      className={`h-4 border-t border-gray-200 relative cursor-pointer hover:bg-blue-50 ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      } ${
+                        dragOverSlot === slot.time ? 'bg-primary-100 border-primary-300' : ''
+                      }`}
+                      onDragOver={(e) => handleDragOver(e, slot.time)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, slot.time)}
+                      onClick={() => handleTimeSlotClick(slot.time)}
+                    >
+                      {dragOverSlot === slot.time && (
+                        <div className="absolute inset-0 bg-primary-200 bg-opacity-50 border-2 border-primary-400 border-dashed rounded">
+                          <div className="text-center text-primary-700 font-medium text-sm py-1">
+                            拖放任务到这里
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
 
-      {/* Timeline Content */}
-      {!timelineState.loading.isLoading && !timelineState.error.hasError && (
-        <div className="relative">
-          {events.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📅</div>
-              <h3 className="text-xl font-semibold text-cartoon-dark mb-2 font-fun">
-                暂无安排
-              </h3>
-              <p className="text-cartoon-gray">
-                {viewMode === 'day' ? '今日还没有任务安排' : '本周还没有任务计划'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Current Time Indicator (only for today in day view) */}
-              {viewMode === 'day' && isToday && (
-                <div 
-                  className="absolute left-8 w-full border-t-2 border-cartoon-red z-10"
-                  style={{ top: `${getCurrentTimePosition() * 6}px` }}
-                >
-                  <div className="bg-cartoon-red text-white text-xs px-2 py-1 rounded-cartoon inline-block -mt-3">
-                    现在 {currentTime.toLocaleTimeString('zh-CN', { 
-                      hour: '2-digit', 
-                      minute: '2-digit' 
-                    })}
+                  {/* Scheduled Tasks */}
+                  {scheduledTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      style={getTaskStyle(task)}
+                      className={`absolute left-2 right-2 rounded-lg border-l-4 p-2 shadow-sm cursor-pointer group ${getPriorityColor(task.priority || 'medium')} z-10 hover:shadow-md transition-shadow`}
+                      onClick={() => handleTaskClick(task)}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center space-x-1">
+                          <TaskCategoryIcon 
+                            category={task.task?.category || 'other'} 
+                            size="sm"
+                          />
+                          <h4 className="font-medium text-gray-900 text-sm truncate flex-1">
+                            {task.task?.title}
+                          </h4>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveFromTimeline(task);
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-600">
+                        <span>{task.plannedTime} - {task.plannedEndTime}</span>
+                        <span>{task.task?.estimatedTime}min</span>
+                      </div>
+                      <div className={`text-xs px-1 py-0.5 rounded ${
+                        task.status === 'completed' ? 'bg-green-100 text-green-700' :
+                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {task.status === 'completed' ? '已完成' :
+                         task.status === 'in_progress' ? '进行中' : '计划中'}
+                      </div>
+                      
+                      {/* Resize Handle */}
+                      <div
+                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-blue-400 hover:bg-blue-500 transition-opacity"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          setResizingTask(task.id);
+                        }}
+                        title="拖拽调整时长"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Loading Overlay */}
+              {loading && (
+                <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+                    <span className="text-gray-600">更新中...</span>
                   </div>
                 </div>
               )}
-
-              {/* Timeline Events */}
-              {events.map((event, index) => (
-                <div key={event.id} className="relative flex items-start">
-                  {/* Timeline Line */}
-                  <div className="flex flex-col items-center mr-4">
-                    <div className={`
-                      w-4 h-4 rounded-full border-2 flex items-center justify-center text-xs
-                      ${getStatusColor(event.status)}
-                    `}>
-                      {event.status === 'completed' && '✓'}
-                      {event.status === 'in_progress' && '⏳'}
-                      {event.status === 'overdue' && '!'}
-                    </div>
-                    {index < events.length - 1 && (
-                      <div className="w-0.5 h-16 bg-cartoon-light mt-2"></div>
-                    )}
-                  </div>
-
-                  {/* Event Content */}
-                  <div className={`
-                    flex-1 bg-cartoon-light rounded-cartoon p-4 border-l-4 
-                    ${getPriorityColor(event.priority)}
-                    ${event.status === 'in_progress' ? 'animate-pulse' : ''}
-                  `}>
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg">{getTypeIcon(event.type)}</span>
-                        <h3 className="font-medium text-cartoon-dark">{event.title}</h3>
-                        {event.priority && (
-                          <span className={`
-                            text-xs px-2 py-1 rounded-cartoon font-medium
-                            ${event.priority === 'high' ? 'bg-cartoon-red text-white' :
-                              event.priority === 'medium' ? 'bg-cartoon-orange text-white' :
-                              'bg-cartoon-green text-white'}
-                          `}>
-                            {event.priority === 'high' ? '高' :
-                             event.priority === 'medium' ? '中' : '低'}优先级
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="text-right">
-                        <div className="text-sm font-mono text-cartoon-dark">
-                          {event.time}
-                          {event.endTime && ` - ${event.endTime}`}
-                        </div>
-                        {event.points > 0 && (
-                          <div className="text-xs text-cartoon-green font-medium">
-                            +{event.points} 积分
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {event.description && (
-                      <p className="text-sm text-cartoon-gray mb-2">{event.description}</p>
-                    )}
-
-                    {/* Task Actions */}
-                    {event.type === 'task' && event.task && (
-                      <div className="flex items-center justify-between text-xs">
-                        <div className="flex items-center space-x-3 text-cartoon-gray">
-                          <span>🏷️ {event.category}</span>
-                          {event.task.task?.estimatedTime && (
-                            <span>⏱️ {event.task.task.estimatedTime}分钟</span>
-                          )}
-                        </div>
-                        
-                        {event.status === 'pending' && (
-                          <button className="bg-cartoon-blue hover:bg-blue-600 text-white px-3 py-1 rounded-cartoon text-xs font-medium transition-colors">
-                            开始任务
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
-          )}
         </div>
-      )}
+
+        {/* Conflict Warning */}
+        {conflictInfo && conflictInfo.hasConflicts && (
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start">
+              <div className="text-red-500 mr-3">⚠️</div>
+              <div className="flex-1">
+                <h4 className="font-medium text-red-800">时间冲突检测</h4>
+                <p className="text-red-700 text-sm mt-1">
+                  该时间段与以下任务冲突：
+                </p>
+                {conflictInfo.conflict?.conflictingTasks.map((conflictTask, index) => (
+                  <div key={index} className="text-sm text-red-600 mt-1">
+                    • {conflictTask.title} ({conflictTask.plannedTime}, {conflictTask.estimatedTime}分钟)
+                  </div>
+                ))}
+                <div className="mt-3 flex space-x-2">
+                  <button
+                    onClick={() => setConflictInfo(null)}
+                    className="text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded"
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Force schedule despite conflicts
+                      // Implementation can be added if needed
+                      setConflictInfo(null);
+                    }}
+                    className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                  >
+                    强制安排
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Create Task Modal */}
+        {showQuickCreate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">快速创建任务</h3>
+              <p className="text-sm text-gray-600 mb-4">时间: {quickCreateTime}</p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    任务标题
+                  </label>
+                  <input
+                    type="text"
+                    value={quickTaskTitle}
+                    onChange={(e) => setQuickTaskTitle(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="输入任务标题..."
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    预计时长 (分钟)
+                  </label>
+                  <input
+                    type="number"
+                    min="15"
+                    max="480"
+                    step="15"
+                    value={quickTaskDuration}
+                    onChange={(e) => setQuickTaskDuration(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowQuickCreate(false)}
+                  className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleQuickTaskCreate}
+                  disabled={!quickTaskTitle.trim() || loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? '创建中...' : '创建任务'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Evidence Upload Modal */}
+        {showEvidenceModal && selectedTask && selectedTask.task && (
+          <EvidenceModal
+            task={selectedTask.task}
+            dailyTask={selectedTask}
+            onClose={() => {
+              setShowEvidenceModal(false);
+              setSelectedTask(null);
+            }}
+            onSubmit={handleEvidenceSubmit}
+          />
+        )}
+      </div>
     </div>
   );
 };

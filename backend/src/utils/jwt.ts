@@ -16,6 +16,17 @@ export const generateToken = (user: User): string => {
 
 export const verifyToken = (token: string): any => {
   try {
+    // Handle demo tokens for development/demo mode
+    if (token.startsWith('demo-token-')) {
+      console.log('🔄 Demo token detected, returning mock user');
+      return {
+        id: 'demo-user-id',
+        email: 'demo@example.com',
+        role: 'student'
+      };
+    }
+    
+    // Verify real JWT tokens
     return jwt.verify(token, JWT_SECRET);
   } catch (error) {
     throw new Error('Invalid token');

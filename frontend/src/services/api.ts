@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://47.120.74.212/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://47.120.74.212';
 
 class ApiService {
   private getAuthToken(): string | null {
@@ -84,9 +84,48 @@ class ApiService {
     });
   }
 
+  async updateDailyTask(dailyTaskId: string, updates: any) {
+    return this.updateDailyTaskStatus(dailyTaskId, updates);
+  }
+
+  async checkSchedulingConflicts(params: {
+    date: string;
+    plannedTime: string;
+    estimatedTime: string;
+    excludeTaskId?: string;
+  }) {
+    const queryParams = new URLSearchParams({
+      date: params.date,
+      plannedTime: params.plannedTime,
+      estimatedTime: params.estimatedTime,
+      ...(params.excludeTaskId && { excludeTaskId: params.excludeTaskId }),
+    }).toString();
+    return this.request(`/daily-tasks/check-conflicts?${queryParams}`);
+  }
+
   async deleteDailyTask(dailyTaskId: string) {
     return this.request(`/daily-tasks/${dailyTaskId}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Recurring tasks
+  async generateRecurringTasks(daysAhead?: number) {
+    return this.request(`/recurring-tasks/generate${daysAhead ? `?daysAhead=${daysAhead}` : ''}`);
+  }
+
+  async getRecurringPatterns() {
+    return this.request('/recurring-tasks/patterns');
+  }
+
+  async getRecurringTaskStats(days?: number) {
+    return this.request(`/recurring-tasks/stats${days ? `?days=${days}` : ''}`);
+  }
+
+  async updateRecurringPattern(taskId: string, updates: any, applyToFuture: boolean = false) {
+    return this.request(`/recurring-tasks/patterns/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ updates, applyToFuture }),
     });
   }
 

@@ -288,7 +288,8 @@
       "mcp__playwright__browser_install",
       "mcp__aliyun__Glob",
       "Bash(BROWSER=none npm start)",
-      "mcp__aliyun__WebSearch"
+      "mcp__aliyun__WebSearch",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }

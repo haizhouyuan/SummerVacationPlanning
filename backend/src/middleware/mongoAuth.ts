@@ -28,7 +28,29 @@ export const authenticateToken = async (
     const decoded = verifyToken(token);
     const userId = decoded.id;
 
-    // Get user data from MongoDB
+    // Handle demo users
+    if (userId === 'demo-user-id') {
+      console.log('🔄 Demo user detected, using mock user data');
+      req.user = {
+        id: 'demo-user-id',
+        email: 'demo@example.com',
+        displayName: '演示学生',
+        role: 'student',
+        points: 150,
+        currentStreak: 3,
+        medals: {
+          bronze: true,
+          silver: false,
+          gold: false,
+          diamond: false
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      } as User;
+      return next();
+    }
+
+    // Get user data from MongoDB for real users
     const user = await collections.users.findOne({ _id: new ObjectId(userId) });
     
     if (!user) {

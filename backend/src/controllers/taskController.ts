@@ -36,6 +36,36 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Handle demo users
+    if (req.user.id === 'demo-user-id') {
+      console.log('🔄 Demo mode: Creating mock task');
+      const mockTaskId = 'demo-task-' + Date.now();
+      const calculatedPoints = points || calculateTaskPoints(difficulty, estimatedTime);
+      
+      const mockTask = {
+        id: mockTaskId,
+        title,
+        description,
+        category,
+        difficulty,
+        estimatedTime,
+        points: calculatedPoints,
+        requiresEvidence: requiresEvidence || false,
+        evidenceTypes: evidenceTypes || [],
+        tags: tags || [],
+        createdBy: req.user.id,
+        isPublic: isPublic || false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      return res.status(201).json({
+        success: true,
+        data: { task: mockTask },
+        message: 'Task created successfully (demo mode)',
+      });
+    }
+
     // Calculate points based on difficulty and time if not provided
     const calculatedPoints = points || calculateTaskPoints(difficulty, estimatedTime);
 
