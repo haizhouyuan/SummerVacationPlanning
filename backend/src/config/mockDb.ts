@@ -71,6 +71,7 @@ export class MockCollections {
       taskId: 'task-1',
       date: new Date().toISOString().split('T')[0],
       status: 'completed',
+      priority: 'medium',
       pointsEarned: 15,
       evidenceText: '我完成了所有数学题目',
       approvalStatus: 'pending',

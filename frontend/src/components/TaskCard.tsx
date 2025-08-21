@@ -50,6 +50,44 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return textMap[difficulty as keyof typeof textMap] || difficulty;
   };
 
+  const getPriorityColor = (priority?: string) => {
+    const colorMap = {
+      high: 'text-red-600 bg-red-100',
+      medium: 'text-yellow-600 bg-yellow-100',
+      low: 'text-green-600 bg-green-100',
+    };
+    return colorMap[priority as keyof typeof colorMap] || 'text-gray-600 bg-gray-100';
+  };
+
+  const getPriorityText = (priority?: string) => {
+    const textMap = {
+      high: '高',
+      medium: '中',
+      low: '低',
+    };
+    return textMap[priority as keyof typeof textMap] || '中';
+  };
+
+  const getTimePreferenceEmoji = (timePreference?: string) => {
+    const emojiMap = {
+      morning: '🌅',
+      afternoon: '☀️',
+      evening: '🌙',
+      flexible: '⏰',
+    };
+    return emojiMap[timePreference as keyof typeof emojiMap] || '⏰';
+  };
+
+  const getTimePreferenceText = (timePreference?: string) => {
+    const textMap = {
+      morning: '上午',
+      afternoon: '下午',
+      evening: '晚上',
+      flexible: '灵活',
+    };
+    return textMap[timePreference as keyof typeof textMap] || '灵活';
+  };
+
   return (
     <div
       className={`
@@ -68,13 +106,24 @@ const TaskCard: React.FC<TaskCardProps> = ({
               <h3 className="font-semibold text-gray-900 text-lg leading-tight">
                 {task.title}
               </h3>
-              <div className="flex items-center space-x-2 mt-1">
+              <div className="flex items-center space-x-2 mt-1 flex-wrap">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(task.difficulty)}`}>
                   {getDifficultyText(task.difficulty)}
                 </span>
                 <span className="text-xs text-gray-500">
                   {task.estimatedTime}分钟
                 </span>
+                {(task as any).priority && (
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor((task as any).priority)}`}>
+                    {getPriorityText((task as any).priority)}优先级
+                  </span>
+                )}
+                {(task as any).timePreference && (
+                  <span className="text-xs text-gray-600 flex items-center">
+                    <span className="mr-1">{getTimePreferenceEmoji((task as any).timePreference)}</span>
+                    {getTimePreferenceText((task as any).timePreference)}
+                  </span>
+                )}
               </div>
             </div>
           </div>

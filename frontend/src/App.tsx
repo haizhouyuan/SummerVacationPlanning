@@ -12,6 +12,7 @@ import TaskPlanning from './pages/TaskPlanning';
 import TodayTasks from './pages/TodayTasks';
 import Rewards from './pages/Rewards';
 import AchievementSquare from './pages/AchievementSquare';
+import RecurringTasksManagement from './pages/RecurringTasksManagement';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -92,6 +93,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <LiteDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/recurring-tasks"
+        element={
+          <ProtectedRoute>
+            <RecurringTasksManagement />
           </ProtectedRoute>
         }
       />

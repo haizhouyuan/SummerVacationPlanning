@@ -31,6 +31,15 @@ export interface Task {
   tags: string[];
   createdBy: string;
   isPublic: boolean;
+  // Extended fields
+  priority?: 'low' | 'medium' | 'high';
+  timePreference?: 'morning' | 'afternoon' | 'evening' | 'flexible';
+  isRecurring?: boolean;
+  recurringPattern?: {
+    type: 'daily' | 'weekly' | 'custom';
+    daysOfWeek?: number[];
+    interval?: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -60,6 +69,13 @@ export interface DailyTask {
   notes?: string;
   isPublic?: boolean;
   pointsEarned: number;
+  // Recurring task fields
+  isRecurring?: boolean;
+  recurringPattern?: {
+    type: 'daily' | 'weekly' | 'custom';
+    daysOfWeek?: number[];
+    interval?: number;
+  };
   // Approval system fields
   approvalStatus?: 'pending' | 'approved' | 'rejected';
   approvedBy?: string;

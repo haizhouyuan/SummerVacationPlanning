@@ -40,7 +40,7 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [newTask, setNewTask] = useState({
+  const getInitialTaskState = () => ({
     title: '',
     description: '',
     category: 'learning' as Task['category'],
@@ -50,8 +50,16 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
     requiresEvidence: true,
     evidenceTypes: ['text'] as ('text' | 'photo' | 'video')[],
     tags: [] as string[],
-    isPublic: true,
+    isPublic: user?.role === 'parent' ? true : false, // Students create private tasks by default
+    isRecurring: false,
+    recurringPattern: {
+      type: 'daily' as 'daily' | 'weekly' | 'custom',
+      daysOfWeek: [] as number[],
+      interval: 1,
+    },
   });
+  
+  const [newTask, setNewTask] = useState(getInitialTaskState());
   
   const [filters, setFilters] = useState<TaskFilters>({
     category: 'all',
@@ -303,18 +311,7 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
   };
 
   const resetCreateForm = () => {
-    setNewTask({
-      title: '',
-      description: '',
-      category: 'learning',
-      difficulty: 'medium',
-      estimatedTime: 30,
-      points: 10,
-      requiresEvidence: true,
-      evidenceTypes: ['text'],
-      tags: [],
-      isPublic: true,
-    });
+    setNewTask(getInitialTaskState());
     setError('');
   };
 
@@ -355,8 +352,8 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            {/* Add New Task Button - visible to parents and admins */}
-            {user && (user.role === 'parent' || user.role === 'admin') && (
+            {/* Add New Task Button - visible to all authenticated users */}
+            {user && (
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 transition-colors duration-200"
@@ -662,7 +659,14 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">创建新任务</h3>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">创建新任务</h3>
+                  {user?.role === 'student' && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      创建您的专属任务，只有您和家长可以看到
+                    </p>
+                  )}
+                </div>
                 <button
                   onClick={() => {
                     setShowCreateModal(false);
@@ -856,18 +860,133 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
                 )}
               </div>
 
+              {/* Recurring Task Settings */}
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isRecurring"
+                    checked={newTask.isRecurring}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, isRecurring: e.target.checked }))}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isRecurring" className="ml-2 text-sm text-gray-700">
+                    设为重复任务
+                  </label>
+                </div>
+
+                {newTask.isRecurring && (
+                  <div className="pl-6 space-y-4 border-l-2 border-primary-200">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        重复模式
+                      </label>
+                      <select
+                        value={newTask.recurringPattern.type}
+                        onChange={(e) => setNewTask(prev => ({
+                          ...prev,
+                          recurringPattern: {
+                            ...prev.recurringPattern,
+                            type: e.target.value as 'daily' | 'weekly' | 'custom'
+                          }
+                        }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      >
+                        <option value="daily">每天</option>
+                        <option value="weekly">每周</option>
+                        <option value="custom">自定义间隔</option>
+                      </select>
+                    </div>
+
+                    {newTask.recurringPattern.type === 'weekly' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          选择星期几
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {['周日', '周一', '周二', '周三', '周四', '周五', '周六'].map((day, index) => (
+                            <label key={index} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={newTask.recurringPattern.daysOfWeek?.includes(index)}
+                                onChange={(e) => {
+                                  const daysOfWeek = newTask.recurringPattern.daysOfWeek || [];
+                                  if (e.target.checked) {
+                                    setNewTask(prev => ({
+                                      ...prev,
+                                      recurringPattern: {
+                                        ...prev.recurringPattern,
+                                        daysOfWeek: [...daysOfWeek, index]
+                                      }
+                                    }));
+                                  } else {
+                                    setNewTask(prev => ({
+                                      ...prev,
+                                      recurringPattern: {
+                                        ...prev.recurringPattern,
+                                        daysOfWeek: daysOfWeek.filter(d => d !== index)
+                                      }
+                                    }));
+                                  }
+                                }}
+                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded mr-2"
+                              />
+                              <span className="text-sm text-gray-700">{day}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {newTask.recurringPattern.type === 'custom' && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          间隔天数
+                        </label>
+                        <input
+                          type="number"
+                          value={newTask.recurringPattern.interval}
+                          onChange={(e) => setNewTask(prev => ({
+                            ...prev,
+                            recurringPattern: {
+                              ...prev.recurringPattern,
+                              interval: parseInt(e.target.value) || 1
+                            }
+                          }))}
+                          min="1"
+                          max="365"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          每 {newTask.recurringPattern.interval} 天重复一次
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Public/Private */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isPublic"
-                  checked={newTask.isPublic}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, isPublic: e.target.checked }))}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isPublic" className="ml-2 text-sm text-gray-700">
-                  公开任务 (其他用户可见)
-                </label>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isPublic"
+                    checked={newTask.isPublic}
+                    onChange={(e) => setNewTask(prev => ({ ...prev, isPublic: e.target.checked }))}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="isPublic" className="ml-2 text-sm text-gray-700">
+                    {user?.role === 'student' ? '分享任务给其他同学' : '公开任务 (其他用户可见)'}
+                  </label>
+                </div>
+                {user?.role === 'student' && (
+                  <p className="text-xs text-gray-500 pl-6">
+                    {newTask.isPublic 
+                      ? '勾选后，您的任务会出现在任务库中，供其他同学参考学习' 
+                      : '不勾选时，任务只有您和家长可以看到'}
+                  </p>
+                )}
               </div>
             </div>
 
