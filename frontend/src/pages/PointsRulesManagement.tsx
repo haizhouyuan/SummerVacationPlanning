@@ -47,6 +47,22 @@ const PointsRulesManagement: React.FC = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // New form state for create form
+  const [newRule, setNewRule] = useState({
+    category: '',
+    activity: '',
+    basePoints: 0,
+    dailyLimit: undefined as number | undefined,
+    isActive: true,
+    bonusRules: [] as any[],
+    multipliers: undefined as any
+  });
+
+  useEffect(() => {
+    fetchPointsRules();
+    fetchGameTimeConfig();
+  }, []);
 
   // Only allow parents to access this page
   if (!user || user.role !== 'parent') {
@@ -59,11 +75,6 @@ const PointsRulesManagement: React.FC = () => {
       </div>
     );
   }
-
-  useEffect(() => {
-    fetchPointsRules();
-    fetchGameTimeConfig();
-  }, []);
 
   const fetchPointsRules = async () => {
     try {
@@ -111,13 +122,39 @@ const PointsRulesManagement: React.FC = () => {
     }
   };
 
-  const createPointsRule = async (newRule: Omit<PointsRule, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const createPointsRule = async () => {
     try {
-      const data = await pointsConfigService.createPointsRule(newRule);
+      // Validate required fields
+      if (!newRule.category || !newRule.activity || newRule.basePoints < 0) {
+        setError('请填写所有必填字段：类别、活动名称和基础积分');
+        return;
+      }
+
+      const ruleData = {
+        category: newRule.category as 'exercise' | 'reading' | 'chores' | 'learning' | 'creativity' | 'other',
+        activity: newRule.activity,
+        basePoints: newRule.basePoints,
+        dailyLimit: newRule.dailyLimit,
+        isActive: newRule.isActive,
+        bonusRules: newRule.bonusRules,
+        multipliers: newRule.multipliers
+      };
+
+      const data = await pointsConfigService.createPointsRule(ruleData);
       
       if (data.success) {
         setSuccess('积分规则创建成功！');
         setShowCreateForm(false);
+        // Reset form
+        setNewRule({
+          category: '',
+          activity: '',
+          basePoints: 0,
+          dailyLimit: undefined,
+          isActive: true,
+          bonusRules: [],
+          multipliers: undefined
+        });
         fetchPointsRules();
       } else {
         setError(data.error || '创建积分规则失败');
@@ -141,6 +178,22 @@ const PointsRulesManagement: React.FC = () => {
     } catch (error) {
       console.error('更新游戏时间配置失败:', error);
       setError('更新游戏时间配置失败');
+    }
+  };
+
+  const toggleRuleStatus = async (ruleId: string, currentStatus: boolean) => {
+    try {
+      const data = await pointsConfigService.updatePointsRule(ruleId, { isActive: !currentStatus });
+      
+      if (data.success) {
+        setSuccess(`规则已${!currentStatus ? '启用' : '禁用'}！`);
+        fetchPointsRules();
+      } else {
+        setError(data.error || '更新规则状态失败');
+      }
+    } catch (error) {
+      console.error('更新规则状态失败:', error);
+      setError('更新规则状态失败');
     }
   };
 
@@ -236,9 +289,13 @@ const PointsRulesManagement: React.FC = () => {
           {showCreateForm && (
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
               <h3 className="text-lg font-semibold mb-4">创建新积分规则</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <select className="px-3 py-2 border border-gray-300 rounded-md">
-                  <option>选择类别</option>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <select 
+                  value={newRule.category}
+                  onChange={(e) => setNewRule({...newRule, category: e.target.value})}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">选择类别</option>
                   <option value="exercise">运动</option>
                   <option value="reading">阅读</option>
                   <option value="chores">家务</option>
@@ -249,21 +306,48 @@ const PointsRulesManagement: React.FC = () => {
                 <input
                   type="text"
                   placeholder="活动名称"
-                  className="px-3 py-2 border border-gray-300 rounded-md"
+                  value={newRule.activity}
+                  onChange={(e) => setNewRule({...newRule, activity: e.target.value})}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <input
                   type="number"
                   placeholder="基础积分"
-                  className="px-3 py-2 border border-gray-300 rounded-md"
+                  value={newRule.basePoints}
+                  onChange={(e) => setNewRule({...newRule, basePoints: parseInt(e.target.value) || 0})}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  min="0"
                 />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <input
+                  type="number"
+                  placeholder="每日上限 (可选)"
+                  value={newRule.dailyLimit || ''}
+                  onChange={(e) => setNewRule({...newRule, dailyLimit: e.target.value ? parseInt(e.target.value) : undefined})}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  min="1"
+                />
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={newRule.isActive}
+                    onChange={(e) => setNewRule({...newRule, isActive: e.target.checked})}
+                    className="rounded border-gray-300 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm text-gray-700">启用规则</span>
+                </label>
+              </div>
               <div className="mt-4 flex gap-2">
-                <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                <button 
+                  onClick={createPointsRule}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                >
                   创建
                 </button>
                 <button 
                   onClick={() => setShowCreateForm(false)}
-                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+                  className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500 transition-colors"
                 >
                   取消
                 </button>
@@ -336,11 +420,36 @@ const PointsRulesManagement: React.FC = () => {
                       )}
                     </td>
                     <td className="px-4 py-2">
-                      <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                        rule.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {rule.isActive ? '启用' : '禁用'}
-                      </span>
+                      {editingRule?.id === rule.id ? (
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            checked={editingRule.isActive}
+                            onChange={(e) => setEditingRule({ ...editingRule, isActive: e.target.checked })}
+                            className="rounded border-gray-300 focus:ring-indigo-500"
+                          />
+                          <span className="text-sm text-gray-700">启用</span>
+                        </label>
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                            rule.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {rule.isActive ? '启用' : '禁用'}
+                          </span>
+                          <button
+                            onClick={() => toggleRuleStatus(rule.id, rule.isActive)}
+                            className={`text-xs px-2 py-1 rounded transition-colors ${
+                              rule.isActive 
+                                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                            }`}
+                            title={rule.isActive ? '点击禁用' : '点击启用'}
+                          >
+                            {rule.isActive ? '禁用' : '启用'}
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       {editingRule?.id === rule.id ? (

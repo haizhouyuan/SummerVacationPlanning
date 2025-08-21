@@ -14,6 +14,7 @@ import TodayTasks from './pages/TodayTasks';
 import Rewards from './pages/Rewards';
 import AchievementSquare from './pages/AchievementSquare';
 import RecurringTasksManagement from './pages/RecurringTasksManagement';
+import PointsRulesManagement from './pages/PointsRulesManagement';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -110,6 +111,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <RecurringTasksManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/points-rules"
+        element={
+          <ProtectedRoute>
+            <PointsRulesManagement />
           </ProtectedRoute>
         }
       />
