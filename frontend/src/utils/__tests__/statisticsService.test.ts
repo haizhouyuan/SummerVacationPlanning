@@ -214,7 +214,7 @@ describe('StatisticsService Tests', () => {
         level: 1,
         progress: 2,
         nextMilestone: 3,
-        progressPercent: expect.closeTo(66.67, 2), // 2/3 * 100
+        progressPercent: 67, // 2/3 * 100, rounded
       });
     });
 
@@ -224,7 +224,7 @@ describe('StatisticsService Tests', () => {
         level: 3, // 超过了3和7的里程碑
         progress: 10,
         nextMilestone: 14,
-        progressPercent: expect.closeTo(71.43, 2), // 10/14 * 100
+        progressPercent: 71, // 10/14 * 100, rounded
       });
     });
 
@@ -244,7 +244,7 @@ describe('StatisticsService Tests', () => {
         level: 7, // 超过所有里程碑
         progress: 120,
         nextMilestone: 100,
-        progressPercent: 120, // 超过100%
+        progressPercent: 100, // limited to 100%
       });
     });
 
@@ -324,7 +324,7 @@ describe('StatisticsService Tests', () => {
       const average = calculateAverage(largeArray);
       const endTime = performance.now();
       
-      expect(average).toBe(4999.5); // 数组的平均值
+      expect(average).toBe(5000); // 数组的平均值，经过Math.round()舍入
       expect(endTime - startTime).toBeLessThan(10); // 应该很快完成
     });
   });

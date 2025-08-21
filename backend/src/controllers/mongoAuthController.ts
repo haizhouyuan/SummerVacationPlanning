@@ -534,6 +534,31 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
 
     const userId = req.user.id;
 
+    // Handle demo users - return mock data directly
+    if (userId === 'demo-user-id') {
+      return res.json({
+        success: true,
+        data: {
+          user: req.user,
+          weeklyStats: {
+            tasksCompleted: 8,
+            totalTasks: 12,
+            pointsEarned: 85,
+            streak: 3
+          },
+          monthlyProgress: {
+            currentMonth: 65,
+            lastMonth: 58
+          },
+          achievements: ['连续完成3天', '本周完成8项任务'],
+          recentActivities: [
+            { type: 'task_completed', description: '完成数学练习', timestamp: new Date().toISOString() },
+            { type: 'points_earned', description: '获得15积分', timestamp: new Date().toISOString() }
+          ]
+        }
+      });
+    }
+
     // Get user details
     const user = await collections.users.findOne({ _id: new ObjectId(userId) });
     if (!user) {

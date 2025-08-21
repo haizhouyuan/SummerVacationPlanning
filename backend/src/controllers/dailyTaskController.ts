@@ -37,8 +37,36 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Check if task exists
-    const task = await collections.tasks.findOne({ _id: new ObjectId(taskId) });
+    // Handle demo mode - return success without database operations
+    if (req.user.id === 'demo-user-id') {
+      return res.status(201).json({
+        success: true,
+        data: {
+          _id: 'demo-daily-task-' + Date.now(),
+          taskId,
+          userId: 'demo-user-id',
+          date,
+          plannedTime,
+          plannedEndTime,
+          priority,
+          status: 'planned',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      });
+    }
+
+    // Check if task exists (only for real users)
+    let task;
+    try {
+      task = await collections.tasks.findOne({ _id: new ObjectId(taskId) });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid task ID format',
+      });
+    }
+    
     if (!task) {
       return res.status(404).json({
         success: false,
