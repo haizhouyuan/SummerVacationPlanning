@@ -9,6 +9,7 @@ import AchievementBadge from '../components/AchievementBadge';
 import SummerProgressTracker from '../components/SummerProgressTracker';
 import PointsHistory from '../components/PointsHistory';
 import Card from '../components/Card';
+import PointsProgressCard from '../components/PointsProgressCard';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -107,55 +108,63 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-4 md:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {/* Welcome Card */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3 md:gap-4">
+          {/* Welcome Card - Simplified for mobile */}
           <Card className="col-span-full" animate={true}>
             <div className="text-center">
-              <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 animate-float">
+              <div className="text-3xl sm:text-4xl lg:text-6xl mb-2 sm:mb-3 animate-float">
                 {currentUser?.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
               </div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cartoon-dark mb-2 font-fun animate-bounce-in px-2">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-cartoon-dark mb-1 sm:mb-2 font-fun animate-bounce-in px-2">
                 欢迎回来，{currentUser?.displayName}！
               </h2>
-              <p className="text-sm sm:text-base text-cartoon-gray mb-4 sm:mb-6 animate-bounce-in px-2">
+              <p className="text-sm text-cartoon-gray mb-3 sm:mb-4 animate-bounce-in px-2 hidden sm:block">
                 {currentUser?.role === 'student' 
                   ? '准备好开始今天的冒险了吗？ 🚀' 
                   : '查看您孩子的精彩进展 📊'}
               </p>
               
-              {/* Time-based greeting */}
-              <div className="inline-block bg-cartoon-blue/10 text-cartoon-blue px-3 sm:px-4 py-2 rounded-cartoon font-medium text-xs sm:text-sm mb-3 sm:mb-4 animate-pop">
+              {/* Time-based greeting - simplified for mobile */}
+              <div className="inline-block bg-cartoon-blue/10 text-cartoon-blue px-2 sm:px-3 py-1 sm:py-2 rounded-cartoon font-medium text-xs mb-2 sm:mb-3 animate-pop">
                 {(() => {
                   const hour = new Date().getHours();
-                  if (hour < 12) return '🌅 早上好！新的一天，新的开始！';
-                  if (hour < 18) return '☀️ 下午好！继续保持优秀！';
-                  return '🌙 晚上好！今天辛苦了！';
+                  if (hour < 12) return '🌅 早上好！';
+                  if (hour < 18) return '☀️ 下午好！';
+                  return '🌙 晚上好！';
                 })()}
               </div>
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:space-x-4 mb-4">
-                <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 animate-pop">
-                  <PointsDisplay points={currentUser?.points || 0} size="md" />
+              
+              {/* User stats integrated into welcome */}
+              <div className="flex flex-row justify-center items-center gap-2 sm:gap-3 mb-2 text-sm">
+                <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon px-3 py-1 sm:px-4 sm:py-2 animate-pop">
+                  <PointsDisplay points={currentUser?.points || 0} size="sm" />
                 </div>
-                <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 text-white animate-pop">
-                  <span className="font-bold text-sm sm:text-base">
+                <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon px-3 py-1 sm:px-4 sm:py-2 text-white animate-pop">
+                  <span className="font-bold text-xs sm:text-sm">
                     🌟 等级 {safeStats.user.level}
                   </span>
                 </div>
-              </div>
-              
-              {/* Weekly Progress */}
-              <div className="bg-cartoon-light rounded-cartoon p-3 sm:p-4 max-w-md mx-auto">
-                <h3 className="text-xs sm:text-sm font-medium text-cartoon-dark mb-2">本周进度</h3>
-                <ProgressBar 
-                  current={safeStats.weeklyStats.completed} 
-                  max={safeStats.weeklyGoal}
-                  label="任务完成"
-                  size="md"
-                  animated={true}
-                />
+                {safeStats.user.currentStreak > 0 && (
+                  <div className="bg-gradient-to-r from-cartoon-orange to-warning-400 rounded-cartoon px-3 py-1 sm:px-4 sm:py-2 text-white animate-pop">
+                    <span className="font-bold text-xs sm:text-sm">
+                      🔥 {safeStats.user.currentStreak}天
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </Card>
+
+          {/* Points & Progress Card - New combined module */}
+          <PointsProgressCard
+            className="col-span-full"
+            dailyCompleted={1}
+            dailyTotal={3}
+            dailyPointsEarned={10}
+            dailyPointsTotal={45}
+            weeklyCompleted={safeStats.weeklyStats.completed}
+            weeklyGoal={safeStats.weeklyGoal}
+          />
 
           {/* Quick Actions - Hidden on mobile to avoid duplication with bottom nav */}
           <Card className="hidden sm:block" animate={true}>
@@ -194,8 +203,8 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          {/* Stats */}
-          <Card animate={true}>
+          {/* Stats - Hidden on mobile */}
+          <Card className="hidden sm:block" animate={true}>
             <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">📊 统计信息</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
@@ -219,101 +228,84 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          {/* Today's Tasks */}
-          <Card className="col-span-full" animate={true}>
-            <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">✅ 今日任务</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Today's Tasks - Simplified for mobile */}
+          <Card className="col-span-full mt-1" animate={true}>
+            <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">✅ 今日任务</h3>
+            <div className="space-y-2 sm:space-y-3">
               {/* 示例今日任务 - 这里可以从API加载实际数据 */}
-              <div className="bg-cartoon-light rounded-cartoon p-4">
+              <div className="bg-cartoon-light rounded-cartoon p-3 sm:p-4">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark">📚 完成数学作业</h4>
-                  <span className="text-xs bg-cartoon-green text-white px-2 py-1 rounded-full">未完成</span>
+                  <h4 className="font-medium text-cartoon-dark text-sm sm:text-base">📚 完成数学作业</h4>
+                  <span className="text-xs bg-red-500 text-white px-2 py-1 rounded-full">未完成</span>
                 </div>
-                <p className="text-sm text-cartoon-gray mb-3">完成第3章练习题1-10</p>
+                <p className="text-xs sm:text-sm text-cartoon-gray mb-2 sm:mb-3">完成第3章练习题1-10</p>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-cartoon-purple">⭐ 20 积分</span>
-                  <button className="bg-cartoon-green hover:bg-success-500 text-white px-3 py-1 rounded-cartoon text-xs transition-colors">
+                  <button className="bg-cartoon-green hover:bg-success-500 text-white px-2 sm:px-3 py-1 rounded-cartoon text-xs transition-colors">
                     完成
                   </button>
                 </div>
               </div>
               
-              <div className="bg-cartoon-light rounded-cartoon p-4">
+              <div className="bg-cartoon-light rounded-cartoon p-3 sm:p-4">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark">🏃 晨跑30分钟</h4>
+                  <h4 className="font-medium text-cartoon-dark text-sm sm:text-base">🏃 晨跑30分钟</h4>
                   <span className="text-xs bg-cartoon-orange text-white px-2 py-1 rounded-full">进行中</span>
                 </div>
-                <p className="text-sm text-cartoon-gray mb-3">在公园跑步30分钟</p>
+                <p className="text-xs sm:text-sm text-cartoon-gray mb-2 sm:mb-3">在公园跑步30分钟</p>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-cartoon-purple">⭐ 15 积分</span>
-                  <button className="bg-cartoon-orange hover:bg-warning-500 text-white px-3 py-1 rounded-cartoon text-xs transition-colors">
+                  <button className="bg-cartoon-orange hover:bg-warning-500 text-white px-2 sm:px-3 py-1 rounded-cartoon text-xs transition-colors">
                     继续
                   </button>
                 </div>
               </div>
               
-              <div className="bg-cartoon-light rounded-cartoon p-4 opacity-75">
+              <div className="bg-cartoon-light rounded-cartoon p-3 sm:p-4 opacity-75">
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark">🎸 吉他练习</h4>
+                  <h4 className="font-medium text-cartoon-dark text-sm sm:text-base">🎸 吉他练习</h4>
                   <span className="text-xs bg-cartoon-green text-white px-2 py-1 rounded-full">✓ 已完成</span>
                 </div>
-                <p className="text-sm text-cartoon-gray mb-3">练习新学的和弦</p>
+                <p className="text-xs sm:text-sm text-cartoon-gray mb-2 sm:mb-3">练习新学的和弦</p>
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-cartoon-purple">⭐ 10 积分</span>
                   <span className="text-xs text-cartoon-green">✓ 完成</span>
                 </div>
               </div>
             </div>
-            
-            {/* Today's Summary */}
-            <div className="mt-6 bg-gradient-to-r from-cartoon-blue/10 to-cartoon-green/10 rounded-cartoon p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium text-cartoon-dark">今日进度</h4>
-                  <p className="text-sm text-cartoon-gray">已完成 1/3 个任务</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-cartoon-green">10 / 45</p>
-                  <p className="text-xs text-cartoon-gray">今日积分</p>
-                </div>
-              </div>
-              <div className="mt-3">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-cartoon-green to-success-400 h-2 rounded-full" style={{width: '33%'}}></div>
-                </div>
-              </div>
-            </div>
           </Card>
 
-          {/* Achievements */}
+          {/* Achievements - Optimized for mobile */}
           <Card animate={true}>
-            <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">🏆 成就徽章</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {safeStats.achievements.length > 0 ? (
-                safeStats.achievements.map((achievement: any, index: number) => (
-                  <AchievementBadge
-                    key={index}
-                    type={achievement.type as any}
-                    level={achievement.level}
-                    title={achievement.title}
-                    description={achievement.description}
-                    isUnlocked={achievement.isUnlocked}
-                    progress={achievement.progress}
-                    maxProgress={achievement.maxProgress}
-                    size="sm"
-                  />
-                ))
-              ) : (
-                <div className="col-span-2 sm:col-span-3 text-center py-4 text-cartoon-gray">
-                  <div className="text-2xl mb-2">🏆</div>
-                  <p className="text-sm">完成任务即可获得成就徽章</p>
-                </div>
-              )}
+            <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">🏆 成就徽章</h3>
+            <div className="overflow-x-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 min-w-0">
+                {safeStats.achievements.length > 0 ? (
+                  safeStats.achievements.map((achievement: any, index: number) => (
+                    <AchievementBadge
+                      key={index}
+                      type={achievement.type as any}
+                      level={achievement.level}
+                      title={achievement.title}
+                      description={achievement.description}
+                      isUnlocked={achievement.isUnlocked}
+                      progress={achievement.progress}
+                      maxProgress={achievement.maxProgress}
+                      size="sm"
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-2 sm:col-span-3 text-center py-4 text-cartoon-gray">
+                    <div className="text-2xl mb-2">🏆</div>
+                    <p className="text-sm">完成任务即可获得成就徽章</p>
+                  </div>
+                )}
+              </div>
             </div>
           </Card>
 
-          {/* Summer Progress Tracker */}
-          <SummerProgressTracker className="animate-bounce-in" />
+          {/* Summer Progress Tracker - Hidden on mobile */}
+          <SummerProgressTracker className="animate-bounce-in hidden sm:block" />
         </div>
 
         {/* Celebration Modal */}

@@ -493,23 +493,7 @@ export const compatibleApiService = {
   },
 
   async updateDailyTask(taskId: string, updateData: any) {
-<<<<<<< HEAD
-    return this.updateDailyTaskStatus(taskId, updateData);
-  },
-  
-  // Force TypeScript recompilation
-
-  async checkSchedulingConflicts(params: {
-    date: string;
-    plannedTime: string;
-    estimatedTime: string;
-    excludeTaskId?: string;
-  }) {
-    console.log('Compatible API: Checking scheduling conflicts', params);
-    
-    // Mock conflict checking - for demo purposes, occasionally return conflicts
-    const hasConflict = Math.random() < 0.1; // 10% chance of conflict
-=======
+    // Use the enhanced implementation from master while maintaining simplified interface
     const taskIndex = mockDailyTasks.findIndex(t => t.id === taskId);
     if (taskIndex === -1) {
       throw new Error('任务未找到');
@@ -540,7 +524,7 @@ export const compatibleApiService = {
     estimatedTime: string; 
     excludeTaskId?: string; 
   }) {
-    // Simple mock conflict checking
+    // Enhanced conflict checking using master's logic
     console.log('Compatible API: Checking scheduling conflicts with params:', params);
     
     const conflictingTasks = mockDailyTasks.filter(task => {
@@ -552,7 +536,7 @@ export const compatibleApiService = {
         return false;
       }
       
-      // Simple overlap check
+      // Detailed overlap check from master
       const taskStartTime = new Date(`${params.date}T${task.plannedTime}:00`);
       const taskDuration = (task as any).task?.estimatedTime || 30;
       const taskEndTime = new Date(taskStartTime.getTime() + taskDuration * 60000);
@@ -563,22 +547,10 @@ export const compatibleApiService = {
     });
 
     const hasConflicts = conflictingTasks.length > 0;
->>>>>>> origin/master
     
     return Promise.resolve({
       success: true,
       data: {
-<<<<<<< HEAD
-        hasConflicts: hasConflict,
-        conflicts: hasConflict ? [
-          {
-            id: 'mock-conflict',
-            title: '模拟冲突任务',
-            plannedTime: params.plannedTime,
-            estimatedTime: '30'
-          }
-        ] : []
-=======
         hasConflicts,
         conflict: hasConflicts ? {
           timeSlot: params.plannedTime,
@@ -589,7 +561,6 @@ export const compatibleApiService = {
             estimatedTime: task.task?.estimatedTime || 30
           }))
         } : null
->>>>>>> origin/master
       }
     });
   },
@@ -831,6 +802,82 @@ export const compatibleApiService = {
     });
   },
 
+  // Parent-specific methods
+  async getPendingApprovalTasks() {
+    console.log('Compatible API: Getting pending approval tasks');
+    
+    const mockPendingTasks = [
+      {
+        id: 'pending-task-1',
+        userId: 'demo-user-123',
+        taskId: '1',
+        status: 'pending',
+        evidenceText: '我已经完成了30分钟的阅读任务，读了一本关于科学的书。',
+        evidenceMedia: [],
+        completedAt: new Date(),
+        task: {
+          title: '阅读30分钟',
+          category: 'reading',
+          points: 15
+        }
+      }
+    ];
+    
+    return Promise.resolve({
+      success: true,
+      data: { tasks: mockPendingTasks }
+    });
+  },
+
+  async getChildren() {
+    console.log('Compatible API: Getting children data');
+    
+    const mockChildren = [
+      {
+        id: 'demo-user-123',
+        name: '袁绍學',
+        email: 'yuanshao@demo.com',
+        points: 240,
+        level: 3,
+        avatar: '',
+        streakDays: 3,
+        tasksCompleted: 8,
+        weeklyGoal: 7,
+        weeklyProgress: 85.7
+      }
+    ];
+    
+    return Promise.resolve({
+      success: true,
+      data: { children: mockChildren }
+    });
+  },
+
+  async getChildStats(childId: string) {
+    console.log('Compatible API: Getting child stats for:', childId);
+    
+    const mockStats = {
+      totalTasks: 15,
+      completedTasks: 8,
+      todayTasks: 3,
+      weeklyStreak: 3,
+      totalPoints: 240,
+      weeklyPoints: 80,
+      achievements: 4,
+      categoryBreakdown: {
+        reading: { completed: 3, total: 5 },
+        exercise: { completed: 2, total: 3 },
+        learning: { completed: 2, total: 4 },
+        creativity: { completed: 1, total: 3 }
+      }
+    };
+    
+    return Promise.resolve({
+      success: true,
+      data: { stats: mockStats }
+    });
+  },
+
   // Fallback method for any other API calls
   async makeRequest(endpoint: string, options: any = {}) {
     console.log(`Compatible API: Making request to ${endpoint}`, options);
@@ -956,7 +1003,10 @@ export const detectNetworkAndGetApiService = async (options: {
       localStorage.getItem('isDemo') === 'true' ||
       localStorage.getItem('currentUser')?.includes('demo') ||
       localStorage.getItem('user_email')?.includes('demo') ||
-      localStorage.getItem('auth_token')?.includes('demo_jwt_token');
+      localStorage.getItem('auth_token')?.includes('demo_jwt_token') ||
+      localStorage.getItem('auth_token')?.startsWith('demo-token') ||
+      /[\u4e00-\u9fff]/.test(localStorage.getItem('user_email') || '') || // Chinese characters
+      ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || '');
 
     const forceCompatibleMode = 
       process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
@@ -1006,7 +1056,10 @@ export const detectNetworkAndGetApiServiceSync = () => {
     localStorage.getItem('isDemo') === 'true' ||
     localStorage.getItem('currentUser')?.includes('demo') ||
     localStorage.getItem('user_email')?.includes('demo') ||
-    localStorage.getItem('auth_token')?.includes('demo_jwt_token');
+    localStorage.getItem('auth_token')?.includes('demo_jwt_token') ||
+    localStorage.getItem('auth_token')?.startsWith('demo-token') ||
+    /[\u4e00-\u9fff]/.test(localStorage.getItem('user_email') || '') || // Chinese characters
+    ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || '');
 
   const forceCompatibleMode = 
     process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
