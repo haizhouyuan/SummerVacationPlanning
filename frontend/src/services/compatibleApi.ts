@@ -111,6 +111,21 @@ const mockTasks = [
     isPublic: true,
     createdAt: new Date(),
     updatedAt: new Date()
+  },
+  {
+    id: '3',
+    title: '测试拖拽任务',
+    description: '这是一个用于测试拖拽功能的任务',
+    category: 'other',
+    difficulty: 'easy',
+    points: 10,
+    estimatedTime: 20,
+    requiresEvidence: false,
+    evidenceTypes: ['text'],
+    tags: ['测试'],
+    isPublic: false,
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ];
 
@@ -351,6 +366,10 @@ export const compatibleApiService = {
     const newTask = {
       id: Date.now().toString(),
       ...taskData,
+      isPublic: taskData.isPublic || false,
+      evidenceTypes: taskData.evidenceTypes || [],
+      tags: taskData.tags || [],
+      points: taskData.points || Math.max(5, Math.floor(taskData.estimatedTime / 6)),
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -426,6 +445,9 @@ export const compatibleApiService = {
   },
 
   async createDailyTask(taskData: any) {
+    // Find the associated task
+    const associatedTask = mockTasks.find(t => t.id === taskData.taskId);
+    
     const newDailyTask = {
       id: Date.now().toString(),
       userId: 'demo-user',
@@ -433,7 +455,8 @@ export const compatibleApiService = {
       status: 'planned',
       pointsEarned: 0,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      task: associatedTask // Include the full task object
     };
     
     mockDailyTasks.push(newDailyTask);
@@ -466,6 +489,78 @@ export const compatibleApiService = {
     return Promise.resolve({
       success: true,
       data: { dailyTask: updatedTask }
+    });
+  },
+
+  async updateDailyTask(taskId: string, updateData: any) {
+    const taskIndex = mockDailyTasks.findIndex(t => t.id === taskId);
+    if (taskIndex === -1) {
+      throw new Error('任务未找到');
+    }
+
+    const updatedTask = {
+      ...mockDailyTasks[taskIndex],
+      ...updateData,
+      updatedAt: new Date()
+    };
+
+    if (updateData.status === 'completed') {
+      updatedTask.completedAt = new Date();
+      updatedTask.pointsEarned = updatedTask.task?.points || 15;
+    }
+
+    mockDailyTasks[taskIndex] = updatedTask;
+
+    return Promise.resolve({
+      success: true,
+      data: { dailyTask: updatedTask }
+    });
+  },
+
+  async checkSchedulingConflicts(params: { 
+    date: string; 
+    plannedTime: string; 
+    estimatedTime: string; 
+    excludeTaskId?: string; 
+  }) {
+    // Simple mock conflict checking
+    console.log('Compatible API: Checking scheduling conflicts with params:', params);
+    
+    const conflictingTasks = mockDailyTasks.filter(task => {
+      if (params.excludeTaskId && task.id === params.excludeTaskId) {
+        return false;
+      }
+      
+      if (task.date !== params.date || !task.plannedTime) {
+        return false;
+      }
+      
+      // Simple overlap check
+      const taskStartTime = new Date(`${params.date}T${task.plannedTime}:00`);
+      const taskDuration = (task as any).task?.estimatedTime || 30;
+      const taskEndTime = new Date(taskStartTime.getTime() + taskDuration * 60000);
+      const newStartTime = new Date(`${params.date}T${params.plannedTime}:00`);
+      const newEndTime = new Date(newStartTime.getTime() + parseInt(params.estimatedTime) * 60000);
+      
+      return (newStartTime < taskEndTime && newEndTime > taskStartTime);
+    });
+
+    const hasConflicts = conflictingTasks.length > 0;
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        hasConflicts,
+        conflict: hasConflicts ? {
+          timeSlot: params.plannedTime,
+          conflictingTasks: conflictingTasks.map(task => ({
+            taskId: task.id,
+            title: task.task?.title || 'Unknown Task',
+            plannedTime: task.plannedTime,
+            estimatedTime: task.task?.estimatedTime || 30
+          }))
+        } : null
+      }
     });
   },
 
@@ -740,7 +835,7 @@ const testApiConnection = async (timeout: number = 5000): Promise<boolean> => {
     // Try to connect to the actual API endpoint
     const testUrl = process.env.REACT_APP_API_URL 
       ? `${process.env.REACT_APP_API_URL}/health`
-      : 'http://localhost:5000/api/health';
+      : 'http://localhost:5001/health';
 
     const response = await fetch(testUrl, {
       method: 'GET',

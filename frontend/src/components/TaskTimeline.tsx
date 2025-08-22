@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DailyTask } from '../types';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import TaskCategoryIcon from './TaskCategoryIcon';
 import EvidenceModal from './EvidenceModal';
 
@@ -47,7 +47,9 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   const [quickTaskDuration, setQuickTaskDuration] = useState(30);
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null);
-  // const [resizingTask, setResizingTask] = useState<string | null>(null);
+  const [resizingTask, setResizingTask] = useState<string | null>(null);
+  const [resizeStartY, setResizeStartY] = useState<number>(0);
+  const [resizeOriginalHeight, setResizeOriginalHeight] = useState<number>(0);
 
   // Generate time slots from 06:00 to 22:00 (every 30 minutes) - focus on active hours
   const generateTimeSlots = (): TimeSlot[] => {
@@ -85,6 +87,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Check if a time slot conflicts with existing tasks
   const checkTimeConflict = async (startTime: string, estimatedTime: number, excludeTaskId?: string) => {
     try {
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.checkSchedulingConflicts({
         date,
         plannedTime: startTime,
@@ -102,8 +105,9 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drag over time slot
   const handleDragOver = (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
+    console.log('👆 Drag over time slot:', timeSlot);
     setDragOverSlot(timeSlot);
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = 'copy'; // Changed from 'move' to match effectAllowed in TaskPlanning
   };
 
   // Handle drag leave
@@ -115,6 +119,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drop on time slot
   const handleDrop = async (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
+    console.log('🎯 Drop event triggered on time slot:', timeSlot);
     setDragOverSlot(null);
     
     try {
@@ -122,7 +127,10 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       const jsonData = e.dataTransfer.getData('application/json');
       const textData = e.dataTransfer.getData('text/plain');
       
+      console.log('📥 Drop data received:', { jsonData: jsonData?.slice(0, 100), textData });
+      
       if (jsonData) {
+        console.log('📋 Processing new task from sidebar');
         // New task from TaskPlanning sidebar
         const task = JSON.parse(jsonData);
         const estimatedTime = task.estimatedTime || 30;
@@ -140,14 +148,26 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         }
 
         // Create new daily task with scheduled time
-        await apiService.createDailyTask({
+        console.log('🔧 Creating daily task with API service');
+        const apiService = detectNetworkAndGetApiServiceSync();
+        console.log('📞 Calling createDailyTask with params:', {
           taskId: task.id,
           date: date,
           plannedTime: timeSlot,
           plannedEndTime: endTime,
         });
-
+        
+        const createResult = await apiService.createDailyTask({
+          taskId: task.id,
+          date: date,
+          plannedTime: timeSlot,
+          plannedEndTime: endTime,
+        });
+        
+        console.log('✅ Daily task created successfully:', createResult);
+        console.log('🔄 Calling onRefresh to update timeline');
         onRefresh?.();
+        console.log('✨ Task drop completed successfully');
         
       } else if (textData && draggedTask) {
         // Existing daily task being rescheduled
@@ -171,6 +191,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
           plannedEndTime: endTime,
         };
 
+        const apiService = detectNetworkAndGetApiServiceSync();
         await apiService.updateDailyTask(draggedTask.id, updates);
         
         // Call parent callback to refresh data
@@ -179,11 +200,113 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       }
       
     } catch (error) {
-      console.error('Error handling task drop:', error);
+      console.error('❌ Error handling task drop:', error);
+      console.error('❌ Error details:', {
+        message: (error as any)?.message,
+        stack: (error as any)?.stack,
+        error: error
+      });
     } finally {
+      console.log('🧹 Cleaning up drop state');
       setLoading(false);
       setDraggedTask(null);
     }
+  };
+
+  // Handle task resizing
+  const handleResizeStart = (e: React.MouseEvent, task: DailyTask) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    setResizingTask(task.id);
+    setResizeStartY(e.clientY);
+    
+    // Calculate current height based on task duration
+    const currentDuration = task.task?.estimatedTime || 30;
+    const slotHeight = 40; // 40px per 30min slot
+    const currentHeight = Math.max((currentDuration / 30) * slotHeight, slotHeight);
+    setResizeOriginalHeight(currentHeight);
+    
+    console.log('🔧 Starting resize for task:', task.id, 'currentDuration:', currentDuration, 'height:', currentHeight);
+    
+    // Add global mouse move and mouse up listeners
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+  };
+
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!resizingTask) return;
+    
+    const deltaY = e.clientY - resizeStartY;
+    const slotHeight = 40; // 40px per 30min slot
+    
+    // Calculate new height (minimum 1 slot = 30 minutes)
+    const newHeight = Math.max(resizeOriginalHeight + deltaY, slotHeight);
+    
+    // Convert height back to duration (in minutes)
+    const newDuration = Math.max(Math.round((newHeight / slotHeight) * 30), 15); // Minimum 15 minutes
+    
+    console.log('📏 Resizing task:', resizingTask, 'newHeight:', newHeight, 'newDuration:', newDuration);
+    
+    // Update the visual height immediately for smooth feedback
+    const taskElement = document.querySelector(`[data-task-id="${resizingTask}"]`) as HTMLElement;
+    if (taskElement) {
+      taskElement.style.height = `${newHeight}px`;
+    }
+  };
+
+  const handleResizeEnd = async (e: MouseEvent) => {
+    if (!resizingTask) return;
+    
+    const deltaY = e.clientY - resizeStartY;
+    const slotHeight = 40;
+    
+    // Calculate final duration
+    const newHeight = Math.max(resizeOriginalHeight + deltaY, slotHeight);
+    const newDuration = Math.max(Math.round((newHeight / slotHeight) * 30), 15);
+    
+    console.log('✅ Finishing resize for task:', resizingTask, 'finalDuration:', newDuration);
+    
+    try {
+      // Find the task being resized
+      const task = dailyTasks.find(t => t.id === resizingTask);
+      if (task && task.plannedTime) {
+        // Calculate new end time
+        const newEndTime = calculateEndTime(task.plannedTime, newDuration);
+        
+        // Update both the task's estimated time and planned end time
+        const updates = {
+          plannedEndTime: newEndTime,
+          // Also update the underlying task's estimated time if possible
+          ...(task.task && {
+            task: {
+              ...task.task,
+              estimatedTime: newDuration
+            }
+          })
+        };
+        
+        const apiService = detectNetworkAndGetApiServiceSync();
+        await apiService.updateDailyTask(task.id, updates);
+        
+        // Update local state
+        onTaskUpdate?.(task.id, updates);
+        onRefresh?.();
+        
+        console.log('🎉 Task resize completed successfully');
+      }
+    } catch (error) {
+      console.error('❌ Error updating task duration:', error);
+      // Revert visual changes on error
+      onRefresh?.();
+    }
+    
+    // Clean up
+    setResizingTask(null);
+    setResizeStartY(0);
+    setResizeOriginalHeight(0);
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', handleResizeEnd);
   };
 
   // Remove task from timeline (move back to unscheduled)
@@ -194,6 +317,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         plannedEndTime: undefined,
       };
 
+      const apiService = detectNetworkAndGetApiServiceSync();
       await apiService.updateDailyTask(task.id, updates);
       onTaskUpdate?.(task.id, updates);
       onRefresh?.();
@@ -216,6 +340,8 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
 
     try {
       setLoading(true);
+      
+      const apiService = detectNetworkAndGetApiServiceSync();
       
       // First create the task
       const newTaskResponse = await apiService.createTask({
@@ -248,7 +374,40 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   };
 
   // Handle task click for evidence upload
-  const handleTaskClick = (task: DailyTask) => {
+  const handleTaskClick = async (task: DailyTask) => {
+    // If task object is missing, try to fetch it
+    if (!task.task && task.taskId) {
+      try {
+        const apiService = detectNetworkAndGetApiServiceSync();
+        const response = await apiService.getTaskById(task.taskId);
+        const fetchedTask = (response as any).data?.task;
+        if (fetchedTask) {
+          // Update the daily task with the fetched task object
+          task.task = fetchedTask;
+        }
+      } catch (error) {
+        console.error('Error fetching task details:', error);
+        // Create a minimal task object if fetch fails
+        task.task = {
+          id: task.taskId || 'unknown',
+          title: '未知任务',
+          description: '',
+          category: 'other' as const,
+          activity: 'general_task',
+          difficulty: 'medium' as const,
+          estimatedTime: 30,
+          requiresEvidence: false,
+          evidenceTypes: [],
+          tags: [],
+          points: 10,
+          isPublic: false,
+          createdBy: 'demo-user',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      }
+    }
+    
     setSelectedTask(task);
     setShowEvidenceModal(true);
   };
@@ -264,6 +423,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
 
     try {
       setLoading(true);
+      const apiService = detectNetworkAndGetApiServiceSync();
       await apiService.updateDailyTask(selectedTask.id, {
         evidenceText: evidenceData.evidenceText,
         evidenceMedia: evidenceData.evidenceMedia,
@@ -349,7 +509,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                     >
                       <div className="text-center">
                         <div className="font-semibold text-xs sm:text-sm">{slot.time}</div>
-                        <div className="text-gray-400 text-xs hidden sm:block">{slot.displayTime}</div>
                       </div>
                     </div>
                   ))}
@@ -408,11 +567,16 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                   {scheduledTasks.map((task) => (
                     <div
                       key={task.id}
+                      data-task-id={task.id}
                       style={getTaskStyle(task)}
                       className={`absolute left-3 right-3 rounded-lg border-l-4 p-3 shadow-md cursor-pointer group ${getPriorityColor(task.priority || 'medium')} z-10 hover:shadow-lg transition-all duration-200 hover:scale-[1.02]`}
                       onClick={() => handleTaskClick(task)}
                       draggable
-                      onDragStart={() => setDraggedTask(task)}
+                      onDragStart={(e) => {
+                        setDraggedTask(task);
+                        e.dataTransfer.setData('text/plain', task.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center space-x-2">
@@ -458,11 +622,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                       {/* Resize Handle */}
                       <div
                         className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 rounded-b-lg"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          // setResizingTask(task.id);
-                          console.log('Resize handle clicked for task:', task.id);
-                        }}
+                        onMouseDown={(e) => handleResizeStart(e, task)}
                         title="拖拽调整任务时长"
                       />
                     </div>

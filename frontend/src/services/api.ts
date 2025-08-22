@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://47.120.74.212';
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001';
 
 class ApiService {
   private getAuthToken(): string | null {

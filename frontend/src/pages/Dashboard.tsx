@@ -8,6 +8,7 @@ import CelebrationModal from '../components/CelebrationModal';
 import AchievementBadge from '../components/AchievementBadge';
 import SummerProgressTracker from '../components/SummerProgressTracker';
 import PointsHistory from '../components/PointsHistory';
+import Card from '../components/Card';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -108,7 +109,7 @@ const Dashboard: React.FC = () => {
     <div className="p-3 sm:p-4 md:p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {/* Welcome Card */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon-lg p-4 sm:p-6 col-span-full animate-bounce-in">
+          <Card className="col-span-full" animate={true}>
             <div className="text-center">
               <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 animate-float">
                 {currentUser?.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
@@ -154,10 +155,10 @@ const Dashboard: React.FC = () => {
                 />
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Quick Actions */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6 animate-bounce-in">
+          {/* Quick Actions - Hidden on mobile to avoid duplication with bottom nav */}
+          <Card className="hidden sm:block" animate={true}>
             <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">🚀 快速操作</h3>
             <div className="space-y-2 sm:space-y-3">
               <button 
@@ -191,10 +192,10 @@ const Dashboard: React.FC = () => {
                 💎 积分历史
               </button>
             </div>
-          </div>
+          </Card>
 
           {/* Stats */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
+          <Card animate={true}>
             <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">📊 统计信息</h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
@@ -216,10 +217,10 @@ const Dashboard: React.FC = () => {
                 </span>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Today's Tasks */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in col-span-full">
+          <Card className="col-span-full" animate={true}>
             <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">✅ 今日任务</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* 示例今日任务 - 这里可以从API加载实际数据 */}
@@ -282,12 +283,12 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Achievements */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
+          <Card animate={true}>
             <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">🏆 成就徽章</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {safeStats.achievements.length > 0 ? (
                 safeStats.achievements.map((achievement: any, index: number) => (
                   <AchievementBadge
@@ -303,13 +304,13 @@ const Dashboard: React.FC = () => {
                   />
                 ))
               ) : (
-                <div className="col-span-3 text-center py-4 text-cartoon-gray">
+                <div className="col-span-2 sm:col-span-3 text-center py-4 text-cartoon-gray">
                   <div className="text-2xl mb-2">🏆</div>
                   <p className="text-sm">完成任务即可获得成就徽章</p>
                 </div>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Summer Progress Tracker */}
           <SummerProgressTracker className="animate-bounce-in" />

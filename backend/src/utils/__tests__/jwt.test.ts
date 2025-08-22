@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+// JWT工具函数单元测试
 import * as jsonwebtoken from 'jsonwebtoken';
 import { generateToken, verifyToken } from '../jwt';
 
 type JwtModule = typeof jsonwebtoken;
 
-vi.mock('jsonwebtoken', (): JwtModule => ({
-  sign: vi.fn().mockReturnValue('token'),
-  verify: vi.fn((token: string) => {
+jest.mock('jsonwebtoken', (): JwtModule => ({
+  sign: jest.fn().mockReturnValue('token'),
+  verify: jest.fn((token: string) => {
     if (token === 'token') return { id: 'user' };
     throw new Error('Invalid token');
   }),

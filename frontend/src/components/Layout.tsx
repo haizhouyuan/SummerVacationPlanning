@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import PointsDisplay from './PointsDisplay';
 import NotificationBadge from './NotificationBadge';
+import BottomNav from './BottomNav';
 import { usePendingApprovalCount } from '../hooks/usePendingApprovalCount';
 
 interface LayoutProps {
@@ -120,8 +121,8 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
               ))}
             </div>
 
-            {/* Mobile Menu Button */}
-            <div className="md:hidden">
+            {/* Mobile Menu Button - Hidden now that we use bottom nav */}
+            <div className="hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="p-2 rounded-cartoon text-cartoon-gray hover:text-cartoon-dark hover:bg-cartoon-light transition-colors"
@@ -150,13 +151,13 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
           </div>
         </div>
         
-        {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && (
+        {/* Mobile Navigation Menu - Hidden since we use bottom nav */}
+        {false && mobileMenuOpen && (
           <div className="lg:hidden bg-white border-t border-cartoon-light">
             <div className="px-3 sm:px-4 py-3 space-y-2">
               {/* Mobile points display */}
               <div className="flex items-center justify-center pb-2 border-b border-cartoon-light sm:hidden">
-                <PointsDisplay points={user.points} size="md" />
+                <PointsDisplay points={user?.points || 0} size="md" />
               </div>
               {navigationItems.map((item) => (
                 <NotificationBadge 
@@ -187,9 +188,12 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
       </div>
 
       {/* Main content */}
-      <div className="w-full">
+      <div className="w-full pb-16 md:pb-0">
         {children}
       </div>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <BottomNav />
     </div>
   );
 };

@@ -17,10 +17,12 @@ const mockUser = {
   updatedAt: new Date(),
 };
 
+const mockRefreshUser = jest.fn();
+
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
     user: mockUser,
-    refreshUser: jest.fn(),
+    refreshUser: mockRefreshUser,
   }),
 }));
 
