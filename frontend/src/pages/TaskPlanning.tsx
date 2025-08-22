@@ -10,7 +10,7 @@ const TaskPlanning: React.FC = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+  // const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
   const [loading, setLoading] = useState(true);
   // const [error, setError] = useState<string>('');
@@ -122,8 +122,8 @@ const TaskPlanning: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar - Task Selection */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm p-6 sticky top-6">
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="bg-white rounded-xl shadow-sm p-6 lg:sticky lg:top-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">📅 日期选择</h3>
               <input
                 type="date"
@@ -167,7 +167,7 @@ const TaskPlanning: React.FC = () => {
                     <span>新建</span>
                   </button>
                 </div>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+                <div className="space-y-2 max-h-64 lg:max-h-80 overflow-y-auto">
                   {loading ? (
                     <div className="text-center py-4">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
@@ -236,7 +236,7 @@ const TaskPlanning: React.FC = () => {
           </div>
 
           {/* Right Side - Timeline */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 order-1 lg:order-2">
             <TaskTimeline
               date={selectedDate}
               dailyTasks={dailyTasks}
