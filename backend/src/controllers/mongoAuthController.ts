@@ -152,11 +152,11 @@ export const login = async (req: Request, res: Response) => {
     console.log('💾 Collections available:', !!collections);
     console.log('👥 Users collection:', !!collections?.users);
 
-    if (!email || !password) {
-      console.log('❌ Missing email or password');
+    if (!email) {
+      console.log('❌ Missing username');
       return res.status(400).json({
         success: false,
-        error: 'Email and password are required',
+        error: '账号名称不能为空',
       });
     }
 
@@ -168,14 +168,18 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Find user by email
+    // Find user by displayName first, then by email
     console.log('🔍 Searching for user...');
-    const user = await collections.users.findOne({ email });
+    let user = await collections.users.findOne({ displayName: email });
+    if (!user) {
+      user = await collections.users.findOne({ email: email });
+    }
     console.log('👤 User found:', user ? 'Yes' : 'No');
     
     if (user) {
       console.log('👤 User details:', {
         email: user.email,
+        displayName: user.displayName,
         role: user.role,
         hasPassword: !!user.password
       });
@@ -189,9 +193,10 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Check password
+    // Check password (support empty passwords)
     console.log('🔑 Checking password...');
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const passwordToCheck = password || '';
+    const isPasswordValid = await bcrypt.compare(passwordToCheck, user.password);
     console.log('✅ Password valid:', isPasswordValid);
 
     if (!isPasswordValid) {

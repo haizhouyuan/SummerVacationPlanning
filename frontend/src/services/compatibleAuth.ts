@@ -67,8 +67,8 @@ export const compatibleAuthService = {
                 user: {
                   id: 'demo-user-id',
                   email: email,
-                  displayName: email.includes('parent') ? '演示家长' : '演示学生',
-                  role: email.includes('parent') ? 'parent' as const : 'student' as const,
+                  displayName: email.includes('parent') ? '演示家长' : (email === '爸爸' || email === '妈妈') ? email : '演示学生',
+                  role: (email.includes('parent') || email === '爸爸' || email === '妈妈') ? 'parent' as const : 'student' as const,
                   avatar: '',
                   points: 150,
                   currentStreak: 3,
@@ -208,7 +208,7 @@ export const compatibleAuthService = {
     return {
       id: 'demo-user-id',
       email: email,
-      displayName: email.includes('parent') ? '演示家长' : '演示学生',
+      displayName: (email === '爸爸' || email === '妈妈') ? email : (email.includes('parent') ? '演示家长' : '演示学生'),
       role: role as 'student' | 'parent',
       avatar: '',
       points: 150,

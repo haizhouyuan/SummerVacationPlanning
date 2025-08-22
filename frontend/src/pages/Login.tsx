@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login: React.FC = () => {
@@ -16,37 +16,15 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      await login(email, password, navigate);
+      // 跳转逻辑由AuthContext处理，不再硬编码
     } catch (error: any) {
-      setError(error.message || 'Login failed');
+      setError(error.message || '登录失败');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDemoLogin = async (userType: 'student' | 'parent') => {
-    setError('');
-    setLoading(true);
-
-    const demoCredentials = {
-      student: { email: 'student@example.com', password: 'testpass123' },
-      parent: { email: 'parent@example.com', password: 'testpass123' }
-    };
-
-    const credentials = demoCredentials[userType];
-    
-    try {
-      setEmail(credentials.email);
-      setPassword(credentials.password);
-      await login(credentials.email, credentials.password);
-      navigate('/dashboard');
-    } catch (error: any) {
-      setError(error.message || 'Demo login failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
@@ -78,16 +56,16 @@ const Login: React.FC = () => {
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email" className="sr-only">
-                邮箱地址
+                账号名称
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
+                id="username"
+                name="username"
+                type="text"
+                autoComplete="username"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="邮箱地址"
+                placeholder="请输入账号（袁绍學/爸爸/妈妈）"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -101,9 +79,8 @@ const Login: React.FC = () => {
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
-                placeholder="密码"
+                placeholder="密码（可留空）"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -136,39 +113,7 @@ const Login: React.FC = () => {
             </button>
           </div>
 
-          <div className="text-center">
-            <span className="text-sm text-gray-600">
-              还没有账户？{' '}
-              <Link to="/register" className="font-medium text-primary-600 hover:text-primary-500 transition-colors duration-200">
-                立即注册
-              </Link>
-            </span>
-          </div>
 
-          {/* Demo Login Buttons */}
-          <div className="mt-6 border-t border-gray-200 pt-6">
-            <p className="text-center text-sm text-gray-600 mb-4">
-              快速体验演示账号
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('student')}
-                disabled={loading}
-                className="inline-flex justify-center py-2 px-4 border border-primary-300 rounded-md shadow-sm bg-white text-sm font-medium text-primary-700 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                👨‍🎓 学生演示
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDemoLogin('parent')}
-                disabled={loading}
-                className="inline-flex justify-center py-2 px-4 border border-secondary-300 rounded-md shadow-sm bg-white text-sm font-medium text-secondary-700 hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                👨‍👩‍👧‍👦 家长演示
-              </button>
-            </div>
-          </div>
         </form>
       </div>
     </div>

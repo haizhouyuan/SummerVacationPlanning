@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Task } from '../types';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 
 interface TaskCreationFormProps {
   onClose: () => void;
@@ -196,6 +196,7 @@ const TaskCreationForm: React.FC<TaskCreationFormProps> = ({
 
     setIsSubmitting(true);
     try {
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response: any = await apiService.createTask({
         title: formData.title.trim(),
         description: formData.description.trim(),

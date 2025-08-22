@@ -469,6 +469,39 @@ export const compatibleApiService = {
     });
   },
 
+  async updateDailyTask(taskId: string, updateData: any) {
+    return this.updateDailyTaskStatus(taskId, updateData);
+  },
+  
+  // Force TypeScript recompilation
+
+  async checkSchedulingConflicts(params: {
+    date: string;
+    plannedTime: string;
+    estimatedTime: string;
+    excludeTaskId?: string;
+  }) {
+    console.log('Compatible API: Checking scheduling conflicts', params);
+    
+    // Mock conflict checking - for demo purposes, occasionally return conflicts
+    const hasConflict = Math.random() < 0.1; // 10% chance of conflict
+    
+    return Promise.resolve({
+      success: true,
+      data: {
+        hasConflicts: hasConflict,
+        conflicts: hasConflict ? [
+          {
+            id: 'mock-conflict',
+            title: '模拟冲突任务',
+            plannedTime: params.plannedTime,
+            estimatedTime: '30'
+          }
+        ] : []
+      }
+    });
+  },
+
   // User profile
   async updateUserProfile(updates: any) {
     return Promise.resolve({

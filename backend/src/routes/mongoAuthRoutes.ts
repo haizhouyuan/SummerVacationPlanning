@@ -15,11 +15,7 @@ const registerValidation = [
   body('parentEmail').optional().isEmail().normalizeEmail(),
 ];
 
-// Login validation
-const loginValidation = [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty(),
-];
+// Login validation removed - supporting preset accounts with empty passwords
 
 // Profile update validation
 const updateProfileValidation = [
@@ -29,10 +25,36 @@ const updateProfileValidation = [
 
 // Public routes
 router.post('/register', registerValidation, validateRequest, register);
-router.post('/login', (req: Request, res: Response, next: NextFunction) => {
+
+// Test route without any validation
+router.post('/login-test', (req: Request, res: Response) => {
+  console.log('🧪 TEST LOGIN route hit:', req.body);
+  res.json({ success: true, message: 'Test login route works', body: req.body });
+});
+
+// Another test route to isolate the issue
+router.post('/debug-login', (req: Request, res: Response) => {
+  console.log('🐛 DEBUG LOGIN route hit:', req.body);
+  res.json({ 
+    success: true, 
+    message: 'Debug route working', 
+    receivedData: req.body,
+    timestamp: new Date().toISOString()
+  });
+});
+
+router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   console.log('🚀 Login route hit:', req.body);
-  next();
-}, loginValidation, validateRequest, login);
+  console.log('🔍 Route handler: About to call login function');
+  try {
+    // TEMPORARY: Call login function directly without any validation
+    await login(req, res);
+    console.log('✅ Route handler: Login function completed successfully');
+  } catch (error) {
+    console.error('❌ Route handler: Login function failed:', error);
+    res.status(500).json({ success: false, error: 'Login failed', details: error });
+  }
+});
 
 // Protected routes
 router.get('/profile', authenticateToken, getProfile);
