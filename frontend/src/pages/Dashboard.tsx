@@ -2,22 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
-import PointsDisplay from '../components/PointsDisplay';
-import ProgressBar from '../components/ProgressBar';
-import CelebrationModal from '../components/CelebrationModal';
-import AchievementBadge from '../components/AchievementBadge';
-import SummerProgressTracker from '../components/SummerProgressTracker';
 import PointsHistory from '../components/PointsHistory';
+import SummerProgressTracker from '../components/SummerProgressTracker';
 import Card from '../components/Card';
+import {
+  WelcomeBanner,
+  TodayTaskList,
+  ProgressStats,
+  AchievementGrid,
+  FeedbackAnimations
+} from '../components/dashboard';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [showCelebration, setShowCelebration] = useState(false);
   const [showPointsHistory, setShowPointsHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<any>(null);
+  const [todayTasks, setTodayTasks] = useState<any[]>([]);
+  const [loadingTasks, setLoadingTasks] = useState(true);
+  
+  // Feedback animation states
+  const [showTaskComplete, setShowTaskComplete] = useState(false);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [taskCompleteData, setTaskCompleteData] = useState<any>(null);
+  const [levelUpData, setLevelUpData] = useState<any>(null);
 
   // Load dashboard statistics
   const loadDashboardStats = async () => {
@@ -44,9 +54,126 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // Load today's tasks
+  const loadTodayTasks = async () => {
+    const isDemoMode = localStorage.getItem('isDemo') === 'true';
+    if (!user && !isDemoMode) return;
+    
+    setLoadingTasks(true);
+
+    try {
+      // For demo mode, provide sample tasks
+      if (isDemoMode) {
+        const demoTasks = [
+          {
+            id: 'demo-task-1',
+            title: '完成数学作业',
+            description: '完成第3章练习题1-10',
+            points: 20,
+            status: 'pending',
+            category: 'learning'
+          },
+          {
+            id: 'demo-task-2',
+            title: '晨跑30分钟',
+            description: '在公园跑步30分钟',
+            points: 15,
+            status: 'in_progress',
+            category: 'exercise'
+          },
+          {
+            id: 'demo-task-3',
+            title: '吉他练习',
+            description: '练习新学的和弦',
+            points: 10,
+            status: 'completed',
+            category: 'creativity'
+          }
+        ];
+        setTodayTasks(demoTasks);
+      } else {
+        // Real API call for production
+        const apiService = detectNetworkAndGetApiServiceSync();
+        const response = await apiService.getTodayTasks() as any;
+        
+        if (response.success) {
+          setTodayTasks(response.data || []);
+        } else {
+          console.warn('Failed to load today tasks:', response.error);
+          setTodayTasks([]);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error loading today tasks:', error);
+      setTodayTasks([]);
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
+
   useEffect(() => {
     loadDashboardStats();
+    loadTodayTasks();
   }, [user]);
+
+  // Task handling functions
+  const handleTaskComplete = async (taskId: string) => {
+    try {
+      // Find the task
+      const task = todayTasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      // Update task status locally
+      const updatedTasks = todayTasks.map(t => 
+        t.id === taskId ? { ...t, status: 'completed' } : t
+      );
+      setTodayTasks(updatedTasks);
+
+      // Show completion animation
+      setTaskCompleteData({
+        title: task.title,
+        points: task.points
+      });
+      setShowTaskComplete(true);
+
+      // Update user points if not demo mode
+      const isDemoMode = localStorage.getItem('isDemo') === 'true';
+      if (!isDemoMode) {
+        const apiService = detectNetworkAndGetApiServiceSync();
+        await apiService.completeTask(taskId);
+        
+        // Refresh dashboard stats
+        loadDashboardStats();
+      }
+    } catch (error) {
+      console.error('Error completing task:', error);
+    }
+  };
+
+  const handleTaskContinue = (taskId: string) => {
+    // Navigate to task detail or simply update status
+    const updatedTasks = todayTasks.map(t => 
+      t.id === taskId ? { ...t, status: 'in_progress' } : t
+    );
+    setTodayTasks(updatedTasks);
+  };
+
+  const handleAddTask = () => {
+    navigate('/planning');
+  };
+
+  const handleAnimationComplete = (type: string) => {
+    switch (type) {
+      case 'task_complete':
+        setShowTaskComplete(false);
+        setTaskCompleteData(null);
+        break;
+      case 'level_up':
+        setShowLevelUp(false);
+        setLevelUpData(null);
+        break;
+    }
+  };
 
   // Check if in demo mode
   const isDemoMode = localStorage.getItem('isDemo') === 'true';
@@ -107,56 +234,58 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-3 sm:p-4 md:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-          {/* Welcome Card */}
-          <Card className="col-span-full" animate={true}>
-            <div className="text-center">
-              <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 animate-float">
-                {currentUser?.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
-              </div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cartoon-dark mb-2 font-fun animate-bounce-in px-2">
-                欢迎回来，{currentUser?.displayName}！
-              </h2>
-              <p className="text-sm sm:text-base text-cartoon-gray mb-4 sm:mb-6 animate-bounce-in px-2">
-                {currentUser?.role === 'student' 
-                  ? '准备好开始今天的冒险了吗？ 🚀' 
-                  : '查看您孩子的精彩进展 📊'}
-              </p>
-              
-              {/* Time-based greeting */}
-              <div className="inline-block bg-cartoon-blue/10 text-cartoon-blue px-3 sm:px-4 py-2 rounded-cartoon font-medium text-xs sm:text-sm mb-3 sm:mb-4 animate-pop">
-                {(() => {
-                  const hour = new Date().getHours();
-                  if (hour < 12) return '🌅 早上好！新的一天，新的开始！';
-                  if (hour < 18) return '☀️ 下午好！继续保持优秀！';
-                  return '🌙 晚上好！今天辛苦了！';
-                })()}
-              </div>
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:space-x-4 mb-4">
-                <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 animate-pop">
-                  <PointsDisplay points={currentUser?.points || 0} size="md" />
-                </div>
-                <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 text-white animate-pop">
-                  <span className="font-bold text-sm sm:text-base">
-                    🌟 等级 {safeStats.user.level}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Weekly Progress */}
-              <div className="bg-cartoon-light rounded-cartoon p-3 sm:p-4 max-w-md mx-auto">
-                <h3 className="text-xs sm:text-sm font-medium text-cartoon-dark mb-2">本周进度</h3>
-                <ProgressBar 
-                  current={safeStats.weeklyStats.completed} 
-                  max={safeStats.weeklyGoal}
-                  label="任务完成"
-                  size="md"
-                  animated={true}
-                />
-              </div>
-            </div>
-          </Card>
+      <div className="max-w-7xl mx-auto">
+        {/* Welcome Banner */}
+        <WelcomeBanner 
+          user={currentUser}
+          userLevel={safeStats.user.level}
+          className="mb-6"
+        />
 
+        {/* Today's Tasks Section */}
+        <TodayTaskList
+          tasks={todayTasks}
+          onTaskComplete={handleTaskComplete}
+          onTaskContinue={handleTaskContinue}
+          onAddTask={handleAddTask}
+          className="mb-6"
+        />
+
+        {/* Progress Stats and Achievement Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div>
+            <ProgressStats
+              todayProgress={{
+                completed: todayTasks.filter(t => t.status === 'completed').length,
+                total: todayTasks.length,
+                points: todayTasks.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.points, 0),
+                maxPoints: todayTasks.reduce((sum, t) => sum + t.points, 0)
+              }}
+              weeklyProgress={{
+                completed: safeStats.weeklyStats.completed,
+                total: safeStats.weeklyGoal,
+                points: safeStats.weeklyStats.points || 0,
+                maxPoints: safeStats.weeklyStats.maxPoints || 0
+              }}
+              weeklyGoal={safeStats.weeklyGoal}
+              currentStreak={safeStats.user.currentStreak}
+            />
+          </div>
+          
+          <div>
+            <AchievementGrid
+              currentLevel={safeStats.user.level}
+              nextLevelPoints={safeStats.user.nextLevelPoints || 200}
+              currentPoints={currentUser?.points || 0}
+              currentStreak={safeStats.user.currentStreak}
+              achievements={safeStats.achievements}
+              levelTitle={safeStats.user.levelTitle}
+            />
+          </div>
+        </div>
+
+        {/* Additional Sections Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Quick Actions - Hidden on mobile to avoid duplication with bottom nav */}
           <Card className="hidden sm:block" animate={true}>
             <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">🚀 快速操作</h3>
@@ -194,144 +323,25 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
 
-          {/* Stats */}
-          <Card animate={true}>
-            <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">📊 统计信息</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
-                <span className="text-cartoon-gray">本周完成</span>
-                <span className="font-semibold text-cartoon-green flex items-center">
-                  <span className="mr-1">✅</span>
-                  {safeStats.weeklyStats.completed} 个任务
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
-                <span className="text-cartoon-gray">累计积分</span>
-                <PointsDisplay points={currentUser?.points || 0} size="sm" showLabel={false} />
-              </div>
-              <div className="flex justify-between items-center p-3 bg-cartoon-light rounded-cartoon">
-                <span className="text-cartoon-gray">连续天数</span>
-                <span className="font-semibold text-cartoon-orange flex items-center">
-                  <span className="mr-1">🔥</span>
-                  {safeStats.user.currentStreak} 天
-                </span>
-              </div>
-            </div>
-          </Card>
-
-          {/* Today's Tasks */}
-          <Card className="col-span-full" animate={true}>
-            <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">✅ 今日任务</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* 示例今日任务 - 这里可以从API加载实际数据 */}
-              <div className="bg-cartoon-light rounded-cartoon p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark">📚 完成数学作业</h4>
-                  <span className="text-xs bg-cartoon-green text-white px-2 py-1 rounded-full">未完成</span>
-                </div>
-                <p className="text-sm text-cartoon-gray mb-3">完成第3章练习题1-10</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-cartoon-purple">⭐ 20 积分</span>
-                  <button className="bg-cartoon-green hover:bg-success-500 text-white px-3 py-1 rounded-cartoon text-xs transition-colors">
-                    完成
-                  </button>
-                </div>
-              </div>
-              
-              <div className="bg-cartoon-light rounded-cartoon p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark">🏃 晨跑30分钟</h4>
-                  <span className="text-xs bg-cartoon-orange text-white px-2 py-1 rounded-full">进行中</span>
-                </div>
-                <p className="text-sm text-cartoon-gray mb-3">在公园跑步30分钟</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-cartoon-purple">⭐ 15 积分</span>
-                  <button className="bg-cartoon-orange hover:bg-warning-500 text-white px-3 py-1 rounded-cartoon text-xs transition-colors">
-                    继续
-                  </button>
-                </div>
-              </div>
-              
-              <div className="bg-cartoon-light rounded-cartoon p-4 opacity-75">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark">🎸 吉他练习</h4>
-                  <span className="text-xs bg-cartoon-green text-white px-2 py-1 rounded-full">✓ 已完成</span>
-                </div>
-                <p className="text-sm text-cartoon-gray mb-3">练习新学的和弦</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-cartoon-purple">⭐ 10 积分</span>
-                  <span className="text-xs text-cartoon-green">✓ 完成</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Today's Summary */}
-            <div className="mt-6 bg-gradient-to-r from-cartoon-blue/10 to-cartoon-green/10 rounded-cartoon p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium text-cartoon-dark">今日进度</h4>
-                  <p className="text-sm text-cartoon-gray">已完成 1/3 个任务</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-cartoon-green">10 / 45</p>
-                  <p className="text-xs text-cartoon-gray">今日积分</p>
-                </div>
-              </div>
-              <div className="mt-3">
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-cartoon-green to-success-400 h-2 rounded-full" style={{width: '33%'}}></div>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Achievements */}
-          <Card animate={true}>
-            <h3 className="text-lg font-semibold text-cartoon-dark mb-4 font-fun">🏆 成就徽章</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {safeStats.achievements.length > 0 ? (
-                safeStats.achievements.map((achievement: any, index: number) => (
-                  <AchievementBadge
-                    key={index}
-                    type={achievement.type as any}
-                    level={achievement.level}
-                    title={achievement.title}
-                    description={achievement.description}
-                    isUnlocked={achievement.isUnlocked}
-                    progress={achievement.progress}
-                    maxProgress={achievement.maxProgress}
-                    size="sm"
-                  />
-                ))
-              ) : (
-                <div className="col-span-2 sm:col-span-3 text-center py-4 text-cartoon-gray">
-                  <div className="text-2xl mb-2">🏆</div>
-                  <p className="text-sm">完成任务即可获得成就徽章</p>
-                </div>
-              )}
-            </div>
-          </Card>
-
           {/* Summer Progress Tracker */}
-          <SummerProgressTracker className="animate-bounce-in" />
+          <SummerProgressTracker className="col-span-1 md:col-span-2 animate-bounce-in" />
         </div>
+      </div>
 
-        {/* Celebration Modal */}
-        <CelebrationModal
-          isOpen={showCelebration}
-          onClose={() => setShowCelebration(false)}
-          type="task_complete"
-          title="任务完成！"
-          message="恭喜你完成了今天的任务！"
-          points={10}
-          emoji="🎉"
-        />
+      {/* Feedback Animations */}
+      <FeedbackAnimations
+        showTaskComplete={showTaskComplete}
+        showLevelUp={showLevelUp}
+        taskData={taskCompleteData}
+        levelData={levelUpData}
+        onAnimationComplete={handleAnimationComplete}
+      />
 
-        {/* Points History Modal */}
-        <PointsHistory
-          isOpen={showPointsHistory}
-          onClose={() => setShowPointsHistory(false)}
-        />
+      {/* Points History Modal */}
+      <PointsHistory
+        isOpen={showPointsHistory}
+        onClose={() => setShowPointsHistory(false)}
+      />
       </div>
   );
 };
