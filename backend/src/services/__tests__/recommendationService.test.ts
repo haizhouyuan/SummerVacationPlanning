@@ -1,8 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
 import { ObjectId } from 'mongodb';
-import type { UserPreferences, Task } from '../recommendationService';
+import type { UserPreferences } from '../recommendationService';
+import type { Task } from '../../types';
 
-vi.mock('../../config/mongodb', () => {
+jest.mock('../../config/mongodb', () => {
   const now = new Date();
   const dailyTasks = [
     { taskId: '000000000000000000000001', status: 'completed', pointsEarned: 10, createdAt: now },
@@ -17,19 +17,19 @@ vi.mock('../../config/mongodb', () => {
     { _id: new ObjectId('000000000000000000000004'), id: '4', category: 'reading', difficulty: 'easy', estimatedTime: 25, points: 15, isPublic: true },
   ];
   const cursor = (data: any[]) => ({
-    sort: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockReturnThis(),
-    toArray: vi.fn().mockResolvedValue(data),
+    sort: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
+    toArray: jest.fn().mockResolvedValue(data),
   });
   return {
     collections: {
       dailyTasks: {
-        find: vi.fn().mockReturnValue({ sort: vi.fn().mockReturnThis(), toArray: vi.fn().mockResolvedValue(dailyTasks) }),
+        find: jest.fn().mockReturnValue({ sort: jest.fn().mockReturnThis(), toArray: jest.fn().mockResolvedValue(dailyTasks) }),
       },
       tasks: {
         find: vi.fn((query: any) => {
           if (query && query._id && query._id.$in) {
-            return { toArray: vi.fn().mockResolvedValue(analyzeTasks) };
+            return { toArray: jest.fn().mockResolvedValue(analyzeTasks) };
           }
           return cursor(availableTasks);
         }),

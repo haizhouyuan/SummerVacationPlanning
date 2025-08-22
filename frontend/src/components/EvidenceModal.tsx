@@ -70,7 +70,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!textEvidence.trim() && uploadedFiles.length === 0) {
+    if (!textEvidence.trim() && !notes.trim() && uploadedFiles.length === 0) {
       setUploadError('请至少提供一种证据');
       return;
     }
@@ -326,7 +326,7 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({
             {viewMode === 'edit' && (
               <button
                 onClick={handleSubmit}
-                disabled={uploading || (!textEvidence.trim() && uploadedFiles.length === 0)}
+                disabled={uploading || (!textEvidence.trim() && !notes.trim() && uploadedFiles.length === 0)}
                 className="flex-1 bg-success-600 hover:bg-success-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg text-sm font-medium transition-colors duration-200"
               >
                 {uploading ? '提交中...' : dailyTask ? '更新证据' : '🎉 完成任务'}

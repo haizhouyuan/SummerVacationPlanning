@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DailyTask } from '../types';
-import { apiService } from '../services/api';
+import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import TaskCategoryIcon from './TaskCategoryIcon';
 import EvidenceModal from './EvidenceModal';
 
@@ -48,12 +48,17 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<DailyTask | null>(null);
   const [resizingTask, setResizingTask] = useState<string | null>(null);
+  const [resizeStartY, setResizeStartY] = useState<number>(0);
+  const [resizeOriginalHeight, setResizeOriginalHeight] = useState<number>(0);
 
-  // Generate time slots from 00:00 to 23:30 (every 30 minutes)
+  // Generate time slots from 06:00 to 22:00 (every 30 minutes) - focus on active hours
   const generateTimeSlots = (): TimeSlot[] => {
     const slots: TimeSlot[] = [];
-    for (let hour = 0; hour < 24; hour++) {
+    for (let hour = 6; hour <= 22; hour++) {
       for (let minute = 0; minute < 60; minute += 30) {
+        // Stop at 22:00, don't include 22:30
+        if (hour === 22 && minute > 0) break;
+        
         const time = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
         const period = hour >= 12 ? 'PM' : 'AM';
@@ -82,6 +87,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Check if a time slot conflicts with existing tasks
   const checkTimeConflict = async (startTime: string, estimatedTime: number, excludeTaskId?: string) => {
     try {
+      const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.checkSchedulingConflicts({
         date,
         plannedTime: startTime,
@@ -99,8 +105,9 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drag over time slot
   const handleDragOver = (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
+    console.log('👆 Drag over time slot:', timeSlot);
     setDragOverSlot(timeSlot);
-    e.dataTransfer.dropEffect = 'move';
+    e.dataTransfer.dropEffect = 'copy'; // Changed from 'move' to match effectAllowed in TaskPlanning
   };
 
   // Handle drag leave
@@ -112,6 +119,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drop on time slot
   const handleDrop = async (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
+    console.log('🎯 Drop event triggered on time slot:', timeSlot);
     setDragOverSlot(null);
     
     try {
@@ -119,7 +127,10 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       const jsonData = e.dataTransfer.getData('application/json');
       const textData = e.dataTransfer.getData('text/plain');
       
+      console.log('📥 Drop data received:', { jsonData: jsonData?.slice(0, 100), textData });
+      
       if (jsonData) {
+        console.log('📋 Processing new task from sidebar');
         // New task from TaskPlanning sidebar
         const task = JSON.parse(jsonData);
         const estimatedTime = task.estimatedTime || 30;
@@ -137,14 +148,26 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         }
 
         // Create new daily task with scheduled time
-        await apiService.createDailyTask({
+        console.log('🔧 Creating daily task with API service');
+        const apiService = detectNetworkAndGetApiServiceSync();
+        console.log('📞 Calling createDailyTask with params:', {
           taskId: task.id,
           date: date,
           plannedTime: timeSlot,
           plannedEndTime: endTime,
         });
-
+        
+        const createResult = await apiService.createDailyTask({
+          taskId: task.id,
+          date: date,
+          plannedTime: timeSlot,
+          plannedEndTime: endTime,
+        });
+        
+        console.log('✅ Daily task created successfully:', createResult);
+        console.log('🔄 Calling onRefresh to update timeline');
         onRefresh?.();
+        console.log('✨ Task drop completed successfully');
         
       } else if (textData && draggedTask) {
         // Existing daily task being rescheduled
@@ -168,6 +191,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
           plannedEndTime: endTime,
         };
 
+        const apiService = detectNetworkAndGetApiServiceSync();
         await apiService.updateDailyTask(draggedTask.id, updates);
         
         // Call parent callback to refresh data
@@ -176,11 +200,113 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       }
       
     } catch (error) {
-      console.error('Error handling task drop:', error);
+      console.error('❌ Error handling task drop:', error);
+      console.error('❌ Error details:', {
+        message: (error as any)?.message,
+        stack: (error as any)?.stack,
+        error: error
+      });
     } finally {
+      console.log('🧹 Cleaning up drop state');
       setLoading(false);
       setDraggedTask(null);
     }
+  };
+
+  // Handle task resizing
+  const handleResizeStart = (e: React.MouseEvent, task: DailyTask) => {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    setResizingTask(task.id);
+    setResizeStartY(e.clientY);
+    
+    // Calculate current height based on task duration
+    const currentDuration = task.task?.estimatedTime || 30;
+    const slotHeight = 40; // 40px per 30min slot
+    const currentHeight = Math.max((currentDuration / 30) * slotHeight, slotHeight);
+    setResizeOriginalHeight(currentHeight);
+    
+    console.log('🔧 Starting resize for task:', task.id, 'currentDuration:', currentDuration, 'height:', currentHeight);
+    
+    // Add global mouse move and mouse up listeners
+    document.addEventListener('mousemove', handleResizeMove);
+    document.addEventListener('mouseup', handleResizeEnd);
+  };
+
+  const handleResizeMove = (e: MouseEvent) => {
+    if (!resizingTask) return;
+    
+    const deltaY = e.clientY - resizeStartY;
+    const slotHeight = 40; // 40px per 30min slot
+    
+    // Calculate new height (minimum 1 slot = 30 minutes)
+    const newHeight = Math.max(resizeOriginalHeight + deltaY, slotHeight);
+    
+    // Convert height back to duration (in minutes)
+    const newDuration = Math.max(Math.round((newHeight / slotHeight) * 30), 15); // Minimum 15 minutes
+    
+    console.log('📏 Resizing task:', resizingTask, 'newHeight:', newHeight, 'newDuration:', newDuration);
+    
+    // Update the visual height immediately for smooth feedback
+    const taskElement = document.querySelector(`[data-task-id="${resizingTask}"]`) as HTMLElement;
+    if (taskElement) {
+      taskElement.style.height = `${newHeight}px`;
+    }
+  };
+
+  const handleResizeEnd = async (e: MouseEvent) => {
+    if (!resizingTask) return;
+    
+    const deltaY = e.clientY - resizeStartY;
+    const slotHeight = 40;
+    
+    // Calculate final duration
+    const newHeight = Math.max(resizeOriginalHeight + deltaY, slotHeight);
+    const newDuration = Math.max(Math.round((newHeight / slotHeight) * 30), 15);
+    
+    console.log('✅ Finishing resize for task:', resizingTask, 'finalDuration:', newDuration);
+    
+    try {
+      // Find the task being resized
+      const task = dailyTasks.find(t => t.id === resizingTask);
+      if (task && task.plannedTime) {
+        // Calculate new end time
+        const newEndTime = calculateEndTime(task.plannedTime, newDuration);
+        
+        // Update both the task's estimated time and planned end time
+        const updates = {
+          plannedEndTime: newEndTime,
+          // Also update the underlying task's estimated time if possible
+          ...(task.task && {
+            task: {
+              ...task.task,
+              estimatedTime: newDuration
+            }
+          })
+        };
+        
+        const apiService = detectNetworkAndGetApiServiceSync();
+        await apiService.updateDailyTask(task.id, updates);
+        
+        // Update local state
+        onTaskUpdate?.(task.id, updates);
+        onRefresh?.();
+        
+        console.log('🎉 Task resize completed successfully');
+      }
+    } catch (error) {
+      console.error('❌ Error updating task duration:', error);
+      // Revert visual changes on error
+      onRefresh?.();
+    }
+    
+    // Clean up
+    setResizingTask(null);
+    setResizeStartY(0);
+    setResizeOriginalHeight(0);
+    document.removeEventListener('mousemove', handleResizeMove);
+    document.removeEventListener('mouseup', handleResizeEnd);
   };
 
   // Remove task from timeline (move back to unscheduled)
@@ -191,6 +317,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         plannedEndTime: undefined,
       };
 
+      const apiService = detectNetworkAndGetApiServiceSync();
       await apiService.updateDailyTask(task.id, updates);
       onTaskUpdate?.(task.id, updates);
       onRefresh?.();
@@ -213,6 +340,8 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
 
     try {
       setLoading(true);
+      
+      const apiService = detectNetworkAndGetApiServiceSync();
       
       // First create the task
       const newTaskResponse = await apiService.createTask({
@@ -245,7 +374,40 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   };
 
   // Handle task click for evidence upload
-  const handleTaskClick = (task: DailyTask) => {
+  const handleTaskClick = async (task: DailyTask) => {
+    // If task object is missing, try to fetch it
+    if (!task.task && task.taskId) {
+      try {
+        const apiService = detectNetworkAndGetApiServiceSync();
+        const response = await apiService.getTaskById(task.taskId);
+        const fetchedTask = (response as any).data?.task;
+        if (fetchedTask) {
+          // Update the daily task with the fetched task object
+          task.task = fetchedTask;
+        }
+      } catch (error) {
+        console.error('Error fetching task details:', error);
+        // Create a minimal task object if fetch fails
+        task.task = {
+          id: task.taskId || 'unknown',
+          title: '未知任务',
+          description: '',
+          category: 'other' as const,
+          activity: 'general_task',
+          difficulty: 'medium' as const,
+          estimatedTime: 30,
+          requiresEvidence: false,
+          evidenceTypes: [],
+          tags: [],
+          points: 10,
+          isPublic: false,
+          createdBy: 'demo-user',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+      }
+    }
+    
     setSelectedTask(task);
     setShowEvidenceModal(true);
   };
@@ -261,6 +423,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
 
     try {
       setLoading(true);
+      const apiService = detectNetworkAndGetApiServiceSync();
       await apiService.updateDailyTask(selectedTask.id, {
         evidenceText: evidenceData.evidenceText,
         evidenceMedia: evidenceData.evidenceMedia,
@@ -282,12 +445,22 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     if (!task.plannedTime) return {};
     
     const [hours, minutes] = task.plannedTime.split(':').map(Number);
-    const startMinutes = hours * 60 + minutes; // Minutes from 00:00
+    
+    // Hide tasks outside visible range (6:00-22:00)
+    if (hours < 6 || hours > 22) {
+      return { display: 'none' };
+    }
+    
+    // Calculate position relative to 6:00 AM start
+    const startMinutes = (hours - 6) * 60 + minutes; // Minutes from 06:00
     const duration = task.task?.estimatedTime || 30;
     
+    // Each slot is 40px high (represents 30 minutes) - matching h-10 class
+    const slotHeight = 40;
+    
     return {
-      top: `${(startMinutes / 30) * 32}px`, // 32px per 30min slot (reduced for 24h view)
-      height: `${Math.max((duration / 30) * 32, 32)}px`, // Minimum 32px height
+      top: `${(startMinutes / 30) * slotHeight}px`, // 40px per 30min slot
+      height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`, // Minimum one slot height
     };
   };
 
@@ -323,61 +496,95 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       <div className="p-6">
         {/* Timeline */}
         <div>
-            <div className="relative bg-gray-50 rounded-lg p-4 min-h-96">
-              {/* Time Labels */}
-              <div className="flex">
-                <div className="w-20 flex-shrink-0">
+            <div className="relative bg-gray-50 rounded-lg p-4 min-h-[700px]">
+              {/* Time Labels and Timeline Grid Layout */}
+              <div className="grid grid-cols-12 gap-0 sm:gap-1">
+                {/* Left: Time Scale Column */}
+                <div className="col-span-3 sm:col-span-2 pr-1 sm:pr-2">
+                  <div className="text-xs font-medium text-gray-500 mb-2 text-center">时间</div>
                   {timeSlots.filter((_, index) => index % 2 === 0).map((slot) => (
                     <div
                       key={slot.time}
-                      className="h-16 flex items-center text-xs text-gray-600 font-medium"
+                      className="h-20 flex items-center justify-center text-xs text-gray-600 font-medium border-r border-gray-200"
                     >
-                      {slot.displayTime}
+                      <div className="text-center">
+                        <div className="font-semibold text-xs sm:text-sm">{slot.time}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Timeline Grid */}
-                <div className="flex-1 relative">
+                {/* Right: Task Schedule Column */}
+                <div className="col-span-9 sm:col-span-10 relative">
+                  <div className="text-xs font-medium text-gray-500 mb-2 text-center">任务安排</div>
                   {/* Time Slots */}
                   {timeSlots.map((slot, index) => (
                     <div
                       key={slot.time}
-                      className={`h-4 border-t border-gray-200 relative cursor-pointer hover:bg-blue-50 ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      className={`h-10 relative cursor-pointer transition-colors duration-200 ${
+                        index % 2 === 0 
+                          ? 'bg-white border-t-2 border-gray-300 hover:bg-blue-50' 
+                          : 'bg-gray-50 border-t border-gray-200 hover:bg-blue-25'
                       } ${
-                        dragOverSlot === slot.time ? 'bg-primary-100 border-primary-300' : ''
+                        dragOverSlot === slot.time ? 'bg-blue-100 border-blue-400' : ''
                       }`}
                       onDragOver={(e) => handleDragOver(e, slot.time)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, slot.time)}
                       onClick={() => handleTimeSlotClick(slot.time)}
+                      title={`点击创建任务 - ${slot.time}`}
                     >
+                      {/* Hour marker - show at every even slot (start of hour) */}
+                      {index % 2 === 0 && (
+                        <div className="absolute left-2 top-1 text-xs text-gray-400 font-medium">
+                          {slot.time}
+                        </div>
+                      )}
+                      
+                      {/* Empty state hint for odd hours */}
+                      {index % 4 === 1 && !scheduledTasks.some(task => {
+                        if (!task.plannedTime) return false;
+                        const [taskHour, taskMinute] = task.plannedTime.split(':').map(Number);
+                        const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+                        return taskHour === slotHour && Math.abs(taskMinute - slotMinute) < 30;
+                      }) && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="text-xs text-gray-300 opacity-50">空闲时段</div>
+                        </div>
+                      )}
+                      
                       {dragOverSlot === slot.time && (
-                        <div className="absolute inset-0 bg-primary-200 bg-opacity-50 border-2 border-primary-400 border-dashed rounded">
-                          <div className="text-center text-primary-700 font-medium text-sm py-1">
-                            拖放任务到这里
+                        <div className="absolute inset-0 bg-blue-200 bg-opacity-50 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center">
+                          <div className="text-center text-blue-700 font-medium text-sm">
+                            📋 拖放任务到此时间段
                           </div>
                         </div>
                       )}
                     </div>
                   ))}
 
-                  {/* Scheduled Tasks */}
+                  {/* Scheduled Tasks - Absolute positioned over the grid */}
                   {scheduledTasks.map((task) => (
                     <div
                       key={task.id}
+                      data-task-id={task.id}
                       style={getTaskStyle(task)}
-                      className={`absolute left-2 right-2 rounded-lg border-l-4 p-2 shadow-sm cursor-pointer group ${getPriorityColor(task.priority || 'medium')} z-10 hover:shadow-md transition-shadow`}
+                      className={`absolute left-3 right-3 rounded-lg border-l-4 p-3 shadow-md cursor-pointer group ${getPriorityColor(task.priority || 'medium')} z-10 hover:shadow-lg transition-all duration-200 hover:scale-[1.02]`}
                       onClick={() => handleTaskClick(task)}
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedTask(task);
+                        e.dataTransfer.setData('text/plain', task.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center space-x-2">
                           <TaskCategoryIcon 
                             category={task.task?.category || 'other'} 
                             size="sm"
                           />
-                          <h4 className="font-medium text-gray-900 text-sm truncate flex-1">
+                          <h4 className="font-medium text-gray-900 text-xs sm:text-sm truncate flex-1">
                             {task.task?.title}
                           </h4>
                         </div>
@@ -386,32 +593,37 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                             e.stopPropagation();
                             handleRemoveFromTimeline(task);
                           }}
-                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity text-sm"
+                          title="移除任务安排"
                         >
-                          ✕
+                          ❌
                         </button>
                       </div>
                       <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>{task.plannedTime} - {task.plannedEndTime}</span>
-                        <span>{task.task?.estimatedTime}min</span>
+                        <span className="font-medium text-xs">{task.plannedTime} - {task.plannedEndTime}</span>
+                        <span className="text-primary-600 font-medium text-xs hidden sm:inline">{task.task?.estimatedTime}分钟</span>
+                        <span className="text-primary-600 font-medium text-xs sm:hidden">{task.task?.estimatedTime}min</span>
                       </div>
-                      <div className={`text-xs px-1 py-0.5 rounded ${
+                      <div className={`text-xs px-2 py-1 rounded-full mt-1 text-center font-medium ${
                         task.status === 'completed' ? 'bg-green-100 text-green-700' :
                         task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                         'bg-gray-100 text-gray-600'
                       }`}>
-                        {task.status === 'completed' ? '已完成' :
-                         task.status === 'in_progress' ? '进行中' : '计划中'}
+                        <span className="hidden sm:inline">
+                          {task.status === 'completed' ? '✅ 已完成' :
+                           task.status === 'in_progress' ? '🔄 进行中' : '📋 计划中'}
+                        </span>
+                        <span className="sm:hidden">
+                          {task.status === 'completed' ? '✅' :
+                           task.status === 'in_progress' ? '🔄' : '📋'}
+                        </span>
                       </div>
                       
                       {/* Resize Handle */}
                       <div
-                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-blue-400 hover:bg-blue-500 transition-opacity"
-                        onMouseDown={(e) => {
-                          e.stopPropagation();
-                          setResizingTask(task.id);
-                        }}
-                        title="拖拽调整时长"
+                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 rounded-b-lg"
+                        onMouseDown={(e) => handleResizeStart(e, task)}
+                        title="拖拽调整任务时长"
                       />
                     </div>
                   ))}

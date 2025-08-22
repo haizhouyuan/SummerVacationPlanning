@@ -182,7 +182,8 @@ describe('DailyTaskCard', () => {
 
     expect(screen.getByText('✅ 家长已通过')).toBeInTheDocument();
     expect(screen.getByText('+5 奖励积分')).toBeInTheDocument();
-    expect(screen.getByText('家长留言: Great job!')).toBeInTheDocument();
+    expect(screen.getByText('家长留言:')).toBeInTheDocument();
+    expect(screen.getByText('Great job!')).toBeInTheDocument();
   });
 
   it('displays evidence text and media', () => {

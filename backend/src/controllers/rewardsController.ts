@@ -32,6 +32,26 @@ export const calculateGameTime = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Handle demo users - return mock response
+    if (req.user.id === 'demo-user-id') {
+      const { pointsToSpend, gameType = 'normal' } = req.body;
+      const exchangeRate = gameType === 'educational' ? 2 : 1;
+      const minutesGranted = Math.min(pointsToSpend * exchangeRate, 120); // Max 2 hours
+      
+      return res.status(200).json({
+        success: true,
+        data: {
+          minutesGranted,
+          pointsSpent: pointsToSpend,
+          remainingPoints: Math.max(0, req.user.points - pointsToSpend),
+          isFreeTime: false,
+          baseGameTime: 30,
+          totalAvailableToday: 30 + minutesGranted,
+        },
+        message: 'Gaming time purchased successfully! (Demo Mode)',
+      });
+    }
+
     const { pointsToSpend, gameType = 'normal', date } = req.body;
     const currentDate = date || new Date().toISOString().split('T')[0];
 
@@ -160,6 +180,37 @@ export const getTodayGameTime = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({
         success: false,
         error: 'User not authenticated',
+      });
+    }
+
+    // Handle demo users - return mock response
+    if (req.user.id === 'demo-user-id') {
+      return res.status(200).json({
+        success: true,
+        data: {
+          baseGameTime: 30,
+          earnedGameTime: 45,
+          totalAvailableToday: 75,
+          totalUsedToday: 20,
+          remainingToday: 55,
+          exchanges: [
+            {
+              id: 'demo-exchange-1',
+              pointsSpent: 15,
+              minutesGranted: 30,
+              gameType: 'educational',
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: 'demo-exchange-2', 
+              pointsSpent: 10,
+              minutesGranted: 15,
+              gameType: 'normal',
+              createdAt: new Date().toISOString(),
+            }
+          ]
+        },
+        message: 'Today\'s gaming time retrieved successfully (Demo Mode)',
       });
     }
 

@@ -26,35 +26,45 @@ export const createTask = async (req: AuthRequest, res: Response) => {
       evidenceTypes,
       tags,
       isPublic,
+      priority,
+      timePreference,
     } = req.body;
 
-    // Validate required fields
-    if (!title || !description || !category || !activity || !difficulty || !estimatedTime) {
+    // Validate required fields (only essential ones)
+    if (!title || !category || !activity) {
       return res.status(400).json({
         success: false,
-        error: 'Title, description, category, activity, difficulty, and estimated time are required',
+        error: 'Title, category, and activity are required',
       });
     }
+
+    // Set default values for optional fields
+    const taskDescription = description || '';
+    const taskDifficulty = difficulty || 'medium';
+    const taskEstimatedTime = estimatedTime || 30;
 
     // Handle demo users
     if (req.user.id === 'demo-user-id') {
       console.log('🔄 Demo mode: Creating mock task');
       const mockTaskId = 'demo-task-' + Date.now();
-      const calculatedPoints = points || calculateTaskPoints(difficulty, estimatedTime);
+      const calculatedPoints = points || calculateTaskPoints(taskDifficulty, taskEstimatedTime);
       
       const mockTask = {
         id: mockTaskId,
         title,
-        description,
+        description: taskDescription,
         category,
-        difficulty,
-        estimatedTime,
+        activity,
+        difficulty: taskDifficulty,
+        estimatedTime: taskEstimatedTime,
         points: calculatedPoints,
         requiresEvidence: requiresEvidence || false,
         evidenceTypes: evidenceTypes || [],
         tags: tags || [],
         createdBy: req.user.id,
         isPublic: isPublic || false,
+        priority: priority || 'medium',
+        timePreference: timePreference || 'flexible',
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -67,21 +77,23 @@ export const createTask = async (req: AuthRequest, res: Response) => {
     }
 
     // Calculate points based on difficulty and time if not provided
-    const calculatedPoints = points || calculateTaskPoints(difficulty, estimatedTime);
+    const calculatedPoints = points || calculateTaskPoints(taskDifficulty, taskEstimatedTime);
 
     const taskData: Omit<Task, 'id'> = {
       title,
-      description,
+      description: taskDescription,
       category,
       activity,
-      difficulty,
-      estimatedTime,
+      difficulty: taskDifficulty,
+      estimatedTime: taskEstimatedTime,
       points: calculatedPoints,
       requiresEvidence: requiresEvidence || false,
       evidenceTypes: evidenceTypes || [],
       tags: tags || [],
       createdBy: req.user.id,
       isPublic: isPublic || false,
+      priority: priority || 'medium',
+      timePreference: timePreference || 'flexible',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -252,6 +264,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       title,
       description,
       category,
+      activity,
       difficulty,
       estimatedTime,
       points,
@@ -259,6 +272,8 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
       evidenceTypes,
       tags,
       isPublic,
+      priority,
+      timePreference,
     } = req.body;
 
     const updates: any = { updatedAt: new Date() };
@@ -266,6 +281,7 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     if (title) updates.title = title;
     if (description) updates.description = description;
     if (category) updates.category = category;
+    if (activity) updates.activity = activity;
     if (difficulty) updates.difficulty = difficulty;
     if (estimatedTime) updates.estimatedTime = estimatedTime;
     if (points) updates.points = points;
@@ -273,6 +289,8 @@ export const updateTask = async (req: AuthRequest, res: Response) => {
     if (evidenceTypes) updates.evidenceTypes = evidenceTypes;
     if (tags) updates.tags = tags;
     if (isPublic !== undefined) updates.isPublic = isPublic;
+    if (priority) updates.priority = priority;
+    if (timePreference) updates.timePreference = timePreference;
 
     await collections.tasks.updateOne(
       { _id: new ObjectId(taskId) },

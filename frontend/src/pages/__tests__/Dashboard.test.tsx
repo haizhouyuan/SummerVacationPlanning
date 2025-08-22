@@ -6,7 +6,7 @@
 import React from 'react';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock相关依赖
 jest.mock('../../contexts/AuthContext', () => ({
@@ -118,9 +118,9 @@ describe('Dashboard组件测试', () => {
     mockDetectNetwork.mockReturnValue(mockApiService);
 
     return render(
-      <BrowserRouter>
+      <MemoryRouter>
         <Dashboard />
-      </BrowserRouter>
+      </MemoryRouter>
     );
   };
 

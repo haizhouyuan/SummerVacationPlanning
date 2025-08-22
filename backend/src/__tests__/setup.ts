@@ -9,15 +9,16 @@ beforeAll(async () => {
   mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
   
+  // Set the test MongoDB URI
+  process.env.MONGODB_URI = uri;
+  
   // Connect to the in-memory database
-  await mongodb.connect(uri);
+  await mongodb.connect();
 });
 
 afterAll(async () => {
   // Clean up connections
-  if (mongodb.client) {
-    await mongodb.client.close();
-  }
+  await mongodb.disconnect();
   if (mongoServer) {
     await mongoServer.stop();
   }
@@ -25,9 +26,15 @@ afterAll(async () => {
 
 beforeEach(async () => {
   // Clean up collections before each test
-  if (collections.users) await collections.users.deleteMany({});
-  if (collections.tasks) await collections.tasks.deleteMany({});
-  if (collections.dailyTasks) await collections.dailyTasks.deleteMany({});
-  if (collections.pointsRules) await collections.pointsRules.deleteMany({});
-  if (collections.userPointsLimits) await collections.userPointsLimits.deleteMany({});
+  try {
+    const cols = mongodb.collections;
+    if (cols.users) await cols.users.deleteMany({});
+    if (cols.tasks) await cols.tasks.deleteMany({});
+    if (cols.dailyTasks) await cols.dailyTasks.deleteMany({});
+    if (cols.pointsRules) await cols.pointsRules.deleteMany({});
+    if (cols.userPointsLimits) await cols.userPointsLimits.deleteMany({});
+  } catch (error: any) {
+    // Collections might not be initialized yet, ignore for simple tests
+    console.log('Collections cleanup skipped:', error.message);
+  }
 });
