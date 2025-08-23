@@ -85,7 +85,7 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
   return (
     <>
       <div className={`bg-white rounded-cartoon-lg shadow-cartoon border-2 transition-all duration-200 ${getStatusColor(dailyTask.status)} ${dailyTask.status === 'completed' ? 'animate-bounce-in' : ''}`}>
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           {/* Header */}
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-3">
