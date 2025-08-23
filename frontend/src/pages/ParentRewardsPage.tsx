@@ -77,15 +77,11 @@ const ParentRewardsPage: React.FC = () => {
 
   const loadRedemptionRequests = async () => {
     try {
-      // TODO: API method not yet implemented - use mock data for now
-      // const response = await apiService.getRedemptions() as any;
-      // if (response.success) {
-      //   const requests = response.data.redemptions || [];
-      //   setRedemptionRequests(requests);
-      // }
-      
-      // Mock data for build compatibility
-      setRedemptionRequests([]);
+      const response = await apiService.getRedemptions({ status: 'pending' }) as any;
+      if (response.success) {
+        const requests = response.data.redemptions || [];
+        setRedemptionRequests(requests);
+      }
     } catch (error: any) {
       console.error('Error loading redemption requests:', error);
     }
