@@ -481,11 +481,12 @@ const TaskPlanning: React.FC = () => {
 
       {/* Task Creation Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="max-w-2xl w-full min-h-0">
             <TaskCreationForm
               onClose={() => setShowCreateForm(false)}
               onTaskCreated={handleTaskCreated}
+              className="max-h-screen overflow-y-auto"
             />
           </div>
         </div>

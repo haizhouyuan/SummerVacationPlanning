@@ -149,7 +149,35 @@
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
 <a name='L86'></a><a href='#L86'>86</a>
-<a name='L87'></a><a href='#L87'>87</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -192,7 +220,35 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -273,29 +329,54 @@ const AchievementSquare: React.FC = <span class="cstat-no" title="statement not 
   };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 py-8 px-4"&gt;
-      &lt;div className="max-w-3xl mx-auto"&gt;
-        &lt;h1 className="text-2xl font-bold text-center mb-6 text-primary-700"&gt;🌟 成就广场 · 公开打卡&lt;/h1&gt;
-        &lt;div className="space-y-6"&gt;
+    &lt;div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100"&gt;
+      {/* Compact Header for mobile */}
+      &lt;div className="bg-white shadow-sm"&gt;
+        &lt;div className="px-4 py-4"&gt;
+          &lt;div className="flex items-center justify-center"&gt;
+            &lt;div className="flex items-center space-x-3"&gt;
+              &lt;div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-500 rounded-full flex items-center justify-center"&gt;
+                &lt;span className="text-white text-lg sm:text-xl font-bold"&gt;🏆&lt;/span&gt;
+              &lt;/div&gt;
+              &lt;div className="text-center"&gt;
+                &lt;h1 className="text-lg sm:text-2xl font-bold text-primary-700"&gt;成就广场&lt;/h1&gt;
+                &lt;p className="text-xs sm:text-sm text-gray-600"&gt;公开打卡分享&lt;/p&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+&nbsp;
+      {/* Desktop Header - Hidden on mobile */}
+      &lt;div className="hidden sm:block py-8 px-4"&gt;
+        &lt;div className="max-w-3xl mx-auto"&gt;
+          &lt;h1 className="text-2xl font-bold text-center mb-6 text-primary-700"&gt;🌟 成就广场 · 公开打卡&lt;/h1&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+&nbsp;
+      &lt;div className="p-4 sm:max-w-3xl sm:mx-auto"&gt;
+        &lt;div className="space-y-4 sm:space-y-6"&gt;
           {tasks.map(<span class="fstat-no" title="function not covered" >(t</span>ask, idx) =&gt; (
-<span class="cstat-no" title="statement not covered" >            &lt;div key={task.id || idx} className="bg-white rounded-xl shadow p-5 flex flex-col gap-2"&gt;</span>
-              &lt;div className="flex items-center gap-3 mb-2"&gt;
+<span class="cstat-no" title="statement not covered" >            &lt;div key={task.id || idx} className="bg-white rounded-lg shadow-sm p-4"&gt;</span>
+              &lt;div className="flex items-center gap-3 mb-3"&gt;
                 &lt;div className="h-10 w-10 rounded-full bg-primary-200 flex items-center justify-center text-lg font-bold text-primary-700"&gt;
                   {task.userDisplayName?.[0] || 'U'}
                 &lt;/div&gt;
-                &lt;div&gt;
-                  &lt;div className="font-semibold text-primary-800"&gt;{task.userDisplayName || '匿名用户'}&lt;/div&gt;
+                &lt;div className="flex-1 min-w-0"&gt;
+                  &lt;div className="font-semibold text-primary-800 truncate"&gt;{task.userDisplayName || '匿名用户'}&lt;/div&gt;
                   &lt;div className="text-xs text-gray-400"&gt;{new Date(task.createdAt).toLocaleString()}&lt;/div&gt;
                 &lt;/div&gt;
-                &lt;div className="ml-auto text-primary-600 font-bold"&gt;+{task.pointsEarned || 0} 积分&lt;/div&gt;
+                &lt;div className="text-primary-600 font-bold text-sm"&gt;+{task.pointsEarned || 0}分&lt;/div&gt;
               &lt;/div&gt;
               {task.evidenceText &amp;&amp; (
-                &lt;div className="bg-primary-50 rounded p-3 text-sm text-gray-800 mb-2"&gt;{task.evidenceText}&lt;/div&gt;
+                &lt;div className="bg-primary-50 rounded-lg p-3 text-sm text-gray-800 mb-3"&gt;{task.evidenceText}&lt;/div&gt;
               )}
               {task.evidenceMedia &amp;&amp; task.evidenceMedia.length &gt; 0 &amp;&amp; (
-                &lt;MediaPreview files={task.evidenceMedia} readOnly={true} /&gt;
+                &lt;div className="mb-3"&gt;
+                  &lt;MediaPreview files={task.evidenceMedia} readOnly={true} /&gt;
+                &lt;/div&gt;
               )}
-              &lt;div className="flex gap-2 text-xs text-gray-500 mt-2"&gt;
+              &lt;div className="flex gap-2 text-xs text-gray-500 mt-2 hidden sm:flex"&gt;
                 &lt;span&gt;任务ID: {task.taskId}&lt;/span&gt;
                 &lt;span&gt;用户ID: {task.userId}&lt;/span&gt;
               &lt;/div&gt;
@@ -303,18 +384,21 @@ const AchievementSquare: React.FC = <span class="cstat-no" title="statement not 
           ))}
         &lt;/div&gt;
         {tasks.length &lt; total &amp;&amp; (
-          &lt;div className="flex justify-center mt-8"&gt;
+          &lt;div className="flex justify-center mt-6"&gt;
             &lt;button
               onClick={handleLoadMore}
               disabled={loading}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg shadow hover:bg-primary-700 disabled:opacity-50"
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg shadow hover:bg-primary-700 disabled:opacity-50 text-sm"
             &gt;
               {loading ? '加载中...' : '加载更多'}
             &lt;/button&gt;
           &lt;/div&gt;
         )}
         {tasks.length === 0 &amp;&amp; !loading &amp;&amp; (
-          &lt;div className="text-center text-gray-400 mt-12"&gt;暂无公开打卡内容&lt;/div&gt;
+          &lt;div className="text-center py-12"&gt;
+            &lt;div className="text-4xl mb-3"&gt;🏆&lt;/div&gt;
+            &lt;div className="text-gray-400 text-sm"&gt;暂无公开打卡内容&lt;/div&gt;
+          &lt;/div&gt;
         )}
       &lt;/div&gt;
     &lt;/div&gt;
@@ -328,7 +412,7 @@ export default AchievementSquare; </pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-11T07:46:54.150Z
+                at 2025-08-23T07:01:43.414Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
