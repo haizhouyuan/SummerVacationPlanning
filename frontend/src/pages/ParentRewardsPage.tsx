@@ -77,7 +77,7 @@ const ParentRewardsPage: React.FC = () => {
 
   const loadRedemptionRequests = async () => {
     try {
-      const response = await apiService.getPendingRedemptions() as any;
+      const response = await apiService.getRedemptions({ status: 'pending' }) as any;
       if (response.success) {
         const requests = response.data.redemptions || [];
         setRedemptionRequests(requests);
