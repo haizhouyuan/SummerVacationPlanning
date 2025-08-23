@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import PointsHistory from '../components/PointsHistory';
 import TopNavigation from '../components/TopNavigation';
-import Card from '../components/Card';
 import { DailyTask } from '../types';
 import {
   WelcomeBanner,
@@ -342,6 +341,11 @@ const Dashboard: React.FC = () => {
         <TopNavigation />
       </div>
       
+      {/* Desktop Top Navigation - 仅在桌面端显示 */}
+      <div className="hidden md:block">
+        <TopNavigation />
+      </div>
+      
       <div className="p-3 sm:p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
         {/* Welcome Banner */}
@@ -375,32 +379,6 @@ const Dashboard: React.FC = () => {
         />
 
 
-        {/* Quick Actions for Desktop */}
-        <div className="max-w-sm mx-auto">
-          <Card className="hidden sm:block" animate={true}>
-            <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">🚀 快速操作</h3>
-            <div className="space-y-2 sm:space-y-3">
-              <button 
-                onClick={() => navigate('/planning')}
-                className="w-full bg-gradient-to-r from-cartoon-blue to-primary-400 hover:from-primary-500 hover:to-primary-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                📅 任务规划
-              </button>
-              <button 
-                onClick={() => navigate('/rewards')}
-                className="w-full bg-gradient-to-r from-cartoon-purple to-secondary-400 hover:from-secondary-500 hover:to-secondary-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                🎁 成长与奖励
-              </button>
-              <button 
-                onClick={() => navigate('/lite')}
-                className="w-full bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                ⚡ 简化版
-              </button>
-            </div>
-          </Card>
-        </div>
         </div>
       </div>
 

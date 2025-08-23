@@ -122,6 +122,11 @@ const TaskPlanning: React.FC = () => {
         <TopNavigation />
       </div>
       
+      {/* Desktop Top Navigation - 仅在桌面端显示 */}
+      <div className="hidden md:block">
+        <TopNavigation />
+      </div>
+      
       <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
       {/* Compact Header for mobile */}
       <div className="bg-white shadow-sm">

@@ -255,9 +255,14 @@ const Rewards: React.FC = () => {
   }
 
   return (
-    <div>
+    <>
       {/* Top Navigation - 仅在移动端显示 */}
       <div className="md:hidden">
+        <TopNavigation />
+      </div>
+      
+      {/* Desktop Top Navigation - 仅在桌面端显示 */}
+      <div className="hidden md:block">
         <TopNavigation />
       </div>
       
@@ -488,7 +493,6 @@ const Rewards: React.FC = () => {
                 </div>
               </div>
             </div>
-            </div>
 
             {/* Special Rewards */}
             <div className="lg:col-span-1">
@@ -603,10 +607,12 @@ const Rewards: React.FC = () => {
                 </div>
               </div>
             </div>
+            </div>
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
