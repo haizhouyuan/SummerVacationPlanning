@@ -49,15 +49,9 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
     },
     { 
       path: '/rewards', 
-      name: '奖励中心', 
+      name: '成长与奖励', 
       icon: '🎁',
-      description: '兑换奖励和游戏时间'
-    },
-    { 
-      path: '/achievements', 
-      name: '成就广场', 
-      icon: '🏆',
-      description: '查看获得的成就徽章'
+      description: '展示徽章、积分和奖励'
     },
     { 
       path: '/history', 

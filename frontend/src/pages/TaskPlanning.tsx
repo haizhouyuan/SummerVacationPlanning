@@ -77,12 +77,29 @@ const TaskPlanning: React.FC = () => {
     ));
   };
 
-  const handleTaskCreated = (newTask: Task) => {
+  const handleTaskCreated = async (newTask: Task) => {
     // Add the new task to the tasks list
     setTasks(prev => [newTask, ...prev]);
     
-    // Show success message
-    alert(`任务"${newTask.title}"创建成功！`);
+    try {
+      // Automatically add the new task to today's daily tasks
+      const apiService = detectNetworkAndGetApiServiceSync();
+      await apiService.createDailyTask({
+        taskId: newTask.id,
+        date: selectedDate,
+        // Don't set plannedTime so it appears as unscheduled
+      });
+      
+      // Refresh daily tasks to show the new task immediately
+      await loadDailyTasks();
+      
+      // Show success message
+      alert(`任务"${newTask.title}"创建成功并已添加到今日任务列表！`);
+    } catch (error) {
+      console.error('Error adding task to daily tasks:', error);
+      // Show success message for task creation even if daily task creation failed
+      alert(`任务"${newTask.title}"创建成功！`);
+    }
     
     // Close the form
     setShowCreateForm(false);
@@ -481,11 +498,12 @@ const TaskPlanning: React.FC = () => {
 
       {/* Task Creation Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="max-w-2xl w-full min-h-0">
             <TaskCreationForm
               onClose={() => setShowCreateForm(false)}
               onTaskCreated={handleTaskCreated}
+              className="max-h-screen overflow-y-auto"
             />
           </div>
         </div>

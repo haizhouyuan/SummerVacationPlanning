@@ -36,41 +36,33 @@ const BottomNav: React.FC = () => {
 
   const navigationItems: NavigationItem[] = [
     { 
-      path: currentUser?.role === 'parent' ? '/parent-dashboard' : '/dashboard', 
-      name: '首页', 
-      icon: '🏠',
-      description: '仪表盘'
-    },
-    { 
       path: '/planning', 
       name: '任务规划', 
       icon: '📅',
       description: '制定和管理任务计划'
     },
-    {
-      path: '/points-history',
-      name: '积分历史',
-      icon: '💎',
-      description: '查看积分获取历史'
-    },
     { 
       path: '/rewards', 
-      name: '奖励中心', 
+      name: '成长与奖励', 
       icon: '🎁',
-      description: '兑换奖励和游戏时间'
+      description: '展示徽章、积分和奖励'
     },
-    ...(currentUser?.role === 'student' ? [{
-      path: '/lite',
-      name: '简化版',
-      icon: '⚡',
-      description: '简化视图界面'
-    }] : [{
-      path: '/task-approval', 
-      name: '任务审批', 
-      icon: '✅',
-      description: '审核孩子提交的任务',
-      notificationCount: pendingCount
-    }])
+    ...(currentUser?.role === 'student' ? [
+      {
+        path: '/achievements',
+        name: '成就广场',
+        icon: '🏆',
+        description: '查看解锁的成就徽章'
+      }
+    ] : [
+      {
+        path: '/task-approval', 
+        name: '任务审批', 
+        icon: '✅',
+        description: '审核孩子提交的任务',
+        notificationCount: pendingCount
+      }
+    ])
   ];
 
   const isCurrentPath = (path: string) => {
@@ -83,7 +75,7 @@ const BottomNav: React.FC = () => {
 
   return (
     <div className="fixed bottom-0 inset-x-0 bg-white border-t border-cartoon-light shadow-cartoon z-50 md:hidden">
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-3 h-16">
         {navigationItems.map((item) => (
           <NotificationBadge
             key={item.path}

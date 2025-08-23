@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
+import AchievementBadge from '../components/AchievementBadge';
+import PointsHistory from '../components/PointsHistory';
 
 const Rewards: React.FC = () => {
   const { user } = useAuth();
   const [gameTimeStats, setGameTimeStats] = useState<any>(null);
   const [specialRewards, setSpecialRewards] = useState<any[]>([]);
+  const [achievements, setAchievements] = useState<any[]>([]);
+  const [redemptionRequests, setRedemptionRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [exchangingGameTime, setExchangingGameTime] = useState(false);
   const [pointsToExchange, setPointsToExchange] = useState(1);
@@ -28,6 +32,63 @@ const Rewards: React.FC = () => {
         totalUsed: 20,
         remainingTime: 70
       };
+
+      const mockAchievements = [
+        {
+          type: 'streak',
+          level: 3,
+          title: '连续签到',
+          description: '连续3天完成任务',
+          isUnlocked: true,
+          progress: 3,
+          maxProgress: 3
+        },
+        {
+          type: 'points',
+          level: 2,
+          title: '积分达人',
+          description: '累计获得200积分',
+          isUnlocked: true,
+          progress: 200,
+          maxProgress: 200
+        },
+        {
+          type: 'tasks',
+          level: 1,
+          title: '任务新手',
+          description: '完成10个任务',
+          isUnlocked: false,
+          progress: 7,
+          maxProgress: 10
+        },
+        {
+          type: 'category',
+          level: 1,
+          title: '运动专家',
+          description: '完成5个运动任务',
+          isUnlocked: false,
+          progress: 3,
+          maxProgress: 5
+        }
+      ];
+
+      const mockRedemptionRequests = [
+        {
+          id: '1',
+          rewardTitle: '游戏机时间',
+          pointsCost: 100,
+          status: 'pending',
+          createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        },
+        {
+          id: '2', 
+          rewardTitle: '家庭电影夜',
+          pointsCost: 50,
+          status: 'approved',
+          createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+          processedAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+        }
+      ];
       
       const mockSpecialRewards = [
         {
@@ -65,14 +126,26 @@ const Rewards: React.FC = () => {
         const specialRewardsResponse = (apiService as any).getSpecialRewards ? 
           await (apiService as any).getSpecialRewards() : 
           { data: { specialRewards: mockSpecialRewards } };
+
+        const achievementsResponse = (apiService as any).getAchievements ? 
+          await (apiService as any).getAchievements() : 
+          { data: { achievements: mockAchievements } };
+
+        const redemptionRequestsResponse = (apiService as any).getRedemptions ? 
+          await (apiService as any).getRedemptions() : 
+          { data: { redemptions: mockRedemptionRequests } };
         
         setGameTimeStats(gameTimeResponse.data.gameTimeStats);
         setSpecialRewards(specialRewardsResponse.data.specialRewards);
+        setAchievements(achievementsResponse.data.achievements);
+        setRedemptionRequests(redemptionRequestsResponse.data.redemptions);
       } catch (apiError) {
         // Fallback to mock data if API calls fail
         console.log('Using mock rewards data for demo mode');
         setGameTimeStats(mockGameTimeStats);
         setSpecialRewards(mockSpecialRewards);
+        setAchievements(mockAchievements);
+        setRedemptionRequests(mockRedemptionRequests);
       }
     } catch (error) {
       console.error('Error loading rewards data:', error);
@@ -192,8 +265,8 @@ const Rewards: React.FC = () => {
                 <span className="text-white text-lg sm:text-xl font-bold">🎁</span>
               </div>
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">奖励中心</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">用积分兑换游戏时间和特殊奖励</p>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">成长与奖励中心</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">展示徽章、积分和奖励</p>
               </div>
             </div>
             
@@ -215,8 +288,8 @@ const Rewards: React.FC = () => {
                 <span className="text-white text-lg sm:text-xl font-bold">🎁</span>
               </div>
               <div className="ml-3 sm:ml-4 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">奖励中心</h1>
-                <p className="text-sm text-gray-600 hidden sm:block">用积分兑换游戏时间和特殊奖励</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">成长与奖励中心</h1>
+                <p className="text-sm text-gray-600 hidden sm:block">展示徽章、积分和奖励</p>
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
@@ -236,7 +309,42 @@ const Rewards: React.FC = () => {
             <p className="mt-2 text-gray-600 text-sm">加载中...</p>
           </div>
         ) : (
-          <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
+          <div className="space-y-6">
+            {/* Achievement Badges Section */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <span className="mr-2">🏆</span>
+                成就徽章
+              </h2>
+              <div className="overflow-x-auto">
+                <div className="flex space-x-4 pb-4 min-w-max">
+                  {achievements.map((achievement, index) => (
+                    <div key={index} className="flex-shrink-0">
+                      <AchievementBadge
+                        type={achievement.type as any}
+                        level={achievement.level}
+                        title={achievement.title}
+                        description={achievement.description}
+                        isUnlocked={achievement.isUnlocked}
+                        progress={achievement.progress}
+                        maxProgress={achievement.maxProgress}
+                        size="md"
+                        showProgress={true}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Points History Section */}
+            <PointsHistory 
+              displayMode="inline" 
+              className="shadow-sm"
+            />
+
+            {/* Game Time Exchange and Special Rewards */}
+            <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
             {/* Game Time Exchange */}
             <div className="lg:col-span-2 space-y-4">
               {/* Today's Game Time Stats */}
@@ -373,6 +481,7 @@ const Rewards: React.FC = () => {
                 </div>
               </div>
             </div>
+            </div>
 
             {/* Special Rewards */}
             <div className="lg:col-span-1">
@@ -435,6 +544,55 @@ const Rewards: React.FC = () => {
                   <p className="text-xs sm:text-sm text-primary-700">
                     特殊奖励需要家长审核。坚持完成任务积累积分，就能兑换心仪的奖励啦！
                   </p>
+                </div>
+
+                {/* Redemption Requests Status */}
+                <div className="mt-6">
+                  <h3 className="text-base font-semibold text-gray-900 mb-3 flex items-center">
+                    <span className="mr-2">📋</span>
+                    我的兑换申请
+                  </h3>
+                  {redemptionRequests.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <span className="text-2xl mb-2 block">📋</span>
+                      <p className="text-sm">暂无兑换申请</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {redemptionRequests.map((request) => (
+                        <div
+                          key={request.id}
+                          className="bg-gray-50 rounded-lg p-3 border border-gray-200"
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="font-medium text-gray-900">
+                              {request.rewardTitle}
+                            </h4>
+                            <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                              request.status === 'pending' 
+                                ? 'bg-yellow-100 text-yellow-700' 
+                                : request.status === 'approved'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}>
+                              {request.status === 'pending' ? '待审批' : 
+                               request.status === 'approved' ? '已批准' : '已拒绝'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center text-sm text-gray-600">
+                            <span>{request.pointsCost} 积分</span>
+                            <span>
+                              {new Date(request.createdAt).toLocaleDateString('zh-CN')}
+                              {request.processedAt && ` → ${new Date(request.processedAt).toLocaleDateString('zh-CN')}`}
+                            </span>
+                          </div>
+                          {request.status === 'pending' && (
+                            <p className="text-xs text-gray-500 mt-1">等待家长审核中...</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -3,14 +3,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import PointsHistory from '../components/PointsHistory';
-import SummerProgressTracker from '../components/SummerProgressTracker';
 import Card from '../components/Card';
 import { DailyTask } from '../types';
 import {
   WelcomeBanner,
   TodayTaskList,
-  ProgressStats,
-  AchievementGrid,
   FeedbackAnimations
 } from '../components/dashboard';
 
@@ -349,6 +346,7 @@ const Dashboard: React.FC = () => {
               points: currentUser.points
             }}
             userLevel={safeStats.user.level}
+            todayPoints={todayTasks.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.task?.points || 0), 0)}
             className="mb-6"
           />
         )}
@@ -369,42 +367,9 @@ const Dashboard: React.FC = () => {
           className="mb-6"
         />
 
-        {/* Progress Stats and Achievement Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div>
-            <ProgressStats
-              todayProgress={{
-                completed: todayTasks.filter(t => t.status === 'completed').length,
-                total: todayTasks.length,
-                points: todayTasks.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.task?.points || 0), 0),
-                maxPoints: todayTasks.reduce((sum, t) => sum + (t.task?.points || 0), 0)
-              }}
-              weeklyProgress={{
-                completed: safeStats.weeklyStats.completed,
-                total: safeStats.weeklyGoal,
-                points: safeStats.weeklyStats.points || 0,
-                maxPoints: safeStats.weeklyStats.maxPoints || 0
-              }}
-              weeklyGoal={safeStats.weeklyGoal}
-              currentStreak={safeStats.user.currentStreak}
-            />
-          </div>
-          
-          <div>
-            <AchievementGrid
-              currentLevel={safeStats.user.level}
-              nextLevelPoints={safeStats.user.nextLevelPoints || 200}
-              currentPoints={currentUser?.points || 0}
-              currentStreak={safeStats.user.currentStreak}
-              achievements={safeStats.achievements}
-              levelTitle={safeStats.user.levelTitle}
-            />
-          </div>
-        </div>
 
-        {/* Additional Sections Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Quick Actions - Hidden on mobile to avoid duplication with bottom nav */}
+        {/* Quick Actions for Desktop */}
+        <div className="max-w-sm mx-auto">
           <Card className="hidden sm:block" animate={true}>
             <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">🚀 快速操作</h3>
             <div className="space-y-2 sm:space-y-3">
@@ -418,13 +383,7 @@ const Dashboard: React.FC = () => {
                 onClick={() => navigate('/rewards')}
                 className="w-full bg-gradient-to-r from-cartoon-purple to-secondary-400 hover:from-secondary-500 hover:to-secondary-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
               >
-                🎁 奖励中心
-              </button>
-              <button 
-                onClick={() => navigate('/achievements')}
-                className="w-full bg-gradient-to-r from-cartoon-orange to-warning-400 hover:from-warning-500 hover:to-warning-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                🏆 成就广场
+                🎁 成长与奖励
               </button>
               <button 
                 onClick={() => navigate('/lite')}
@@ -432,17 +391,8 @@ const Dashboard: React.FC = () => {
               >
                 ⚡ 简化版
               </button>
-              <button 
-                onClick={() => setShowPointsHistory(true)}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-400 hover:from-pink-500 hover:to-purple-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                💎 积分历史
-              </button>
             </div>
           </Card>
-
-          {/* Summer Progress Tracker */}
-          <SummerProgressTracker className="col-span-1 md:col-span-2 animate-bounce-in" />
         </div>
       </div>
 

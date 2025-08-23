@@ -95,21 +95,23 @@ const TodayTaskList: React.FC<TodayTaskListProps> = ({
             return (
               <div 
                 key={task.id} 
-                className={`bg-cartoon-light rounded-cartoon p-4 transition-all duration-300 ${statusConfig.cardOpacity}`}
+                className={`bg-cartoon-light rounded-cartoon p-4 transition-all duration-300 h-32 flex flex-col justify-between ${statusConfig.cardOpacity}`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark flex items-center">
-                    <span className="mr-2">{getCategoryIcon(task.category)}</span>
-                    {task.title}
-                  </h4>
-                  <span className={`text-xs px-2 py-1 rounded-full ${statusConfig.bgColor} ${statusConfig.textColor}`}>
-                    {statusConfig.label}
-                  </span>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-cartoon-dark flex items-center">
+                      <span className="mr-2">{getCategoryIcon(task.category)}</span>
+                      {task.title}
+                    </h4>
+                    <span className={`text-xs px-2 py-1 rounded-full ${statusConfig.bgColor} ${statusConfig.textColor}`}>
+                      {statusConfig.label}
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-cartoon-gray mb-3 line-clamp-2">{task.description}</p>
                 </div>
                 
-                <p className="text-sm text-cartoon-gray mb-3">{task.description}</p>
-                
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mt-auto">
                   <span className="text-xs text-cartoon-purple flex items-center">
                     ⭐ {task.points} 积分
                   </span>
@@ -142,32 +144,6 @@ const TodayTaskList: React.FC<TodayTaskListProps> = ({
             </button>
           </div>
         )}
-      </div>
-      
-      {/* Today's Progress Summary */}
-      <div className="bg-gradient-to-r from-cartoon-blue/10 to-cartoon-green/10 rounded-cartoon p-4">
-        <div className="flex justify-between items-center mb-3">
-          <div>
-            <h4 className="font-medium text-cartoon-dark">今日进度</h4>
-            <p className="text-sm text-cartoon-gray">已完成 {completedTasks}/{totalTasks} 个任务</p>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-bold text-cartoon-green">{completedPoints} / {totalPoints}</p>
-            <p className="text-xs text-cartoon-gray">今日积分</p>
-          </div>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div 
-            className="bg-gradient-to-r from-cartoon-green to-success-400 h-3 rounded-full transition-all duration-500 ease-out"
-            style={{width: `${progressPercentage}%`}}
-          ></div>
-        </div>
-        
-        <div className="text-center mt-2">
-          <span className="text-xs text-cartoon-gray">{progressPercentage}% 完成</span>
-        </div>
       </div>
     </Card>
   );

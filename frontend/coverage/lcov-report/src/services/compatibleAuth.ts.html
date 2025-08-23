@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.67% </span>
+                <span class="strong">3.41% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>3/112</span>
+                <span class='fraction'>4/117</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">3.7% </span>
+                <span class="strong">2.38% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/27</span>
+                <span class='fraction'>1/42</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.67% </span>
+                <span class="strong">3.41% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>3/112</span>
+                <span class='fraction'>4/117</span>
             </div>
         
             
@@ -348,14 +348,37 @@
 <a name='L283'></a><a href='#L283'>283</a>
 <a name='L284'></a><a href='#L284'>284</a>
 <a name='L285'></a><a href='#L285'>285</a>
-<a name='L286'></a><a href='#L286'>286</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L286'></a><a href='#L286'>286</a>
+<a name='L287'></a><a href='#L287'>287</a>
+<a name='L288'></a><a href='#L288'>288</a>
+<a name='L289'></a><a href='#L289'>289</a>
+<a name='L290'></a><a href='#L290'>290</a>
+<a name='L291'></a><a href='#L291'>291</a>
+<a name='L292'></a><a href='#L292'>292</a>
+<a name='L293'></a><a href='#L293'>293</a>
+<a name='L294'></a><a href='#L294'>294</a>
+<a name='L295'></a><a href='#L295'>295</a>
+<a name='L296'></a><a href='#L296'>296</a>
+<a name='L297'></a><a href='#L297'>297</a>
+<a name='L298'></a><a href='#L298'>298</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -524,6 +547,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -635,7 +659,18 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { User, ApiResponse } from '../types';
 &nbsp;
-const API_BASE_URL = process.env.REACT_APP_API_URL ? <span class="branch-0 cbranch-no" title="branch not covered" >`${process.env.REACT_APP_API_URL}/api` </span>: 'http://47.120.74.212/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || <span class="branch-1 cbranch-no" title="branch not covered" >'http://localhost:5001/api';</span>
+&nbsp;
+// 安全移除DOM元素的工具函数
+const safeRemoveElement = <span class="fstat-no" title="function not covered" >(e</span>lement: Element | null | undefined) =&gt; {
+<span class="cstat-no" title="statement not covered" >  if (element &amp;&amp; element.parentNode) {</span>
+<span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      element.parentNode.removeChild(element);</span>
+    } catch (error) {
+<span class="cstat-no" title="statement not covered" >      console.warn('Failed to remove element safely:', error);</span>
+    }
+  }
+};
 &nbsp;
 // 网络兼容的认证服务 - 使用iframe和表单提交绕过fetch限制
 export const compatibleAuthService = {
@@ -691,8 +726,8 @@ export const compatibleAuthService = {
                 user: {
                   id: 'demo-user-id',
                   email: email,
-                  displayName: email.includes('parent') ? '演示家长' : '演示学生',
-                  role: email.includes('parent') ? 'parent' as const : 'student' as const,
+                  displayName: email.includes('parent') ? '演示家长' : (email === '爸爸' || email === '妈妈') ? email : '演示学生',
+                  role: (email.includes('parent') || email === '爸爸' || email === '妈妈') ? 'parent' as const : 'student' as const,
                   avatar: '',
                   points: 150,
                   currentStreak: 3,
@@ -718,23 +753,23 @@ export const compatibleAuthService = {
 <span class="cstat-no" title="statement not covered" >              reject(new Error('登录处理失败'));</span>
             }
             
-            // 清理DOM
-<span class="cstat-no" title="statement not covered" >            document.body.removeChild(form);</span>
-<span class="cstat-no" title="statement not covered" >            document.body.removeChild(iframe);</span>
+            // 安全清理DOM
+<span class="cstat-no" title="statement not covered" >            safeRemoveElement(form);</span>
+<span class="cstat-no" title="statement not covered" >            safeRemoveElement(iframe);</span>
           }, 1000);
         } catch (error) {
 <span class="cstat-no" title="statement not covered" >          reject(new Error('网络请求失败'));</span>
-          // 清理DOM
-<span class="cstat-no" title="statement not covered" >          document.body.removeChild(form);</span>
-<span class="cstat-no" title="statement not covered" >          document.body.removeChild(iframe);</span>
+          // 安全清理DOM
+<span class="cstat-no" title="statement not covered" >          safeRemoveElement(form);</span>
+<span class="cstat-no" title="statement not covered" >          safeRemoveElement(iframe);</span>
         }
       };
       
 <span class="cstat-no" title="statement not covered" >      iframe.onerror = <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >        reject(new Error('网络连接失败'));</span>
-        // 清理DOM
-<span class="cstat-no" title="statement not covered" >        document.body.removeChild(form);</span>
-<span class="cstat-no" title="statement not covered" >        document.body.removeChild(iframe);</span>
+        // 安全清理DOM
+<span class="cstat-no" title="statement not covered" >        safeRemoveElement(form);</span>
+<span class="cstat-no" title="statement not covered" >        safeRemoveElement(iframe);</span>
       };
       
       // 提交表单
@@ -801,16 +836,17 @@ export const compatibleAuthService = {
           
 <span class="cstat-no" title="statement not covered" >          resolve(mockResponse);</span>
           
-          // 清理DOM
-<span class="cstat-no" title="statement not covered" >          document.body.removeChild(form);</span>
-<span class="cstat-no" title="statement not covered" >          document.body.removeChild(iframe);</span>
+          // 安全清理DOM
+<span class="cstat-no" title="statement not covered" >          safeRemoveElement(form);</span>
+<span class="cstat-no" title="statement not covered" >          safeRemoveElement(iframe);</span>
         }, 1000);
       };
       
 <span class="cstat-no" title="statement not covered" >      iframe.onerror = <span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >        reject(new Error('注册失败'));</span>
-<span class="cstat-no" title="statement not covered" >        document.body.removeChild(form);</span>
-<span class="cstat-no" title="statement not covered" >        document.body.removeChild(iframe);</span>
+        // 安全清理DOM
+<span class="cstat-no" title="statement not covered" >        safeRemoveElement(form);</span>
+<span class="cstat-no" title="statement not covered" >        safeRemoveElement(iframe);</span>
       };
       
 <span class="cstat-no" title="statement not covered" >      form.submit();</span>
@@ -831,7 +867,7 @@ export const compatibleAuthService = {
 <span class="cstat-no" title="statement not covered" >    return {</span>
       id: 'demo-user-id',
       email: email,
-      displayName: email.includes('parent') ? '演示家长' : '演示学生',
+      displayName: (email === '爸爸' || email === '妈妈') ? email : (email.includes('parent') ? '演示家长' : '演示学生'),
       role: role as 'student' | 'parent',
       avatar: '',
       points: 150,
@@ -925,7 +961,7 @@ export const detectNetworkAndGetAuthService = <span class="fstat-no" title="func
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-11T07:46:54.150Z
+                at 2025-08-23T07:01:43.414Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
