@@ -306,21 +306,24 @@ const Dashboard: React.FC = () => {
     email: 'demo@example.com'
   } : null);
 
-  // Safe stats with defaults
-  const safeStats = stats || {
+  // Safe stats with defaults - ensure all nested properties are defined
+  const safeStats = {
     user: {
-      level: 1,
-      levelTitle: '新手',
-      currentStreak: 0,
-      nextLevelPoints: 100
+      level: stats?.user?.level || 1,
+      levelTitle: stats?.user?.levelTitle || '新手',
+      currentStreak: stats?.user?.currentStreak || 0,
+      nextLevelPoints: stats?.user?.nextLevelPoints || 100,
+      ...stats?.user
     },
     weeklyStats: {
-      completed: 0,
-      points: 0,
-      maxPoints: 0
+      completed: stats?.weeklyStats?.completed || 0,
+      points: stats?.weeklyStats?.points || 0,
+      maxPoints: stats?.weeklyStats?.maxPoints || 0,
+      ...stats?.weeklyStats
     },
-    weeklyGoal: 10,
-    achievements: []
+    weeklyGoal: stats?.weeklyGoal || 10,
+    achievements: stats?.achievements || [],
+    ...stats
   };
 
   if (loading) {
