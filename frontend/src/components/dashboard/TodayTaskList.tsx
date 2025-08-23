@@ -95,21 +95,23 @@ const TodayTaskList: React.FC<TodayTaskListProps> = ({
             return (
               <div 
                 key={task.id} 
-                className={`bg-cartoon-light rounded-cartoon p-4 transition-all duration-300 ${statusConfig.cardOpacity}`}
+                className={`bg-cartoon-light rounded-cartoon p-4 transition-all duration-300 h-32 flex flex-col justify-between ${statusConfig.cardOpacity}`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-cartoon-dark flex items-center">
-                    <span className="mr-2">{getCategoryIcon(task.category)}</span>
-                    {task.title}
-                  </h4>
-                  <span className={`text-xs px-2 py-1 rounded-full ${statusConfig.bgColor} ${statusConfig.textColor}`}>
-                    {statusConfig.label}
-                  </span>
+                <div className="flex-1">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-cartoon-dark flex items-center">
+                      <span className="mr-2">{getCategoryIcon(task.category)}</span>
+                      {task.title}
+                    </h4>
+                    <span className={`text-xs px-2 py-1 rounded-full ${statusConfig.bgColor} ${statusConfig.textColor}`}>
+                      {statusConfig.label}
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-cartoon-gray mb-3 line-clamp-2">{task.description}</p>
                 </div>
                 
-                <p className="text-sm text-cartoon-gray mb-3">{task.description}</p>
-                
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mt-auto">
                   <span className="text-xs text-cartoon-purple flex items-center">
                     ⭐ {task.points} 积分
                   </span>

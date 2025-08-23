@@ -47,18 +47,22 @@ const BottomNav: React.FC = () => {
       icon: '🎁',
       description: '展示徽章、积分和奖励'
     },
-    ...(currentUser?.role === 'student' ? [{
-      path: '/lite',
-      name: '简化版',
-      icon: '⚡',
-      description: '简化视图界面'
-    }] : [{
-      path: '/task-approval', 
-      name: '任务审批', 
-      icon: '✅',
-      description: '审核孩子提交的任务',
-      notificationCount: pendingCount
-    }])
+    ...(currentUser?.role === 'student' ? [
+      {
+        path: '/achievements',
+        name: '成就广场',
+        icon: '🏆',
+        description: '查看解锁的成就徽章'
+      }
+    ] : [
+      {
+        path: '/task-approval', 
+        name: '任务审批', 
+        icon: '✅',
+        description: '审核孩子提交的任务',
+        notificationCount: pendingCount
+      }
+    ])
   ];
 
   const isCurrentPath = (path: string) => {

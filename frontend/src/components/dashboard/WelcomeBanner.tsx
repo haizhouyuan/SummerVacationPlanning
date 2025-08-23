@@ -31,12 +31,12 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
     <Card className={`col-span-full ${className}`} animate={true}>
       <div className="text-center">
         {/* Main Icon */}
-        <div className="text-4xl sm:text-6xl mb-3 sm:mb-4 animate-float">
+        <div className="text-3xl sm:text-6xl mb-2 sm:mb-4 animate-float">
           {user?.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
         </div>
         
         {/* Welcome Message */}
-        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-cartoon-dark mb-4 font-fun animate-bounce-in px-2">
+        <h2 className="text-base sm:text-xl lg:text-2xl font-bold text-cartoon-dark mb-3 sm:mb-4 font-fun animate-bounce-in px-2">
           你好，今天的任务准备好了吗？
         </h2>
         
@@ -46,11 +46,11 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
         </div>
         
         {/* Points Overview */}
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:space-x-4 mb-4">
-          <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 animate-pop">
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 sm:space-x-4 mb-3 sm:mb-4">
+          <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-3 sm:px-6 py-1.5 sm:py-3 animate-pop">
             <PointsDisplay points={user?.points || 0} size="md" />
           </div>
-          <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 text-white animate-pop">
+          <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-3 sm:px-6 py-1.5 sm:py-3 text-white animate-pop">
             <span className="font-bold text-sm sm:text-base">
               📊 今日积分 {todayPoints}
             </span>
