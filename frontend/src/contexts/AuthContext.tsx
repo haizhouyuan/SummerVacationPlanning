@@ -132,7 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     currentUser: user,
     loading,
-    isDemo: false, // Set appropriate demo mode detection logic if needed
+    isDemo: localStorage.getItem('isDemo') === 'true',
     login,
     register,
     logout,
