@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import PointsHistory from '../components/PointsHistory';
-import SummerProgressTracker from '../components/SummerProgressTracker';
 import Card from '../components/Card';
 import { DailyTask } from '../types';
 import {
@@ -369,9 +368,8 @@ const Dashboard: React.FC = () => {
         />
 
 
-        {/* Additional Sections Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Quick Actions - Hidden on mobile to avoid duplication with bottom nav */}
+        {/* Quick Actions for Desktop */}
+        <div className="max-w-sm mx-auto">
           <Card className="hidden sm:block" animate={true}>
             <h3 className="text-base sm:text-lg font-semibold text-cartoon-dark mb-3 sm:mb-4 font-fun">🚀 快速操作</h3>
             <div className="space-y-2 sm:space-y-3">
@@ -395,9 +393,6 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
           </Card>
-
-          {/* Summer Progress Tracker */}
-          <SummerProgressTracker className="col-span-1 md:col-span-2 animate-bounce-in" />
         </div>
       </div>
 
