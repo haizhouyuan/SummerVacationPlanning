@@ -19,6 +19,7 @@ const TaskPlanning: React.FC = () => {
   // const [recommendedTasks, setRecommendedTasks] = useState<any[]>([]);
   // const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [activeView, setActiveView] = useState<'schedule' | 'tasks'>('schedule');
 
   const categories = [
     { key: 'all', label: '全部', emoji: '📋' },
@@ -98,31 +99,73 @@ const TaskPlanning: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
-      {/* Header */}
+      {/* Compact Header for mobile */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="h-12 w-12 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xl font-bold">📅</span>
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Title and Icon */}
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-lg sm:text-xl font-bold">📅</span>
               </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold text-gray-900">任务规划</h1>
-                <p className="text-sm text-gray-600">选择今日要完成的任务</p>
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">任务规划</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">选择今日要完成的任务</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-                <p className="text-xs text-gray-500">{user.points} 积分</p>
-              </div>
+            
+            {/* Right: User Info - Compact */}
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
+              <p className="text-xs text-gray-500">{user.points} 积分</p>
+            </div>
+          </div>
+          
+          {/* Date Selection - Below header */}
+          <div className="mt-4">
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-gray-700">📅 日期:</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                min={new Date().toISOString().split('T')[0]}
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="p-4">
+        {/* View Toggle Tabs - Mobile */}
+        <div className="sm:hidden mb-4">
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setActiveView('schedule')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                activeView === 'schedule'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              📅 今日安排
+            </button>
+            <button
+              onClick={() => setActiveView('tasks')}
+              className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                activeView === 'tasks'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              🎯 任务清单
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden sm:grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar - Task Selection */}
           <div className="lg:col-span-1 order-2 lg:order-1">
             <div className="bg-white rounded-xl shadow-sm p-6 lg:sticky lg:top-6">
@@ -252,6 +295,187 @@ const TaskPlanning: React.FC = () => {
               onRefresh={loadDailyTasks}
             />
           </div>
+        </div>
+
+        {/* Mobile Views */}
+        <div className="sm:hidden">
+          {/* Today's Schedule View */}
+          {activeView === 'schedule' && (
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <span className="text-xl mr-2">📅</span>
+                    今日安排
+                  </h3>
+                  <button
+                    onClick={() => setActiveView('tasks')}
+                    className="text-primary-600 text-sm font-medium"
+                  >
+                    + 添加任务
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedDate} • {dailyTasks.length} 个任务
+                </p>
+              </div>
+              
+              <div className="p-4">
+                {dailyTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-3xl mb-3">📅</div>
+                    <h4 className="font-medium text-gray-900 mb-2">还未安排任务</h4>
+                    <p className="text-sm text-gray-600 mb-4">点击"任务清单"选择要完成的任务</p>
+                    <button
+                      onClick={() => setActiveView('tasks')}
+                      className="bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                    >
+                      选择任务
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {dailyTasks
+                      .sort((a, b) => a.plannedTime?.localeCompare(b.plannedTime || '') || 0)
+                      .map((task) => (
+                        <div key={task.id} className="bg-gray-50 rounded-lg p-3">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-lg">
+                              {categories.find(c => c.key === task.task?.category)?.emoji || '⭐'}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 text-sm">{task.task?.title || '未知任务'}</h4>
+                              <div className="flex items-center justify-between mt-1">
+                                <span className="text-xs text-gray-600">
+                                  {task.plannedTime ? 
+                                    `⏰ ${task.plannedTime}` : 
+                                    '⏰ 待安排时间'
+                                  }
+                                </span>
+                                <span className="text-xs text-primary-600 font-medium">
+                                  {task.task?.points || 0}分
+                                </span>
+                              </div>
+                            </div>
+                            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              task.status === 'completed' 
+                                ? 'bg-green-100 text-green-800' 
+                                : task.status === 'in_progress'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {task.status === 'completed' ? '已完成' :
+                               task.status === 'in_progress' ? '进行中' : '计划中'}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Task Selection View */}
+          {activeView === 'tasks' && (
+            <div className="bg-white rounded-lg shadow-sm">
+              <div className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <span className="text-xl mr-2">🎯</span>
+                    任务清单
+                  </h3>
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="text-primary-600 text-sm font-medium"
+                  >
+                    + 新建
+                  </button>
+                </div>
+              </div>
+
+              {/* Category Filter - Horizontal scroll */}
+              <div className="px-4 py-3 border-b bg-gray-50">
+                <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+                  {categories.map((category) => (
+                    <button
+                      key={category.key}
+                      onClick={() => setActiveCategory(category.key)}
+                      className={`flex items-center space-x-1 px-3 py-2 text-sm rounded-full transition-colors duration-200 whitespace-nowrap ${
+                        activeCategory === category.key
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-white text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>{category.emoji}</span>
+                      <span className="font-medium">{category.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="p-4">
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {loading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
+                      <p className="text-gray-600">加载中...</p>
+                    </div>
+                  ) : filteredTasks.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <div className="text-3xl mb-3">📝</div>
+                      <p className="text-sm">该分类下暂无任务</p>
+                    </div>
+                  ) : (
+                    filteredTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className={`p-3 rounded-lg border-2 transition-colors duration-200 ${
+                          isTaskPlanned(task) 
+                            ? 'border-gray-200 bg-gray-50 opacity-50' 
+                            : 'border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <span className="text-lg">
+                              {categories.find(c => c.key === task.category)?.emoji || '⭐'}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-gray-900 text-sm">{task.title}</h4>
+                              <div className="flex items-center space-x-3 mt-1">
+                                <span className="text-xs text-gray-500">
+                                  ⏱️ {task.estimatedTime}分钟
+                                </span>
+                                <span className="text-xs text-primary-600 font-medium">
+                                  💰 {task.points}分
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          {isTaskPlanned(task) ? (
+                            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
+                              已安排
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                // Add task to schedule (simplified - you'd implement proper scheduling)
+                                alert(`将 "${task.title}" 添加到日程安排`);
+                              }}
+                              className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-primary-700 transition-colors"
+                            >
+                              添加
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -124,7 +124,7 @@ export interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   isDemo: boolean | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, navigate?: any) => Promise<void>;
   register: (email: string, password: string, displayName: string, role: 'student' | 'parent', parentEmail?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (displayName?: string, avatar?: string) => Promise<void>;

@@ -132,6 +132,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     currentUser: user,
     loading,
+    isDemo: false, // Set appropriate demo mode detection logic if needed
     login,
     register,
     logout,

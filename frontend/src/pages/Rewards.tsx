@@ -182,8 +182,32 @@ const Rewards: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
-      {/* Header */}
+      {/* Mobile Compact Header */}
       <div className="bg-white shadow-sm">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Title and Icon */}
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-lg sm:text-xl font-bold">🎁</span>
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">奖励中心</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">用积分兑换游戏时间和特殊奖励</p>
+              </div>
+            </div>
+            
+            {/* Right: User Info - Compact */}
+            <div className="text-right">
+              <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
+              <p className="text-xs sm:text-base font-bold text-primary-600">{user.points} 积分</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Header - Hidden on mobile */}
+      <div className="hidden sm:block bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
           <div className="flex justify-between items-center py-4 sm:py-6">
             <div className="flex items-center flex-1 min-w-0">
@@ -205,52 +229,52 @@ const Rewards: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="p-4 sm:max-w-7xl sm:mx-auto sm:px-4 lg:px-6 xl:px-8 sm:py-6 lg:py-8">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600 text-sm">加载中...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
             {/* Game Time Exchange */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4">
               {/* Today's Game Time Stats */}
               {gameTimeStats && (
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                     <span className="mr-2">🎮</span>
                     今日游戏时间
                   </h2>
                   
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <div className="text-2xl font-bold text-gray-700">{gameTimeStats.baseGameTime}</div>
-                      <div className="text-sm text-gray-600">基础时间(分钟)</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-lg sm:text-2xl font-bold text-gray-700">{gameTimeStats.baseGameTime}</div>
+                      <div className="text-xs sm:text-sm text-gray-600">基础时间</div>
                     </div>
-                    <div className="text-center p-4 bg-secondary-50 rounded-lg">
-                      <div className="text-2xl font-bold text-secondary-600">{gameTimeStats.bonusTimeEarned}</div>
-                      <div className="text-sm text-gray-600">奖励时间(分钟)</div>
+                    <div className="text-center p-3 bg-secondary-50 rounded-lg">
+                      <div className="text-lg sm:text-2xl font-bold text-secondary-600">{gameTimeStats.bonusTimeEarned}</div>
+                      <div className="text-xs sm:text-sm text-gray-600">奖励时间</div>
                     </div>
-                    <div className="text-center p-4 bg-primary-50 rounded-lg">
-                      <div className="text-2xl font-bold text-primary-600">{gameTimeStats.totalAvailable}</div>
-                      <div className="text-sm text-gray-600">总可用时间</div>
+                    <div className="text-center p-3 bg-primary-50 rounded-lg">
+                      <div className="text-lg sm:text-2xl font-bold text-primary-600">{gameTimeStats.totalAvailable}</div>
+                      <div className="text-xs sm:text-sm text-gray-600">总可用</div>
                     </div>
-                    <div className="text-center p-4 bg-success-50 rounded-lg">
-                      <div className="text-2xl font-bold text-success-600">{gameTimeStats.remainingTime}</div>
-                      <div className="text-sm text-gray-600">剩余时间</div>
+                    <div className="text-center p-3 bg-success-50 rounded-lg">
+                      <div className="text-lg sm:text-2xl font-bold text-success-600">{gameTimeStats.remainingTime}</div>
+                      <div className="text-xs sm:text-sm text-gray-600">剩余</div>
                     </div>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mb-6">
-                    <div className="flex justify-between text-sm text-gray-600 mb-2">
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs sm:text-sm text-gray-600 mb-2">
                       <span>已使用时间</span>
                       <span>{gameTimeStats.totalUsed} / {gameTimeStats.totalAvailable} 分钟</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
                       <div 
-                        className="bg-gradient-to-r from-primary-500 to-secondary-500 h-3 rounded-full transition-all duration-300"
+                        className="bg-gradient-to-r from-primary-500 to-secondary-500 h-2 sm:h-3 rounded-full transition-all duration-300"
                         style={{ 
                           width: `${Math.max(0, Math.min(100, (gameTimeStats.totalUsed / gameTimeStats.totalAvailable) * 100))}%` 
                         }}
@@ -261,13 +285,13 @@ const Rewards: React.FC = () => {
               )}
 
               {/* Game Time Exchange */}
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                   <span className="mr-2">🔄</span>
                   积分兑换游戏时间
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
                   {/* Normal Games */}
                   <div className={`p-3 sm:p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 ${
                     gameType === 'normal' ? 'border-primary-400 bg-primary-50' : 'border-gray-200 hover:border-gray-300'
@@ -305,8 +329,8 @@ const Rewards: React.FC = () => {
                 </div>
 
                 {/* Exchange Controls */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-4 mb-4">
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3 mb-3">
                     <label className="text-sm font-medium text-gray-700">兑换积分:</label>
                     <div className="flex items-center space-x-2">
                       <button
@@ -352,13 +376,13 @@ const Rewards: React.FC = () => {
 
             {/* Special Rewards */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <div className="bg-white rounded-lg shadow-sm p-4">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
                   <span className="mr-2">🏆</span>
                   特殊奖励
                 </h2>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {specialRewards.map((reward) => (
                     <div 
                       key={reward.id}
@@ -406,9 +430,9 @@ const Rewards: React.FC = () => {
                   ))}
                 </div>
 
-                <div className="mt-6 p-4 bg-primary-50 rounded-lg">
-                  <h4 className="font-semibold text-primary-900 mb-2">💡 提示</h4>
-                  <p className="text-sm text-primary-700">
+                <div className="mt-4 p-3 bg-primary-50 rounded-lg">
+                  <h4 className="font-semibold text-primary-900 mb-2 text-sm">💡 提示</h4>
+                  <p className="text-xs sm:text-sm text-primary-700">
                     特殊奖励需要家长审核。坚持完成任务积累积分，就能兑换心仪的奖励啦！
                   </p>
                 </div>

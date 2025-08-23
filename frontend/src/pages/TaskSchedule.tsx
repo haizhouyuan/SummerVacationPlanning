@@ -148,8 +148,72 @@ const TaskSchedule: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      {/* Compact Header for mobile */}
+      <div className="bg-white shadow-sm">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Left: Title and Icon */}
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-indigo-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-lg sm:text-xl font-bold">📅</span>
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">任务日程</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">查看您的任务时间安排和进度</p>
+              </div>
+            </div>
+            
+            {/* Right: User Info - Compact */}
+            {user && (
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
+                <p className="text-xs text-gray-500">{user.points} 积分</p>
+              </div>
+            )}
+          </div>
+          
+          {/* Mobile Controls - Below header */}
+          <div className="mt-4 space-y-3">
+            {/* Date Selection */}
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium text-gray-700">📅 日期:</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              />
+            </div>
+            
+            {/* View Toggle - Mobile */}
+            <div className="flex bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setView('timeline')}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                  view === 'timeline'
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                📊 时间轴
+              </button>
+              <button
+                onClick={() => setView('calendar')}
+                className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                  view === 'calendar'
+                    ? 'bg-white text-indigo-600 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                📆 周视图
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Header - Hidden on mobile */}
+      <div className="hidden sm:block bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-4 sm:py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -194,23 +258,23 @@ const TaskSchedule: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="p-4 sm:max-w-7xl sm:mx-auto sm:px-6 lg:px-8 sm:py-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">加载中...</p>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600 text-sm">加载中...</p>
           </div>
         ) : view === 'timeline' ? (
           /* Timeline View */
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
                 {new Date(selectedDate).toLocaleDateString('zh-CN', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -239,7 +303,7 @@ const TaskSchedule: React.FC = () => {
               )}
 
               {/* Timeline */}
-              <div className="relative min-h-[600px]">
+              <div className="relative min-h-[400px] sm:min-h-[600px]">
                 {/* Hour markers */}
                 {Array.from({ length: 24 }, (_, i) => (
                   <div 
@@ -247,19 +311,19 @@ const TaskSchedule: React.FC = () => {
                     className="absolute left-0 right-0 border-t border-gray-100"
                     style={{ top: `${(i / 24) * 100}%` }}
                   >
-                    <span className="absolute left-4 -top-2 text-xs text-gray-500 bg-white px-1">
+                    <span className="absolute left-2 sm:left-4 -top-2 text-xs text-gray-500 bg-white px-1">
                       {i.toString().padStart(2, '0')}:00
                     </span>
                   </div>
                 ))}
 
                 {/* Tasks */}
-                <div className="pl-16 pr-6 py-4">
+                <div className="pl-12 sm:pl-16 pr-4 sm:pr-6 py-4">
                   {dailyTasks.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="text-6xl mb-4">📋</div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">今日暂无安排</h3>
-                      <p className="text-gray-600">前往任务规划页面添加今日任务</p>
+                    <div className="text-center py-8">
+                      <div className="text-4xl sm:text-6xl mb-3">📋</div>
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">今日暂无安排</h3>
+                      <p className="text-sm text-gray-600">前往任务规划页面添加今日任务</p>
                     </div>
                   ) : (
                     dailyTasks
@@ -281,50 +345,55 @@ const TaskSchedule: React.FC = () => {
                         return (
                           <div
                             key={task.id}
-                            className={`absolute left-0 right-0 mx-4 p-4 rounded-lg shadow-sm border ${getStatusColor(task.status)} ${getPriorityColor(task.priority || 'medium')}`}
+                            className={`absolute left-0 right-0 mx-2 sm:mx-4 p-3 sm:p-4 rounded-lg shadow-sm border ${getStatusColor(task.status)} ${getPriorityColor(task.priority || 'medium')}`}
                             style={{ 
                               top: `${topPosition}%`,
-                              minHeight: '60px',
+                              minHeight: '50px',
                               zIndex: hasTime ? 5 : 1
                             }}
                           >
                             <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-900 text-sm">
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-gray-900 text-xs sm:text-sm truncate">
                                   {task.task?.title || '未知任务'}
                                 </h4>
-                                <div className="flex items-center space-x-3 mt-1 text-xs text-gray-600">
+                                <div className="flex items-center space-x-2 sm:space-x-3 mt-1 text-xs text-gray-600">
                                   {task.plannedTime && (
                                     <span className="flex items-center">
                                       ⏰ {formatTime(task.plannedTime)}
                                       {task.plannedEndTime && ` - ${formatTime(task.plannedEndTime)}`}
                                     </span>
                                   )}
-                                  <span>{task.task?.points || 0} 分</span>
-                                  <span>{task.task?.estimatedTime || 0} 分钟</span>
+                                  <span>{task.task?.points || 0}分</span>
+                                  <span className="hidden sm:inline">{task.task?.estimatedTime || 0}分钟</span>
                                   {task.priority && task.priority !== 'medium' && (
-                                    <span className={`px-2 py-1 rounded-full text-xs ${
+                                    <span className={`px-1 sm:px-2 py-1 rounded-full text-xs hidden sm:inline-block ${
                                       task.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
                                     }`}>
-                                      {task.priority === 'high' ? '高优先级' : '低优先级'}
+                                      {task.priority === 'high' ? '高' : '低'}
                                     </span>
                                   )}
                                 </div>
                                 {task.planningNotes && (
-                                  <p className="text-xs text-gray-600 mt-2">{task.planningNotes}</p>
+                                  <p className="text-xs text-gray-600 mt-1 sm:mt-2 truncate sm:whitespace-normal">{task.planningNotes}</p>
                                 )}
                               </div>
                               
-                              <div className="flex items-center space-x-2 ml-4">
+                              <div className="flex items-center ml-2 sm:ml-4">
                                 <span className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
                                   task.status === 'completed' ? 'bg-green-100 text-green-800' :
                                   task.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
                                   task.status === 'skipped' ? 'bg-red-100 text-red-800' :
                                   'bg-gray-100 text-gray-800'
                                 }`}>
-                                  {task.status === 'completed' ? '✅ 已完成' :
-                                   task.status === 'in_progress' ? '⏳ 进行中' :
-                                   task.status === 'skipped' ? '⏭️ 已跳过' : '📋 计划中'}
+                                  {task.status === 'completed' ? '✅' :
+                                   task.status === 'in_progress' ? '⏳' :
+                                   task.status === 'skipped' ? '⏭️' : '📋'}
+                                  <span className="hidden sm:inline ml-1">
+                                    {task.status === 'completed' ? '已完成' :
+                                     task.status === 'in_progress' ? '进行中' :
+                                     task.status === 'skipped' ? '已跳过' : '计划中'}
+                                  </span>
                                 </span>
                               </div>
                             </div>
@@ -338,25 +407,25 @@ const TaskSchedule: React.FC = () => {
           </div>
         ) : (
           /* Calendar/Weekly View */
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
                 周视图 - {new Date(getWeekDates()[0]).toLocaleDateString('zh-CN', { month: 'long' })}
               </h2>
             </div>
 
             <div className="grid grid-cols-7 gap-0 border-b border-gray-200">
               {['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((day, index) => (
-                <div key={index} className="p-4 text-center border-r border-gray-200 last:border-r-0">
-                  <div className="text-sm font-medium text-gray-900">{day}</div>
-                  <div className="text-lg font-bold text-gray-700 mt-1">
+                <div key={index} className="p-2 sm:p-4 text-center border-r border-gray-200 last:border-r-0">
+                  <div className="text-xs sm:text-sm font-medium text-gray-900">{day}</div>
+                  <div className="text-sm sm:text-lg font-bold text-gray-700 mt-1">
                     {new Date(getWeekDates()[index]).getDate()}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-0 min-h-[400px]">
+            <div className="grid grid-cols-7 gap-0 min-h-[300px] sm:min-h-[400px]">
               {getWeekDates().map((date, index) => {
                 const dayTasks = weeklyTasks[date] || [];
                 const isToday = date === new Date().toISOString().split('T')[0];
@@ -364,27 +433,27 @@ const TaskSchedule: React.FC = () => {
                 return (
                   <div 
                     key={date} 
-                    className={`border-r border-gray-200 last:border-r-0 p-2 ${isToday ? 'bg-blue-50' : ''}`}
+                    className={`border-r border-gray-200 last:border-r-0 p-1 sm:p-2 ${isToday ? 'bg-blue-50' : ''}`}
                   >
                     <div className="space-y-1">
                       {dayTasks.length === 0 ? (
-                        <div className="text-xs text-gray-400 text-center py-4">无任务</div>
+                        <div className="text-xs text-gray-400 text-center py-2 sm:py-4">无任务</div>
                       ) : (
-                        dayTasks.slice(0, 3).map((task) => (
+                        dayTasks.slice(0, 2).map((task) => (
                           <div
                             key={task.id}
-                            className={`p-2 rounded text-xs border ${getStatusColor(task.status)}`}
+                            className={`p-1 sm:p-2 rounded text-xs border ${getStatusColor(task.status)}`}
                           >
-                            <div className="font-medium truncate">
+                            <div className="font-medium truncate text-xs">
                               {task.task?.title || '未知任务'}
                             </div>
                             {task.plannedTime && (
-                              <div className="text-xs opacity-75">
+                              <div className="text-xs opacity-75 hidden sm:block">
                                 {formatTime(task.plannedTime)}
                               </div>
                             )}
                             <div className="flex items-center justify-between mt-1">
-                              <span>{task.task?.points || 0}分</span>
+                              <span className="text-xs">{task.task?.points || 0}分</span>
                               <span className="text-xs">
                                 {task.status === 'completed' ? '✅' :
                                  task.status === 'in_progress' ? '⏳' :
@@ -394,9 +463,9 @@ const TaskSchedule: React.FC = () => {
                           </div>
                         ))
                       )}
-                      {dayTasks.length > 3 && (
+                      {dayTasks.length > 2 && (
                         <div className="text-xs text-gray-500 text-center py-1">
-                          +{dayTasks.length - 3} 更多
+                          +{dayTasks.length - 2}
                         </div>
                       )}
                     </div>
