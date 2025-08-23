@@ -4,7 +4,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
-  role: 'student' | 'parent';
+  role: 'student' | 'parent' | 'admin';
   parentId?: string; // For students, reference to parent
   children?: string[]; // For parents, array of child IDs
   points: number;
