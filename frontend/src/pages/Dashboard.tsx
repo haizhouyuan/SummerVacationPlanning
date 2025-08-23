@@ -418,25 +418,13 @@ const Dashboard: React.FC = () => {
                 onClick={() => navigate('/rewards')}
                 className="w-full bg-gradient-to-r from-cartoon-purple to-secondary-400 hover:from-secondary-500 hover:to-secondary-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
               >
-                🎁 奖励中心
-              </button>
-              <button 
-                onClick={() => navigate('/achievements')}
-                className="w-full bg-gradient-to-r from-cartoon-orange to-warning-400 hover:from-warning-500 hover:to-warning-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                🏆 成就广场
+                🎁 成长与奖励
               </button>
               <button 
                 onClick={() => navigate('/lite')}
                 className="w-full bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
               >
                 ⚡ 简化版
-              </button>
-              <button 
-                onClick={() => setShowPointsHistory(true)}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-400 hover:from-pink-500 hover:to-purple-600 text-white py-3 px-4 rounded-cartoon-lg transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg animate-pop font-medium"
-              >
-                💎 积分历史
               </button>
             </div>
           </Card>

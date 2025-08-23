@@ -24,11 +24,18 @@ interface PointsTransaction {
 }
 
 interface PointsHistoryProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
+  displayMode?: 'modal' | 'inline';
+  className?: string;
 }
 
-const PointsHistory: React.FC<PointsHistoryProps> = ({ isOpen, onClose }) => {
+const PointsHistory: React.FC<PointsHistoryProps> = ({ 
+  isOpen = true, 
+  onClose, 
+  displayMode = 'modal',
+  className = ''
+}) => {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState<PointsTransaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,10 +45,10 @@ const PointsHistory: React.FC<PointsHistoryProps> = ({ isOpen, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || displayMode === 'inline') {
       loadPointsHistory();
     }
-  }, [isOpen, timeFilter, typeFilter]);
+  }, [isOpen, displayMode, timeFilter, typeFilter]);
 
   const loadPointsHistory = async () => {
     try {
@@ -149,24 +156,42 @@ const PointsHistory: React.FC<PointsHistoryProps> = ({ isOpen, onClose }) => {
 
   const stats = getSummaryStats();
 
-  if (!isOpen) return null;
+  if (displayMode === 'modal' && !isOpen) return null;
+
+  // Conditional wrapper for modal vs inline
+  const WrapperComponent = displayMode === 'modal' 
+    ? ({ children }: { children: React.ReactNode }) => (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-cartoon-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-cartoon-lg">
+            {children}
+          </div>
+        </div>
+      )
+    : ({ children }: { children: React.ReactNode }) => (
+        <div className={`bg-white rounded-lg shadow-sm ${className}`}>
+          {children}
+        </div>
+      );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-cartoon-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-cartoon-lg">
+    <WrapperComponent>
         {/* Header */}
-        <div className="p-6 border-b border-cartoon-light">
+        <div className={`${displayMode === 'modal' ? 'p-6' : 'p-4'} border-b border-cartoon-light`}>
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-bold text-cartoon-dark font-fun">💎 积分历史记录</h2>
-              <p className="text-cartoon-gray">查看积分的获得和使用详情</p>
+              <h2 className={`${displayMode === 'modal' ? 'text-2xl' : 'text-lg'} font-bold text-cartoon-dark font-fun`}>💎 积分收支记录</h2>
+              {displayMode === 'modal' && (
+                <p className="text-cartoon-gray">查看积分的获得和使用详情</p>
+              )}
             </div>
-            <button
-              onClick={onClose}
-              className="text-cartoon-gray hover:text-cartoon-dark text-xl font-bold p-2 rounded-cartoon hover:bg-cartoon-light transition-all duration-200"
-            >
-              ✕
-            </button>
+            {displayMode === 'modal' && onClose && (
+              <button
+                onClick={onClose}
+                className="text-cartoon-gray hover:text-cartoon-dark text-xl font-bold p-2 rounded-cartoon hover:bg-cartoon-light transition-all duration-200"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
 
@@ -353,8 +378,7 @@ const PointsHistory: React.FC<PointsHistoryProps> = ({ isOpen, onClose }) => {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </WrapperComponent>
   );
 };
 
