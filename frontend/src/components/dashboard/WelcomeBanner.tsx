@@ -8,13 +8,15 @@ interface WelcomeBannerProps {
     role: 'student' | 'parent';
     points: number;
   };
-  userLevel: number;
+  userLevel?: number;
+  todayPoints?: number;
   className?: string;
 }
 
 const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
   user,
   userLevel,
+  todayPoints = 0,
   className = ''
 }) => {
   // Get time-based greeting
@@ -34,30 +36,23 @@ const WelcomeBanner: React.FC<WelcomeBannerProps> = ({
         </div>
         
         {/* Welcome Message */}
-        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cartoon-dark mb-2 font-fun animate-bounce-in px-2">
-          欢迎回来，{user?.displayName}！
+        <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-cartoon-dark mb-4 font-fun animate-bounce-in px-2">
+          你好，今天的任务准备好了吗？
         </h2>
         
-        {/* Role-based Description */}
-        <p className="text-sm sm:text-base text-cartoon-gray mb-4 sm:mb-6 animate-bounce-in px-2">
-          {user?.role === 'student' 
-            ? '准备好开始今天的冒险了吗？ 🚀' 
-            : '查看您孩子的精彩进展 📊'}
-        </p>
-        
-        {/* Time-based Greeting */}
-        <div className="inline-block bg-cartoon-blue/10 text-cartoon-blue px-3 sm:px-4 py-2 rounded-cartoon font-medium text-xs sm:text-sm mb-3 sm:mb-4 animate-pop">
+        {/* Time-based Greeting - Hidden on mobile */}
+        <div className="hidden sm:inline-block bg-cartoon-blue/10 text-cartoon-blue px-3 sm:px-4 py-2 rounded-cartoon font-medium text-xs sm:text-sm mb-3 sm:mb-4 animate-pop">
           {getTimeGreeting()}
         </div>
         
-        {/* Points and Level Display */}
+        {/* Points Overview */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:space-x-4 mb-4">
           <div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 animate-pop">
             <PointsDisplay points={user?.points || 0} size="md" />
           </div>
           <div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 text-white animate-pop">
             <span className="font-bold text-sm sm:text-base">
-              🌟 等级 {userLevel}
+              📊 今日积分 {todayPoints}
             </span>
           </div>
         </div>

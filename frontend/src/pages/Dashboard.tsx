@@ -9,8 +9,6 @@ import { DailyTask } from '../types';
 import {
   WelcomeBanner,
   TodayTaskList,
-  ProgressStats,
-  AchievementGrid,
   FeedbackAnimations
 } from '../components/dashboard';
 
@@ -349,6 +347,7 @@ const Dashboard: React.FC = () => {
               points: currentUser.points
             }}
             userLevel={safeStats.user.level}
+            todayPoints={todayTasks.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.task?.points || 0), 0)}
             className="mb-6"
           />
         )}
@@ -369,38 +368,6 @@ const Dashboard: React.FC = () => {
           className="mb-6"
         />
 
-        {/* Progress Stats and Achievement Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div>
-            <ProgressStats
-              todayProgress={{
-                completed: todayTasks.filter(t => t.status === 'completed').length,
-                total: todayTasks.length,
-                points: todayTasks.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.task?.points || 0), 0),
-                maxPoints: todayTasks.reduce((sum, t) => sum + (t.task?.points || 0), 0)
-              }}
-              weeklyProgress={{
-                completed: safeStats.weeklyStats.completed,
-                total: safeStats.weeklyGoal,
-                points: safeStats.weeklyStats.points || 0,
-                maxPoints: safeStats.weeklyStats.maxPoints || 0
-              }}
-              weeklyGoal={safeStats.weeklyGoal}
-              currentStreak={safeStats.user.currentStreak}
-            />
-          </div>
-          
-          <div>
-            <AchievementGrid
-              currentLevel={safeStats.user.level}
-              nextLevelPoints={safeStats.user.nextLevelPoints || 200}
-              currentPoints={currentUser?.points || 0}
-              currentStreak={safeStats.user.currentStreak}
-              achievements={safeStats.achievements}
-              levelTitle={safeStats.user.levelTitle}
-            />
-          </div>
-        </div>
 
         {/* Additional Sections Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
