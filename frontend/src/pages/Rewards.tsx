@@ -481,6 +481,7 @@ const Rewards: React.FC = () => {
                 </div>
               </div>
             </div>
+            </div>
 
             {/* Special Rewards */}
             <div className="lg:col-span-1">
