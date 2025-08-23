@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Task, DailyTask } from '../types';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
+import TopNavigation from '../components/TopNavigation';
 // import TaskCard from '../components/TaskCard';
 import TaskTimeline from '../components/TaskTimeline';
 import TaskCreationForm from '../components/TaskCreationForm';
@@ -115,7 +116,13 @@ const TaskPlanning: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
+    <div>
+      {/* Top Navigation - 仅在移动端显示 */}
+      <div className="md:hidden">
+        <TopNavigation />
+      </div>
+      
+      <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
       {/* Compact Header for mobile */}
       <div className="bg-white shadow-sm">
         <div className="px-4 py-4">
@@ -508,6 +515,7 @@ const TaskPlanning: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

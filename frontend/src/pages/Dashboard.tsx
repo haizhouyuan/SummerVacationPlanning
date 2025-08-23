@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import PointsHistory from '../components/PointsHistory';
+import TopNavigation from '../components/TopNavigation';
 import Card from '../components/Card';
 import { DailyTask } from '../types';
 import {
@@ -335,8 +336,14 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-3 sm:p-4 md:p-6">
-      <div className="max-w-7xl mx-auto">
+    <>
+      {/* Top Navigation - 仅在移动端显示 */}
+      <div className="md:hidden">
+        <TopNavigation />
+      </div>
+      
+      <div className="p-3 sm:p-4 md:p-6">
+        <div className="max-w-7xl mx-auto">
         {/* Welcome Banner */}
         {currentUser && (
           <WelcomeBanner 
@@ -394,6 +401,7 @@ const Dashboard: React.FC = () => {
             </div>
           </Card>
         </div>
+        </div>
       </div>
 
       {/* Feedback Animations */}
@@ -410,7 +418,7 @@ const Dashboard: React.FC = () => {
         isOpen={showPointsHistory}
         onClose={() => setShowPointsHistory(false)}
       />
-    </div>
+    </>
   );
 };
 
