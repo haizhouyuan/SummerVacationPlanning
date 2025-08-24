@@ -734,6 +734,9 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    // Fetch task details for both approval and rejection flows
+    const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+    
     const updates: any = {
       approvalStatus: action === 'approve' ? 'approved' : 'rejected',
       approvedBy: req.user.id,
@@ -744,7 +747,6 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
 
     // If approving, award the original points plus any bonus points
     if (action === 'approve') {
-      const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
       if (task) {
         const basePoints = dailyTask.pointsEarned || 0;
         const bonusPointsValue = bonusPoints ? parseInt(bonusPoints) : 0;
@@ -911,8 +913,8 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
       businessLogger.taskOperation(dailyTask.userId, dailyTask._id.toString(), 'REJECTED', {
         rejectedBy: req.user.id,
         approvalNotes,
-        taskCategory: task.category,
-        taskActivity: task.activity
+        taskCategory: task?.category,
+        taskActivity: task?.activity
       });
 
       // Clawback points if they were already awarded

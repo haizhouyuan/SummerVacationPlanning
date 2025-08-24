@@ -76,7 +76,7 @@ export const authenticateToken = async (
   }
 };
 
-export const requireRole = (allowedRoles: ('student' | 'parent')[]) => {
+export const requireRole = (allowedRoles: ('student' | 'parent' | 'admin')[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({

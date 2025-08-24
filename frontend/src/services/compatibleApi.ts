@@ -454,6 +454,7 @@ export const compatibleApiService = {
       ...taskData,
       status: 'planned',
       pointsEarned: 0,
+      completedAt: new Date(), // Add required completedAt property
       createdAt: new Date(),
       updatedAt: new Date(),
       task: associatedTask // Include the full task object
