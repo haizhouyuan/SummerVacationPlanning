@@ -455,12 +455,13 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     const startMinutes = (hours - 6) * 60 + minutes; // Minutes from 06:00
     const duration = task.task?.estimatedTime || 30;
     
-    // Each slot is 40px high (represents 30 minutes) - matching h-10 class
-    const slotHeight = 40;
+    // Responsive slot heights - mobile: 32px, desktop: 40px per 30min slot
+    const isMobile = window.innerWidth < 640; // sm breakpoint
+    const slotHeight = isMobile ? 32 : 40;
     
     return {
-      top: `${(startMinutes / 30) * slotHeight}px`, // 40px per 30min slot
-      height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`, // Minimum one slot height
+      top: `${(startMinutes / 30) * slotHeight}px`,
+      height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`,
     };
   };
 
@@ -500,28 +501,29 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
               {/* Time Labels and Timeline Grid Layout */}
               <div className="grid grid-cols-12 gap-0 sm:gap-1">
                 {/* Left: Time Scale Column */}
-                <div className="col-span-3 sm:col-span-2 pr-1 sm:pr-2">
-                  <div className="text-xs font-medium text-gray-500 mb-2 text-center">时间</div>
+                <div className="col-span-4 sm:col-span-2 pr-2 sm:pr-3">
+                  <div className="text-xs font-medium text-gray-500 mb-3 text-center">时间</div>
                   {timeSlots.filter((_, index) => index % 2 === 0).map((slot) => (
                     <div
                       key={slot.time}
-                      className="h-20 flex items-center justify-center text-xs text-gray-600 font-medium border-r border-gray-200"
+                      className="h-16 sm:h-20 flex items-center justify-center text-xs text-gray-600 font-medium border-r border-gray-200"
                     >
                       <div className="text-center">
-                        <div className="font-semibold text-xs sm:text-sm">{slot.time}</div>
+                        <div className="font-semibold text-sm sm:text-base mb-1">{slot.time}</div>
+                        <div className="text-xs text-gray-500 hidden sm:block">{slot.displayTime}</div>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 {/* Right: Task Schedule Column */}
-                <div className="col-span-9 sm:col-span-10 relative">
-                  <div className="text-xs font-medium text-gray-500 mb-2 text-center">任务安排</div>
+                <div className="col-span-8 sm:col-span-10 relative">
+                  <div className="text-xs font-medium text-gray-500 mb-3 text-center">任务安排</div>
                   {/* Time Slots */}
                   {timeSlots.map((slot, index) => (
                     <div
                       key={slot.time}
-                      className={`h-10 relative cursor-pointer transition-colors duration-200 ${
+                      className={`h-8 sm:h-10 relative cursor-pointer transition-colors duration-200 ${
                         index % 2 === 0 
                           ? 'bg-white border-t-2 border-gray-300 hover:bg-blue-50' 
                           : 'bg-gray-50 border-t border-gray-200 hover:bg-blue-25'
@@ -536,27 +538,41 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                     >
                       {/* Hour marker - show at every even slot (start of hour) */}
                       {index % 2 === 0 && (
-                        <div className="absolute left-2 top-1 text-xs text-gray-400 font-medium">
-                          {slot.time}
+                        <div className="absolute left-1 sm:left-2 top-1 text-xs text-gray-400 font-medium">
+                          <span className="sm:hidden">{slot.time}</span>
+                          <span className="hidden sm:inline">{slot.displayTime}</span>
                         </div>
                       )}
                       
-                      {/* Empty state hint for odd hours */}
+                      {/* Empty state hint for odd hours - only on desktop */}
                       {index % 4 === 1 && !scheduledTasks.some(task => {
                         if (!task.plannedTime) return false;
                         const [taskHour, taskMinute] = task.plannedTime.split(':').map(Number);
                         const [slotHour, slotMinute] = slot.time.split(':').map(Number);
                         return taskHour === slotHour && Math.abs(taskMinute - slotMinute) < 30;
                       }) && (
-                        <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="absolute inset-0 hidden sm:flex items-center justify-center">
                           <div className="text-xs text-gray-300 opacity-50">空闲时段</div>
+                        </div>
+                      )}
+                      
+                      {/* Mobile: Show plus icon for empty slots */}
+                      {!scheduledTasks.some(task => {
+                        if (!task.plannedTime) return false;
+                        const [taskHour, taskMinute] = task.plannedTime.split(':').map(Number);
+                        const [slotHour, slotMinute] = slot.time.split(':').map(Number);
+                        return taskHour === slotHour && Math.abs(taskMinute - slotMinute) < 15;
+                      }) && (
+                        <div className="absolute inset-0 flex sm:hidden items-center justify-center">
+                          <div className="text-gray-300 text-lg opacity-60">+</div>
                         </div>
                       )}
                       
                       {dragOverSlot === slot.time && (
                         <div className="absolute inset-0 bg-blue-200 bg-opacity-50 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center">
-                          <div className="text-center text-blue-700 font-medium text-sm">
-                            📋 拖放任务到此时间段
+                          <div className="text-center text-blue-700 font-medium text-xs sm:text-sm">
+                            <span className="hidden sm:inline">📋 拖放任务到此时间段</span>
+                            <span className="sm:hidden">📋 放置任务</span>
                           </div>
                         </div>
                       )}
@@ -569,7 +585,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                       key={task.id}
                       data-task-id={task.id}
                       style={getTaskStyle(task)}
-                      className={`absolute left-3 right-3 rounded-lg border-l-4 p-3 shadow-md cursor-pointer group ${getPriorityColor(task.priority || 'medium')} z-10 hover:shadow-lg transition-all duration-200 hover:scale-[1.02]`}
+                      className={`absolute left-2 right-2 sm:left-3 sm:right-3 rounded-lg border-l-4 p-2 sm:p-3 shadow-md cursor-pointer group ${getPriorityColor(task.priority || 'medium')} z-10 hover:shadow-lg transition-all duration-200 hover:scale-[1.02]`}
                       onClick={() => handleTaskClick(task)}
                       draggable
                       onDragStart={(e) => {
@@ -579,11 +595,13 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                       }}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center space-x-2">
-                          <TaskCategoryIcon 
-                            category={task.task?.category || 'other'} 
-                            size="sm"
-                          />
+                        <div className="flex items-center space-x-1 sm:space-x-2 flex-1 min-w-0">
+                          <div className="flex-shrink-0">
+                            <TaskCategoryIcon 
+                              category={task.task?.category || 'other'} 
+                              size="sm"
+                            />
+                          </div>
                           <h4 className="font-medium text-gray-900 text-xs sm:text-sm truncate flex-1">
                             {task.task?.title}
                           </h4>
@@ -593,18 +611,27 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                             e.stopPropagation();
                             handleRemoveFromTimeline(task);
                           }}
-                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity text-sm"
+                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity text-xs sm:text-sm flex-shrink-0 ml-1"
                           title="移除任务安排"
                         >
-                          ❌
+                          ✕
                         </button>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span className="font-medium text-xs">{task.plannedTime} - {task.plannedEndTime}</span>
-                        <span className="text-primary-600 font-medium text-xs hidden sm:inline">{task.task?.estimatedTime}分钟</span>
-                        <span className="text-primary-600 font-medium text-xs sm:hidden">{task.task?.estimatedTime}min</span>
+                      
+                      {/* Time and Duration - Mobile optimized */}
+                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                        <span className="font-medium truncate">
+                          <span className="hidden sm:inline">{task.plannedTime} - {task.plannedEndTime}</span>
+                          <span className="sm:hidden">{task.plannedTime}</span>
+                        </span>
+                        <span className="text-primary-600 font-medium flex-shrink-0 ml-2">
+                          <span className="hidden sm:inline">{task.task?.estimatedTime}分钟</span>
+                          <span className="sm:hidden">{task.task?.estimatedTime}分</span>
+                        </span>
                       </div>
-                      <div className={`text-xs px-2 py-1 rounded-full mt-1 text-center font-medium ${
+                      
+                      {/* Status badge - Mobile optimized */}
+                      <div className={`text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-center font-medium ${
                         task.status === 'completed' ? 'bg-green-100 text-green-700' :
                         task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                         'bg-gray-100 text-gray-600'
@@ -613,15 +640,15 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                           {task.status === 'completed' ? '✅ 已完成' :
                            task.status === 'in_progress' ? '🔄 进行中' : '📋 计划中'}
                         </span>
-                        <span className="sm:hidden">
+                        <span className="sm:hidden text-xs">
                           {task.status === 'completed' ? '✅' :
                            task.status === 'in_progress' ? '🔄' : '📋'}
                         </span>
                       </div>
                       
-                      {/* Resize Handle */}
+                      {/* Resize Handle - Hidden on mobile for better touch experience */}
                       <div
-                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 rounded-b-lg"
+                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 rounded-b-lg hidden sm:block"
                         onMouseDown={(e) => handleResizeStart(e, task)}
                         title="拖拽调整任务时长"
                       />
@@ -682,22 +709,37 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
 
         {/* Quick Create Task Modal */}
         {showQuickCreate && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-96 max-w-full mx-4">
-              <h3 className="text-lg font-semibold mb-4">快速创建任务</h3>
-              <p className="text-sm text-gray-600 mb-4">时间: {quickCreateTime}</p>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">快速创建任务</h3>
+                <button
+                  onClick={() => setShowQuickCreate(false)}
+                  className="text-gray-400 hover:text-gray-600 text-xl"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center text-sm text-blue-800">
+                  <span className="text-lg mr-2">⏰</span>
+                  <span className="font-medium">安排时间: {quickCreateTime}</span>
+                </div>
+              </div>
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    任务标题
+                    任务标题 *
                   </label>
                   <input
                     type="text"
                     value={quickTaskTitle}
                     onChange={(e) => setQuickTaskTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="输入任务标题..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="例如：完成数学作业、运动30分钟..."
+                    autoFocus
                   />
                 </div>
                 
@@ -705,31 +747,50 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     预计时长 (分钟)
                   </label>
-                  <input
-                    type="number"
-                    min="15"
-                    max="480"
-                    step="15"
-                    value={quickTaskDuration}
-                    onChange={(e) => setQuickTaskDuration(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="range"
+                      min="15"
+                      max="120"
+                      step="15"
+                      value={quickTaskDuration}
+                      onChange={(e) => setQuickTaskDuration(Number(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded min-w-[60px] text-center">
+                      {quickTaskDuration}分
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>15分</span>
+                    <span>2小时</span>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button
                   onClick={() => setShowQuickCreate(false)}
-                  className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors order-2 sm:order-1"
                 >
                   取消
                 </button>
                 <button
                   onClick={handleQuickTaskCreate}
                   disabled={!quickTaskTitle.trim() || loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 order-1 sm:order-2 flex-1"
                 >
-                  {loading ? '创建中...' : '创建任务'}
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>创建中...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>✨</span>
+                      <span>创建任务</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
