@@ -162,6 +162,17 @@ async function createDatabaseIndexes() {
     console.log('  ✅ 待审批任务索引');
     indexCount++;
     
+    // 防止重复任务的唯一索引
+    await db.collection('dailyTasks').createIndex(
+      { userId: 1, taskId: 1, date: 1 }, 
+      { 
+        name: 'idx_daily_tasks_unique_user_task_date',
+        unique: true // 防止同一用户同一天重复添加相同任务
+      }
+    );
+    console.log('  ✅ 防重复任务唯一索引');
+    indexCount++;
+    
     // ======================
     // REDEMPTIONS 兑换记录集合索引
     // ======================
@@ -264,10 +275,13 @@ async function createDatabaseIndexes() {
     // ======================
     console.log('\n📊 创建用户积分限制集合索引...');
     
-    // 用户限制索引
+    // 用户限制索引 - 修复：使用userId+date唯一索引
     await db.collection('userPointsLimits').createIndex(
-      { userId: 1, category: 1 }, 
-      { name: 'idx_user_limits_user_category' }
+      { userId: 1, date: 1 }, 
+      { 
+        name: 'idx_user_points_limits_user_date_unique',
+        unique: true // 确保每个用户每天只有一条记录
+      }
     );
     console.log('  ✅ 用户积分限制索引');
     indexCount++;

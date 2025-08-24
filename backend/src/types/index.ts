@@ -77,17 +77,21 @@ export interface DailyTask {
     interval?: number; // For custom intervals
   };
   completedAt?: Date;
-  evidenceText?: string; // 文本心得
-  evidenceMedia?: EvidenceMediaItem[]; // 多媒体证据
   isPublic?: boolean; // 是否公开
   evidence?: {
-    type: 'text' | 'photo' | 'video';
+    type: 'text' | 'photo' | 'video' | 'audio';
     content: string; // Text content or file URL
     timestamp: Date;
+    metadata?: {
+      filename?: string;
+      size?: number;
+      mimetype?: string;
+    };
   }[];
   notes?: string;
   planningNotes?: string; // Notes added during planning phase
   pointsEarned: number;
+  pendingPoints?: number; // Points waiting for approval, stored when task completed but not yet approved
   // Approval system enhancement
   approvalStatus?: 'pending' | 'approved' | 'rejected';
   approvedBy?: string; // Parent ID
