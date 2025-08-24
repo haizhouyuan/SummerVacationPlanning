@@ -1,0 +1,116 @@
+{
+  "logging": {
+    "level": "info",
+    "productionLevel": "warn",
+    "enableConsole": true,
+    "enableFile": true,
+    "colors": true,
+    "timestamp": true,
+    "prettyPrint": false
+  },
+  "fileTransports": {
+    "combined": {
+      "enabled": true,
+      "filename": "combined-%DATE%.log",
+      "maxSize": "50m",
+      "maxFiles": "30d",
+      "zippedArchive": true,
+      "datePattern": "YYYY-MM-DD"
+    },
+    "error": {
+      "enabled": true,
+      "filename": "error-%DATE%.log",
+      "level": "error",
+      "maxSize": "20m",
+      "maxFiles": "90d",
+      "zippedArchive": true,
+      "datePattern": "YYYY-MM-DD"
+    },
+    "http": {
+      "enabled": true,
+      "filename": "http-%DATE%.log",
+      "level": "http",
+      "maxSize": "50m",
+      "maxFiles": "7d",
+      "zippedArchive": true,
+      "datePattern": "YYYY-MM-DD"
+    },
+    "business": {
+      "enabled": true,
+      "filename": "business-%DATE%.log",
+      "maxSize": "20m",
+      "maxFiles": "60d",
+      "zippedArchive": true,
+      "datePattern": "YYYY-MM-DD"
+    }
+  },
+  "cleanup": {
+    "enabled": true,
+    "schedule": "0 2 * * *",
+    "retentionPolicies": {
+      "combined-": 30,
+      "error-": 90,
+      "http-": 7,
+      "business-": 60,
+      "exceptions.log": 180,
+      "rejections.log": 180
+    },
+    "maxLogFileSize": 104857600,
+    "compressOldLogs": true
+  },
+  "analysis": {
+    "enabled": true,
+    "generateDailyReports": true,
+    "alertThresholds": {
+      "errorRate": 5.0,
+      "slowRequestRate": 10.0,
+      "securityEventCount": 10,
+      "averageResponseTime": 2000
+    },
+    "retainReports": "30d"
+  },
+  "alerts": {
+    "enabled": false,
+    "email": {
+      "enabled": false,
+      "recipients": [],
+      "smtp": {
+        "host": "",
+        "port": 587,
+        "secure": false,
+        "auth": {
+          "user": "",
+          "pass": ""
+        }
+      }
+    },
+    "webhook": {
+      "enabled": false,
+      "urls": []
+    }
+  },
+  "performance": {
+    "maxListeners": 100,
+    "bufferSize": 1000,
+    "flushInterval": 5000
+  },
+  "security": {
+    "maskSensitiveData": true,
+    "sensitiveFields": [
+      "password",
+      "token",
+      "apiKey",
+      "secret",
+      "authorization",
+      "cookie"
+    ],
+    "logSecurityEvents": true,
+    "failedLoginThreshold": 5
+  },
+  "development": {
+    "enableDebugLogs": true,
+    "logSqlQueries": false,
+    "logRequestBodies": false,
+    "logResponseBodies": false
+  }
+}

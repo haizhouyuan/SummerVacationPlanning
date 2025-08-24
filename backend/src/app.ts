@@ -5,6 +5,13 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
+import logger from './config/logger';
+import { 
+  httpLogger, 
+  errorLogger, 
+  slowQueryLogger, 
+  securityLogger 
+} from './middleware/loggerMiddleware';
 
 dotenv.config();
 
@@ -28,9 +35,18 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Logging
+// Winston logging setup
+app.use(httpLogger);
+app.use(securityLogger);
+app.use(slowQueryLogger(1000)); // 1秒慢查询阈值
+
+// Morgan HTTP logging (只在非测试环境)
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan('combined'));
+  app.use(morgan('combined', {
+    stream: {
+      write: (message: string) => logger.http(message.trim())
+    }
+  }));
 }
 
 // Body parsing
@@ -77,10 +93,12 @@ app.use('/api/points-config', pointsConfigRoutes);
 // 静态资源服务，开放 /uploads 目录
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Error handling middleware
+// Error handling middleware (must be after all routes)
+app.use(errorLogger);
+
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({
+  // 错误已经在errorLogger中记录了，这里只处理响应
+  res.status(err.status || 500).json({
     error: 'Something went wrong!',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error',
   });

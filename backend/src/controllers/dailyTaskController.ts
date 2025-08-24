@@ -5,6 +5,8 @@ import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
 import { calculateConfigurablePoints } from './pointsConfigController';
 import { getCurrentWeek } from '../utils/dateUtils';
+import { businessLogger } from '../config/logger';
+import { logBusinessOperation } from '../middleware/loggerMiddleware';
 
 export const createDailyTask = async (req: AuthRequest, res: Response) => {
   try {
@@ -318,6 +320,16 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
 
           // Update points tracking and award points only if task doesn't require approval or is already approved
           if (actualPointsAwarded > 0 && (!task.requiresEvidence || dailyTask.approvalStatus === 'approved')) {
+            // Log the points operation
+            businessLogger.pointsOperation(req.user.id, 'TASK_COMPLETION', actualPointsAwarded, {
+              taskId: dailyTask.taskId,
+              dailyTaskId: dailyTask._id.toString(),
+              taskCategory: task.category,
+              taskActivity: task.activity,
+              originalPoints: pointsResult.totalPoints,
+              limitApplied: isPointsTruncated || isLimitReached
+            });
+
             // Use transaction to ensure atomic operations
             const session = mongodb['client'].startSession();
             try {
@@ -795,6 +807,26 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
           }
 
           if (actualPointsAwarded > 0) {
+            // Log the task approval and points operation
+            businessLogger.taskOperation(dailyTask.userId, dailyTask._id.toString(), 'APPROVED_WITH_POINTS', {
+              approvedBy: req.user.id,
+              basePoints,
+              bonusPoints: bonusPointsValue,
+              totalPointsToAward,
+              actualPointsAwarded,
+              approvalNotes,
+              taskCategory: task.category,
+              taskActivity: task.activity
+            });
+
+            businessLogger.pointsOperation(dailyTask.userId, 'TASK_APPROVAL', actualPointsAwarded, {
+              approvedBy: req.user.id,
+              taskId: dailyTask.taskId,
+              dailyTaskId: dailyTask._id.toString(),
+              basePoints,
+              bonusPoints: bonusPointsValue
+            });
+
             // Use transaction to ensure atomic operations
             const session = mongodb['client'].startSession();
             try {
@@ -875,10 +907,26 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
 
     // If rejecting, handle points clawback and task status
     if (action === 'reject') {
+      // Log task rejection
+      businessLogger.taskOperation(dailyTask.userId, dailyTask._id.toString(), 'REJECTED', {
+        rejectedBy: req.user.id,
+        approvalNotes,
+        taskCategory: task.category,
+        taskActivity: task.activity
+      });
+
       // Clawback points if they were already awarded
       const currentPointsEarned = dailyTask.pointsEarned || 0;
       
       if (currentPointsEarned > 0) {
+        // Log points clawback
+        businessLogger.pointsOperation(dailyTask.userId, 'POINTS_CLAWBACK', -currentPointsEarned, {
+          rejectedBy: req.user.id,
+          taskId: dailyTask.taskId,
+          dailyTaskId: dailyTask._id.toString(),
+          reason: 'Task rejected by parent',
+          approvalNotes
+        });
         // Use transaction to ensure atomic operations for clawback
         const session = mongodb['client'].startSession();
         try {

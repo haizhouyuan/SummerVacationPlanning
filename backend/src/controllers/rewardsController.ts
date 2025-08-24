@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { collections } from '../config/mongodb';
+import { collections, mongodb } from '../config/mongodb';
 import { User } from '../types';
 import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
@@ -142,16 +142,26 @@ export const calculateGameTime = async (req: AuthRequest, res: Response) => {
       createdAt: new Date(),
     };
 
-    await collections.gameTimeExchanges.insertOne(exchange);
-
-    // Deduct points from user
-    await collections.users.updateOne(
-      { _id: new ObjectId(req.user.id) },
-      {
-        $inc: { points: -pointsToSpend },
-        $set: { updatedAt: new Date() }
-      }
-    );
+    // Use transaction to ensure atomic operation
+    const session = mongodb['client'].startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Insert exchange record
+        await collections.gameTimeExchanges.insertOne(exchange, { session });
+        
+        // Deduct points from user
+        await collections.users.updateOne(
+          { _id: new ObjectId(req.user.id) },
+          {
+            $inc: { points: -pointsToSpend },
+            $set: { updatedAt: new Date() }
+          },
+          { session }
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
 
     res.status(200).json({
       success: true,
@@ -481,14 +491,25 @@ export const exchangeGameTime = async (req: AuthRequest, res: Response) => {
       createdAt: new Date(),
     };
 
-    // Insert exchange record
-    const result = await collections.gameTimeExchanges.insertOne(exchange);
-
-    // Update user points
-    await collections.users.updateOne(
-      { _id: new ObjectId(req.user.id) },
-      { $inc: { points: -points } }
-    );
+    // Use transaction to ensure atomic operation
+    const session = mongodb['client'].startSession();
+    let result;
+    try {
+      await session.withTransaction(async () => {
+        // Insert exchange record
+        const insertResult = await collections.gameTimeExchanges.insertOne(exchange, { session });
+        result = insertResult;
+        
+        // Update user points
+        await collections.users.updateOne(
+          { _id: new ObjectId(req.user.id) },
+          { $inc: { points: -points } },
+          { session }
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
 
     res.status(200).json({
       success: true,
