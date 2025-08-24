@@ -10,7 +10,7 @@ interface NavigationTab {
 }
 
 const TopNavigation: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,14 +61,50 @@ const TopNavigation: React.FC = () => {
     navigate(path);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <div className="bg-white border-b border-cartoon-light shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto">
         {/* 顶部标题栏 - 仅在移动端显示 */}
-        <div className="flex items-center justify-center py-2 md:hidden">
+        <div className="flex items-center justify-between py-2 md:hidden">
           <h1 className="text-lg font-bold text-cartoon-dark font-fun">
             🌟 暑期规划助手
           </h1>
+          <button
+            onClick={handleLogout}
+            className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm transition-colors"
+          >
+            退出
+          </button>
+        </div>
+        
+        {/* 桌面端标题栏和登出按钮 - 仅在桌面端显示 */}
+        <div className="hidden md:flex items-center justify-between py-3 px-4">
+          <h1 className="text-xl font-bold text-cartoon-dark font-fun">
+            🌟 暑期规划助手
+          </h1>
+          <div className="flex items-center space-x-3">
+            {currentUser && (
+              <div className="text-right">
+                <p className="text-sm font-medium text-cartoon-dark">{currentUser.displayName}</p>
+                <p className="text-xs text-cartoon-gray">{currentUser.points} 积分</p>
+              </div>
+            )}
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
+            >
+              退出登录
+            </button>
+          </div>
         </div>
         
         {/* 导航标签页 */}
