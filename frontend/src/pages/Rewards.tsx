@@ -4,6 +4,7 @@ import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import TopNavigation from '../components/TopNavigation';
 import AchievementBadge from '../components/AchievementBadge';
 import PointsHistory from '../components/PointsHistory';
+import SpecialRewardRequest from '../components/SpecialRewardRequest';
 
 const Rewards: React.FC = () => {
   const { user } = useAuth();
@@ -501,6 +502,7 @@ const Rewards: React.FC = () => {
                   <span className="mr-2">🏆</span>
                   特殊奖励
                 </h2>
+                <div className="mb-4">                  <SpecialRewardRequest                     onRequestSuccess={() => loadData()}                    userPoints={user?.points || 0}                  />                </div>
 
                 <div className="space-y-3">
                   {specialRewards.map((reward) => (

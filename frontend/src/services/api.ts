@@ -242,6 +242,7 @@ class ApiService {
     const queryParams = new URLSearchParams(filters).toString();
     return this.request(`/tasks/recommended${queryParams ? `?${queryParams}` : ''}`);
   }
+// Special rewards API endpoints  async requestSpecialReward(data: {    rewardTitle: string;    rewardDescription?: string;    pointsCost: number;    notes?: string;  }): Promise<any> {    return this.request("/rewards/special/request", {      method: "POST",      body: JSON.stringify(data),    });  }  async getSpecialRewardRequests(filters?: { status?: string; studentId?: string }): Promise<any> {    const queryParams = filters ? new URLSearchParams(filters as any).toString() : "";    return this.request(`/rewards/special/requests${queryParams ? `?${queryParams}` : ""}`);  }  async approveSpecialRedemption(requestId: string, data: { approvalNotes?: string }): Promise<any> {    return this.request(`/rewards/special/${requestId}/approve`, {      method: "PUT",      body: JSON.stringify(data),    });  }  async rejectSpecialRedemption(requestId: string, data: { rejectionReason: string }): Promise<any> {    return this.request(`/rewards/special/${requestId}/reject`, {      method: "PUT",      body: JSON.stringify(data),    });  }
 }
 
 export const apiService = new ApiService();

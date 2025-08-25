@@ -6,6 +6,7 @@ import Layout from '../components/Layout';
 import PointsDisplay from '../components/PointsDisplay';
 import PointsHistory from '../components/PointsHistory';
 import NotificationBadge from '../components/NotificationBadge';
+import SpecialRewardApproval from '../components/SpecialRewardApproval';
 
 interface Child {
   id: string;
@@ -374,6 +375,7 @@ const ParentRewardsPage: React.FC = () => {
               )}
             </div>
 
+            {/* Special Rewards Approval */}            <div className="bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6 mb-4 sm:mb-6">              <SpecialRewardApproval />            </div>
             {/* Points Management Guide */}
             <div className="bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6">
               <h2 className="text-lg sm:text-xl font-bold text-cartoon-dark font-fun mb-3 sm:mb-4">📖 积分管理指南</h2>
