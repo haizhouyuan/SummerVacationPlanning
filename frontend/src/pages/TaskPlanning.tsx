@@ -488,9 +488,22 @@ const TaskPlanning: React.FC = () => {
                             </span>
                           ) : (
                             <button
-                              onClick={() => {
-                                // Add task to schedule (simplified - you'd implement proper scheduling)
-                                alert(`将 "${task.title}" 添加到日程安排`);
+                              onClick={async () => {
+                                try {
+                                  const apiService = detectNetworkAndGetApiServiceSync();
+                                  await apiService.createDailyTask({
+                                    taskId: task.id,
+                                    date: selectedDate,
+                                    // Don't set plannedTime so it appears as unscheduled
+                                  });
+                                  await loadDailyTasks();
+                                  // Show success message briefly
+                                  const successMessage = `✅ "${task.title}" 已添加到今日任务`;
+                                  alert(successMessage);
+                                } catch (error) {
+                                  console.error('Error adding task to daily tasks:', error);
+                                  alert(`❌ 添加任务失败：${(error as any)?.message || '未知错误'}`);
+                                }
                               }}
                               className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-primary-700 transition-colors"
                             >
