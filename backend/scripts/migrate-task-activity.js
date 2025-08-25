@@ -31,7 +31,7 @@ const getActivityFromTask = (title, category) => {
 };
 
 async function migrateTaskActivity() {
-  const client = new MongoClient(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/summer-vacation');
+  const client = new MongoClient(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/summer_app');
   
   try {
     await client.connect();

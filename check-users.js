@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/summer-vacation';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/summer_app';
 
 async function checkUsers() {
   const client = new MongoClient(MONGODB_URI);
@@ -9,7 +9,7 @@ async function checkUsers() {
     await client.connect();
     console.log('Connected to MongoDB');
     
-    const db = client.db('summer-vacation');
+    const db = client.db();
     const usersCollection = db.collection('users');
     
     const users = await usersCollection.find({}).toArray();

@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/summer-vacation';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/summer_app';
 
 async function createDemoUsers() {
   const client = new MongoClient(MONGODB_URI);
@@ -10,7 +10,7 @@ async function createDemoUsers() {
     await client.connect();
     console.log('Connected to MongoDB');
     
-    const db = client.db('summer-vacation');
+    const db = client.db();
     const usersCollection = db.collection('users');
     
     // Check if demo users already exist
