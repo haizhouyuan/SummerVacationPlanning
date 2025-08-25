@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import MediaPreview from '../components/MediaPreview';
 
 const PAGE_SIZE = 20;
 
 const AchievementSquare: React.FC = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -35,20 +39,58 @@ const AchievementSquare: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
       {/* Compact Header for mobile */}
       <div className="bg-white shadow-sm">
         <div className="px-4 py-4">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-lg sm:text-xl font-bold">🏆</span>
               </div>
-              <div className="text-center">
+              <div>
                 <h1 className="text-lg sm:text-2xl font-bold text-primary-700">成就广场</h1>
                 <p className="text-xs sm:text-sm text-gray-600">公开打卡分享</p>
               </div>
+            </div>
+            
+            {/* Authentication buttons */}
+            <div className="flex items-center space-x-2">
+              {user ? (
+                <div className="flex items-center space-x-2">
+                  <div className="text-right hidden sm:block">
+                    <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
+                    <p className="text-xs text-gray-500">积分: {user.points || 0}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
+                  >
+                    退出
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleLogin}
+                  className="bg-primary-500 hover:bg-primary-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
+                >
+                  登录
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -57,7 +99,45 @@ const AchievementSquare: React.FC = () => {
       {/* Desktop Header - Hidden on mobile */}
       <div className="hidden sm:block py-8 px-4">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl font-bold text-center mb-6 text-primary-700">🌟 成就广场 · 公开打卡</h1>
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold text-primary-700">🌟 成就广场 · 公开打卡</h1>
+            
+            {/* Desktop Authentication buttons */}
+            <div className="flex items-center space-x-4">
+              {user ? (
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
+                    <p className="text-xs text-gray-500">
+                      {user.role === 'student' ? '👨‍🎓 学生' : '👨‍👩‍👧‍👦 家长'} • 积分: {user.points || 0}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                  >
+                    返回首页
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                  >
+                    退出登录
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <p className="text-sm text-gray-600">游客身份浏览</p>
+                  <button
+                    onClick={handleLogin}
+                    className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                  >
+                    登录账户
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

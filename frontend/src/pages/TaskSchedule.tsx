@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { DailyTask } from '../types';
 import { apiService } from '../services/api';
 
 const TaskSchedule: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [view, setView] = useState<'timeline' | 'calendar'>('timeline');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
@@ -135,6 +137,15 @@ const TaskSchedule: React.FC = () => {
     return dates;
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -163,11 +174,19 @@ const TaskSchedule: React.FC = () => {
               </div>
             </div>
             
-            {/* Right: User Info - Compact */}
+            {/* Right: User Info and Logout - Compact */}
             {user && (
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-                <p className="text-xs text-gray-500">{user.points} 积分</p>
+              <div className="flex items-center space-x-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
+                  <p className="text-xs text-gray-500">{user.points} 积分</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
+                >
+                  退出
+                </button>
               </div>
             )}
           </div>
@@ -252,6 +271,19 @@ const TaskSchedule: React.FC = () => {
                   onChange={(e) => setSelectedDate(e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
+                
+                <div className="flex items-center space-x-3">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">{user?.displayName}</p>
+                    <p className="text-xs text-gray-500">积分: {user?.points || 0}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                  >
+                    退出登录
+                  </button>
+                </div>
               </div>
             </div>
           </div>

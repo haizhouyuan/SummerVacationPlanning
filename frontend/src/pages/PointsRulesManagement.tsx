@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { pointsConfigService } from '../services/pointsConfigService';
 
@@ -39,7 +40,8 @@ interface GameTimeConfig {
 }
 
 const PointsRulesManagement: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [pointsRules, setPointsRules] = useState<PointsRule[]>([]);
   const [gameTimeConfig, setGameTimeConfig] = useState<GameTimeConfig | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +65,15 @@ const PointsRulesManagement: React.FC = () => {
     fetchPointsRules();
     fetchGameTimeConfig();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   // Only allow parents to access this page
   if (!user || user.role !== 'parent') {
@@ -213,8 +224,24 @@ const PointsRulesManagement: React.FC = () => {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">积分规则管理</h1>
-          <p className="text-gray-600">家长可以在这里调整各类任务的积分规则和每日上限设置</p>
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">积分规则管理</h1>
+              <p className="text-gray-600">家长可以在这里调整各类任务的积分规则和每日上限设置</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
+                <p className="text-xs text-gray-500">家长账户</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                退出登录
+              </button>
+            </div>
+          </div>
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-yellow-800 text-sm">
               ⚠️ <strong>重要提示：</strong>请慎重设置积分规则，这将直接影响孩子的积分获得和游戏时间兑换。建议在修改前与孩子沟通。

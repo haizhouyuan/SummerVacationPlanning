@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../components/NotificationSystem';
 import { apiService } from '../services/api';
 
 const RecurringTasksManagement: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { showSuccess, showError } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [patterns, setPatterns] = useState<any[]>([]);
@@ -73,6 +75,15 @@ const RecurringTasksManagement: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (!user) {
     return <div>请先登录</div>;
   }
@@ -109,6 +120,12 @@ const RecurringTasksManagement: React.FC = () => {
                 <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
                 <p className="text-xs text-gray-500">家长账户</p>
               </div>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+              >
+                退出登录
+              </button>
             </div>
           </div>
         </div>

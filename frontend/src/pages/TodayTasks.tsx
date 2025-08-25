@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../components/NotificationSystem';
 import { DailyTask } from '../types';
@@ -11,8 +12,9 @@ import EvidenceModal from '../components/EvidenceModal';
 import WeatherWidget from '../components/WeatherWidget';
 
 const TodayTasks: React.FC = () => {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
   const { showSuccess, showError } = useNotifications();
+  const navigate = useNavigate();
   const [dailyTasks, setDailyTasks] = useState<DailyTask[]>([]);
   const [gameTimeStats, setGameTimeStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -141,6 +143,15 @@ const TodayTasks: React.FC = () => {
     return Math.round((completed / dailyTasks.length) * 100);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center">
@@ -174,12 +185,20 @@ const TodayTasks: React.FC = () => {
                   {user?.role === 'student' ? '👨‍🎓 学生' : '👨‍👩‍👧‍👦 家长'} • 积分: {user?.points || 0}
                 </p>
               </div>
-              <button
-                onClick={() => window.location.href = '/dashboard'}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                返回首页
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                >
+                  返回首页
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
+                >
+                  退出登录
+                </button>
+              </div>
             </div>
           </div>
         </div>
