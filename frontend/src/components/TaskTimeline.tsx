@@ -105,9 +105,23 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drag over time slot
   const handleDragOver = (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
-    console.log('👆 Drag over time slot:', timeSlot);
     setDragOverSlot(timeSlot);
-    e.dataTransfer.dropEffect = 'copy'; // Changed from 'move' to match effectAllowed in TaskPlanning
+    
+    // Set appropriate dropEffect based on drag source
+    try {
+      const jsonData = e.dataTransfer.getData('application/json');
+      if (jsonData) {
+        const parsedData = JSON.parse(jsonData);
+        // If it's an existing task being moved, use 'move', otherwise use 'copy'
+        e.dataTransfer.dropEffect = parsedData.isExistingTask ? 'move' : 'copy';
+      } else {
+        // Fallback: check effectAllowed to determine appropriate dropEffect
+        e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed === 'move' ? 'move' : 'copy';
+      }
+    } catch (error) {
+      // If parsing fails, default to 'copy' for new tasks
+      e.dataTransfer.dropEffect = 'copy';
+    }
   };
 
   // Handle drag leave
@@ -119,7 +133,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drop on time slot
   const handleDrop = async (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
-    console.log('🎯 Drop event triggered on time slot:', timeSlot);
     setDragOverSlot(null);
     
     try {
@@ -127,14 +140,12 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       const jsonData = e.dataTransfer.getData('application/json');
       const textData = e.dataTransfer.getData('text/plain');
       
-      console.log('📥 Drop data received:', { jsonData: jsonData?.slice(0, 100), textData });
       
       if (jsonData) {
         const parsedData = JSON.parse(jsonData);
         
         if (parsedData.isExistingTask) {
           // Existing daily task being rescheduled
-          console.log('🔄 Processing existing task rescheduling:', parsedData);
           const taskToMove = parsedData.taskData;
           const estimatedTime = taskToMove.task?.estimatedTime || 30;
           const endTime = calculateEndTime(timeSlot, estimatedTime);
@@ -156,18 +167,15 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
             plannedEndTime: endTime,
           };
 
-          console.log('📝 Updating daily task:', taskToMove.id, 'with new time:', updates);
           const apiService = detectNetworkAndGetApiServiceSync();
           await apiService.updateDailyTask(taskToMove.id, updates);
           
           // Call parent callback to refresh data
           onTaskUpdate?.(taskToMove.id, updates);
           onRefresh?.();
-          console.log('✅ Task rescheduled successfully');
           
         } else {
           // New task from TaskPlanning sidebar
-          console.log('📋 Processing new task from sidebar:', parsedData);
           const task = parsedData;
           const estimatedTime = task.estimatedTime || 30;
           const endTime = calculateEndTime(timeSlot, estimatedTime);
@@ -184,14 +192,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
           }
 
           // Create new daily task with scheduled time
-          console.log('🔧 Creating daily task with API service');
           const apiService = detectNetworkAndGetApiServiceSync();
-          console.log('📞 Calling createDailyTask with params:', {
-            taskId: task.id,
-            date: date,
-            plannedTime: timeSlot,
-            plannedEndTime: endTime,
-          });
           
           const createResult = await apiService.createDailyTask({
             taskId: task.id,
@@ -200,15 +201,11 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
             plannedEndTime: endTime,
           });
           
-          console.log('✅ Daily task created successfully:', createResult);
-          console.log('🔄 Calling onRefresh to update timeline');
           onRefresh?.();
-          console.log('✨ Task drop completed successfully');
         }
         
       } else if (textData && draggedTask) {
         // Fallback: Existing daily task being rescheduled (legacy path)
-        console.log('🔄 Processing task rescheduling (legacy path):', draggedTask);
         const estimatedTime = draggedTask.task?.estimatedTime || 30;
         const endTime = calculateEndTime(timeSlot, estimatedTime);
 
@@ -245,7 +242,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         error: error
       });
     } finally {
-      console.log('🧹 Cleaning up drop state');
       setLoading(false);
       setDraggedTask(null);
     }
@@ -265,7 +261,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     const currentHeight = Math.max((currentDuration / 30) * slotHeight, slotHeight);
     setResizeOriginalHeight(currentHeight);
     
-    console.log('🔧 Starting resize for task:', task.id, 'currentDuration:', currentDuration, 'height:', currentHeight);
     
     // Add global mouse move and mouse up listeners
     document.addEventListener('mousemove', handleResizeMove);
@@ -284,7 +279,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     // Convert height back to duration (in minutes)
     const newDuration = Math.max(Math.round((newHeight / slotHeight) * 30), 15); // Minimum 15 minutes
     
-    console.log('📏 Resizing task:', resizingTask, 'newHeight:', newHeight, 'newDuration:', newDuration);
     
     // Update the visual height immediately for smooth feedback
     const taskElement = document.querySelector(`[data-task-id="${resizingTask}"]`) as HTMLElement;
@@ -303,7 +297,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     const newHeight = Math.max(resizeOriginalHeight + deltaY, slotHeight);
     const newDuration = Math.max(Math.round((newHeight / slotHeight) * 30), 15);
     
-    console.log('✅ Finishing resize for task:', resizingTask, 'finalDuration:', newDuration);
     
     try {
       // Find the task being resized
@@ -312,16 +305,10 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         // Calculate new end time
         const newEndTime = calculateEndTime(task.plannedTime, newDuration);
         
-        // Update both the task's estimated time and planned end time
+        // Update only the planned end time for this specific daily task
+        // Don't modify the global task template - just this instance's scheduling
         const updates = {
           plannedEndTime: newEndTime,
-          // Also update the underlying task's estimated time if possible
-          ...(task.task && {
-            task: {
-              ...task.task,
-              estimatedTime: newDuration
-            }
-          })
         };
         
         const apiService = detectNetworkAndGetApiServiceSync();
@@ -331,7 +318,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         onTaskUpdate?.(task.id, updates);
         onRefresh?.();
         
-        console.log('🎉 Task resize completed successfully');
       }
     } catch (error) {
       console.error('❌ Error updating task duration:', error);
@@ -849,7 +835,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                         onClick={() => handleTaskClick(task)}
                         draggable
                         onDragStart={(e) => {
-                          console.log('🚀 Starting drag for existing task:', task.id, task);
                           setDraggedTask(task);
                           // Set both text and JSON data for better handling
                           e.dataTransfer.setData('text/plain', task.id);
@@ -962,22 +947,12 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                     • {conflictTask.title} ({conflictTask.plannedTime}, {conflictTask.estimatedTime}分钟)
                   </div>
                 ))}
-                <div className="mt-3 flex space-x-2">
+                <div className="mt-3">
                   <button
                     onClick={() => setConflictInfo(null)}
                     className="text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded"
                   >
-                    取消
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Force schedule despite conflicts
-                      // Implementation can be added if needed
-                      setConflictInfo(null);
-                    }}
-                    className="text-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                  >
-                    强制安排
+                    确定
                   </button>
                 </div>
               </div>

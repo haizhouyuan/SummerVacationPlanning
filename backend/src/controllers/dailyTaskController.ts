@@ -198,7 +198,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
     }
 
     const { dailyTaskId } = req.params;
-    const { status, evidence, notes, evidenceText, evidenceMedia, isPublic } = req.body;
+    const { status, evidence, notes, evidenceText, evidenceMedia, isPublic, plannedTime, plannedEndTime } = req.body;
 
     const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
     if (!dailyTask) {
@@ -398,6 +398,14 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
 
     if (notes) {
       updates.notes = notes;
+    }
+
+    // Handle planned time updates for task scheduling
+    if (plannedTime !== undefined) {
+      updates.plannedTime = plannedTime;
+    }
+    if (plannedEndTime !== undefined) {
+      updates.plannedEndTime = plannedEndTime;
     }
 
     await collections.dailyTasks.updateOne(

@@ -246,17 +246,13 @@ const TaskPlanning: React.FC = () => {
                         draggable={!isTaskPlanned(task)}
                         onDragStart={(e) => {
                           if (!isTaskPlanned(task)) {
-                            console.log('🚀 Starting drag for task:', task.title, task);
                             e.dataTransfer.setData('application/json', JSON.stringify(task));
                             e.dataTransfer.effectAllowed = 'copy';
-                            console.log('✅ Drag data set successfully');
                           } else {
-                            console.log('❌ Task already planned, preventing drag');
                             e.preventDefault();
                           }
                         }}
                         onDragEnd={(e) => {
-                          console.log('🏁 Drag ended for task:', task.title);
                         }}
                         className={`p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
                           isTaskPlanned(task) 
