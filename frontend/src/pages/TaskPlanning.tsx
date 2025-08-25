@@ -350,8 +350,8 @@ const TaskPlanning: React.FC = () => {
                     {dailyTasks
                       .sort((a, b) => a.plannedTime?.localeCompare(b.plannedTime || '') || 0)
                       .map((task) => (
-                        <div key={task.id} className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center space-x-3 mb-3">
+                        <div key={task.id} className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex items-center space-x-3 mb-4">
                             <span className="text-lg">
                               {categories.find(c => c.key === task.task?.category)?.emoji || '⭐'}
                             </span>

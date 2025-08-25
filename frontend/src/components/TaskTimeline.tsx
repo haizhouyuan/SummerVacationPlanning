@@ -532,7 +532,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     const { leftPercent, widthPercent } = calculateParallelLayout(task, scheduledTasks);
     
     return {
-      top: `${(startMinutes / 30) * slotHeight}px`, // 40px per 30min slot
+      top: `${32 + (startMinutes / 30) * slotHeight}px`, // 32px (top-8) + 40px per 30min slot for proper alignment
       height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`, // Minimum one slot height
       left: `calc(8px + ${leftPercent}%)`, // 8px base margin + percentage position
       right: 'auto',
