@@ -533,7 +533,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     
     return {
       top: `${32 + (startMinutes / 30) * slotHeight}px`, // 32px (top-8) + 40px per 30min slot for proper alignment
-      height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`, // Minimum one slot height
+      height: `${Math.max((duration / 30) * slotHeight, 60)}px`, // Minimum 60px height for simplified content
       left: `calc(8px + ${leftPercent}%)`, // 8px base margin + percentage position
       right: 'auto',
       width: `calc(${widthPercent}% - 4px)`, // Full width minus small gap between parallel tasks
@@ -687,51 +687,20 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                         className={`relative rounded-lg border-l-4 p-4 shadow-sm ${getTaskColor(task)} bg-white/90`}
                         onClick={() => handleTaskClick(task)}
                       >
-                        {/* Time and Priority */}
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <div className="bg-primary-100 text-primary-700 px-2 py-1 rounded text-sm font-medium">
-                              {task.plannedTime}
-                            </div>
-                            <div className={`text-sm ${priorityInfo.color}`} title={priorityInfo.text}>
-                              {priorityInfo.emoji}
-                            </div>
+                        {/* Task Title with Category Icon and Priority */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <TaskCategoryIcon 
+                              category={task.task?.category || 'other'} 
+                              size="sm"
+                            />
+                            <h4 className="font-medium text-gray-900 flex-1 truncate">
+                              {task.task?.title}
+                            </h4>
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {task.task?.estimatedTime}分钟
+                          <div className={`text-sm ${priorityInfo.color}`} title={priorityInfo.text}>
+                            {priorityInfo.emoji}
                           </div>
-                        </div>
-
-                        {/* Task Title and Category */}
-                        <div className="flex items-center space-x-2 mb-3">
-                          <TaskCategoryIcon 
-                            category={task.task?.category || 'other'} 
-                            size="sm"
-                          />
-                          <h4 className="font-medium text-gray-900 flex-1">
-                            {task.task?.title}
-                          </h4>
-                        </div>
-
-                        {/* Compact Status and Category Badges for Mobile */}
-                        <div className="flex items-center gap-1 flex-wrap">
-                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${getStatusBadgeColor(task.status || 'planned')}`}>
-                            {task.status === 'completed' ? '✅' :
-                             task.status === 'in_progress' ? '🔄' :
-                             task.status === 'skipped' ? '⏭️' : '📋'}
-                          </div>
-                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${getCategoryColor(task.task?.category || 'other')}`}>
-                            {task.task?.category === 'exercise' ? '🏃‍♂️' :
-                             task.task?.category === 'reading' ? '📚' :
-                             task.task?.category === 'learning' ? '🧠' :
-                             task.task?.category === 'creativity' ? '🎨' :
-                             task.task?.category === 'chores' ? '🧹' : '⭐'}
-                          </div>
-                          <span className="text-xs text-gray-500 ml-1">
-                            {task.status === 'completed' ? '已完成' :
-                             task.status === 'in_progress' ? '进行中' :
-                             task.status === 'skipped' ? '跳过' : '计划中'}
-                          </span>
                         </div>
 
                         {/* Mobile Actions */}
@@ -803,7 +772,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                     >
                       <div className="text-right">
                         <div className="font-semibold text-sm">{slot.time}</div>
-                        <div className="text-xs text-gray-500 mt-1">{slot.displayTime}</div>
                       </div>
                       {/* Time axis dot */}
                       <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-primary-500 rounded-full border-2 border-white shadow-sm z-20"></div>
@@ -908,7 +876,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                         {/* Timeline connection line */}
                         <div className="absolute left-0 top-1/2 transform -translate-x-6 -translate-y-1/2 w-4 h-px bg-primary-300"></div>
                         
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <TaskCategoryIcon 
                               category={task.task?.category || 'other'} 
@@ -917,56 +885,23 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                             <h4 className="font-medium text-gray-900 text-sm truncate flex-1">
                               {task.task?.title}
                             </h4>
+                          </div>
+                          <div className="flex items-center space-x-2">
                             {/* Priority indicator */}
                             <div className={`text-xs ${priorityInfo.color}`} title={priorityInfo.text}>
                               {priorityInfo.emoji}
                             </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveFromTimeline(task);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-all text-sm p-1 rounded hover:bg-red-50"
+                              title="移除任务安排"
+                            >
+                              ✕
+                            </button>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveFromTimeline(task);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-all text-sm p-1 rounded hover:bg-red-50"
-                            title="移除任务安排"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
-                          <span className="font-medium bg-gray-100 px-2 py-1 rounded text-xs">
-                            {task.plannedTime} - {task.plannedEndTime}
-                          </span>
-                          <span className="text-primary-600 font-medium text-xs">
-                            {task.task?.estimatedTime}分钟
-                          </span>
-                        </div>
-                        
-                        {/* Compact status and category badges */}
-                        <div className="flex items-center gap-1 flex-wrap">
-                          {/* Status Badge - more compact */}
-                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border text-center ${getStatusBadgeColor(task.status || 'planned')}`}>
-                            {task.status === 'completed' ? '✅' :
-                             task.status === 'in_progress' ? '🔄' :
-                             task.status === 'skipped' ? '⏭️' : '📋'}
-                          </div>
-                          
-                          {/* Category Badge - more compact */}
-                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border text-center ${getCategoryColor(task.task?.category || 'other')}`}>
-                            {task.task?.category === 'exercise' ? '🏃‍♂️' :
-                             task.task?.category === 'reading' ? '📚' :
-                             task.task?.category === 'learning' ? '🧠' :
-                             task.task?.category === 'creativity' ? '🎨' :
-                             task.task?.category === 'chores' ? '🧹' : '⭐'}
-                          </div>
-                          
-                          {/* Status text - compact */}
-                          <span className="text-xs text-gray-500 ml-1">
-                            {task.status === 'completed' ? '已完成' :
-                             task.status === 'in_progress' ? '进行中' :
-                             task.status === 'skipped' ? '跳过' : '计划中'}
-                          </span>
                         </div>
                         
                         {/* Enhanced Resize Handle */}

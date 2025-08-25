@@ -166,7 +166,7 @@ const EnhancedTaskPlanning: React.FC = () => {
       
       for (const task of selectedTasks) {
         // Check if task is already planned for this date
-        const existingTask = dailyTasks.find(dt => dt.taskId === task.id);
+        const existingTask = dailyTasks.find((dt: DailyTask) => dt.taskId === task.id);
         if (!existingTask) {
           const apiService = detectNetworkAndGetApiServiceSync();
           await apiService.createDailyTask({
@@ -195,7 +195,7 @@ const EnhancedTaskPlanning: React.FC = () => {
   const weeklySchedule = weeklyScheduleState.data;
   
   const isTaskPlanned = (task: Task) => {
-    return dailyTasks.some(dt => dt.taskId === task.id);
+    return dailyTasks.some((dt: DailyTask) => dt.taskId === task.id);
   };
 
   const getTotalPoints = () => {
@@ -342,7 +342,7 @@ const EnhancedTaskPlanning: React.FC = () => {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                   <h4 className="text-md font-semibold text-gray-900 mb-3">📋 今日任务</h4>
                   <div className="space-y-2">
-                    {dailyTasks.map((dailyTask) => (
+                    {dailyTasks.map((dailyTask: DailyTask) => (
                       <div key={dailyTask.id} className="p-2 bg-success-50 rounded-lg">
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskTimeline 测试</title>
+  <script src="https://unpkg.com/tailwindcss-cdn@3.4.0/tailwindcss.js"></script>
+  <style>
+    /* 模拟TaskTimeline的网格布局和任务定位 */
+    .timeline-grid {
+      position: relative;
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+      border-radius: 8px;
+      padding: 16px;
+      min-height: 700px;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .time-slot {
+      height: 40px; /* 每个30分钟时段 = 40px */
+      position: relative;
+      border-bottom: 1px solid #e5e7eb;
+      transition: colors 0.2s;
+    }
+    
+    .time-slot:nth-child(even) {
+      border-color: #f3f4f6;
+      background: #f9fafb;
+    }
+    
+    .time-slot:nth-child(odd) {
+      border-color: #e5e7eb;
+      background: rgba(255, 255, 255, 0.5);
+    }
+    
+    .task-block {
+      position: absolute;
+      border-left: 4px solid #059669;
+      background: rgba(16, 185, 129, 0.1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      z-index: 10;
+      transition: all 0.2s;
+      background-color: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(4px);
+    }
+    
+    .task-block:hover {
+      box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+      transform: scale(1.01);
+    }
+    
+    .time-label {
+      position: absolute;
+      right: -120px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      z-index: 15;
+      font-size: 12px;
+      color: #6b7280;
+    }
+    
+    /* 修复前的定位 - 有双重偏移 */
+    .task-old-position {
+      /* 原来的代码：topOffset = 32px + 网格容器的top-8 = 双重偏移 */
+      top: calc(32px + 80px); /* 80px = 2个时段 * 40px，应该对应8:00 */
+    }
+    
+    /* 修复后的定位 - 无双重偏移 */
+    .task-new-position {  
+      /* 修复后的代码：topOffset = 0px + 网格容器的top-8 = 正确偏移 */
+      top: 80px; /* 80px = 2个时段 * 40px，正确对应8:00 */
+    }
+  </style>
+</head>
+<body class="bg-gray-100 p-8">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">TaskTimeline 定位修复测试</h1>
+    
+    <!-- 修复前的效果 -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+      <h2 class="text-xl font-bold text-red-600 mb-4">修复前：任务定位有双重偏移问题</h2>
+      <div class="flex">
+        <!-- 时间刻度列 -->
+        <div class="w-24 flex-shrink-0 mr-4">
+          <div class="text-xs font-medium text-gray-500 mb-4 text-center">时间</div>
+          <div class="h-20 flex items-center justify-end pr-4 text-xs text-gray-700 font-medium">
+            <div class="text-right">
+              <div class="font-semibold text-sm">06:00</div>
+            </div>
+          </div>
+          <div class="h-20 flex items-center justify-end pr-4 text-xs text-gray-700 font-medium">
+            <div class="text-right">
+              <div class="font-semibold text-sm">08:00</div>
+            </div>
+          </div>
+          <div class="h-20 flex items-center justify-end pr-4 text-xs text-gray-700 font-medium">
+            <div class="text-right">
+              <div class="font-semibold text-sm">10:00</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 中央时间轴 -->
+        <div class="w-px bg-blue-500 flex-shrink-0"></div>
+        
+        <!-- 任务区域 -->
+        <div class="flex-1 ml-4 relative">
+          <div class="text-xs font-medium text-gray-500 mb-4 text-center">任务安排</div>
+          
+          <!-- 时间网格背景 -->
+          <div class="absolute inset-0 top-8">
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+          </div>
+          
+          <!-- 问题任务：应该在8:00但显示在更下方 -->
+          <div class="task-block task-old-position" style="left: calc(8px + 0%); width: calc(100% - 4px); height: 40px;">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">📚</span>
+                <h4 class="font-medium text-gray-900 text-sm">早读任务</h4>
+                <div class="text-xs px-1 py-0.5 rounded font-medium border bg-gray-100 text-gray-600 border-gray-200">📋</div>
+              </div>
+            </div>
+            
+            <!-- 外部时间标签 -->
+            <div class="time-label">
+              <span class="font-medium bg-gray-100 px-2 py-1 rounded whitespace-nowrap">08:00 - 08:30</span>
+              <div class="flex items-center space-x-1">
+                <span class="text-blue-600 font-medium">30分钟</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm text-red-600 mt-2">❌ 任务显示在时间轴下方，不在正确的8:00位置</p>
+    </div>
+    
+    <!-- 修复后的效果 -->
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <h2 class="text-xl font-bold text-green-600 mb-4">修复后：任务定位正确对齐</h2>
+      <div class="flex">
+        <!-- 时间刻度列 -->
+        <div class="w-24 flex-shrink-0 mr-4">
+          <div class="text-xs font-medium text-gray-500 mb-4 text-center">时间</div>
+          <div class="h-20 flex items-center justify-end pr-4 text-xs text-gray-700 font-medium">
+            <div class="text-right">
+              <div class="font-semibold text-sm">06:00</div>
+            </div>
+          </div>
+          <div class="h-20 flex items-center justify-end pr-4 text-xs text-gray-700 font-medium">
+            <div class="text-right">
+              <div class="font-semibold text-sm">08:00</div>
+            </div>
+          </div>
+          <div class="h-20 flex items-center justify-end pr-4 text-xs text-gray-700 font-medium">
+            <div class="text-right">
+              <div class="font-semibold text-sm">10:00</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 中央时间轴 -->
+        <div class="w-px bg-blue-500 flex-shrink-0"></div>
+        
+        <!-- 任务区域 -->
+        <div class="flex-1 ml-4 relative">
+          <div class="text-xs font-medium text-gray-500 mb-4 text-center">任务安排</div>
+          
+          <!-- 时间网格背景 -->
+          <div class="absolute inset-0 top-8">
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+            <div class="time-slot"></div>
+          </div>
+          
+          <!-- 修复后的任务：正确显示在8:00位置 -->
+          <div class="task-block task-new-position" style="left: calc(8px + 0%); width: calc(100% - 4px); height: 40px;">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">📚</span>
+                <h4 class="font-medium text-gray-900 text-sm">早读任务</h4>
+                <div class="text-xs px-1 py-0.5 rounded font-medium border bg-gray-100 text-gray-600 border-gray-200">📋</div>
+              </div>
+            </div>
+            
+            <!-- 外部时间标签 -->
+            <div class="time-label">
+              <span class="font-medium bg-gray-100 px-2 py-1 rounded whitespace-nowrap">08:00 - 08:30</span>
+              <div class="flex items-center space-x-1">
+                <span class="text-blue-600 font-medium">30分钟</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-sm text-green-600 mt-2">✅ 任务正确显示在时间轴上的8:00位置，上下边缘精确对齐</p>
+    </div>
+    
+    <!-- 修复说明 -->
+    <div class="bg-blue-50 rounded-xl p-6 mt-8">
+      <h3 class="text-lg font-bold text-blue-900 mb-3">修复说明</h3>
+      <div class="text-blue-800 space-y-2">
+        <p><strong>问题：</strong>TaskTimeline组件中的<code>getTaskStyle</code>函数有双重偏移问题。</p>
+        <p><strong>原因：</strong>网格容器已经有top-8偏移处理标题间距，但代码中又额外添加了32px的topOffset。</p>
+        <p><strong>修复：</strong>将<code>topOffset</code>从32px改为0px，移除双重偏移。</p>
+        <div class="bg-white rounded p-3 mt-3 font-mono text-sm">
+          <div class="text-red-600 mb-2">// 修复前</div>
+          <div class="text-red-600 mb-3">const topOffset = 32; // 导致双重偏移</div>
+          <div class="text-green-600 mb-2">// 修复后</div>
+          <div class="text-green-600">const topOffset = 0; // 无额外偏移，网格容器已处理</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

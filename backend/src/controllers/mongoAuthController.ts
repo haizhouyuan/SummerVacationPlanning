@@ -714,6 +714,10 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     console.error('Get dashboard stats error:', error);
     
     // Provide fallback statistics in case of database issues
+    if (!req.user) {
+      return res.status(401).json({ message: 'User not authenticated' });
+    }
+    
     const fallbackStats = {
       user: {
         id: req.user.id,
