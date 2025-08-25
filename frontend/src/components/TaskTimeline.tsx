@@ -127,12 +127,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       const jsonData = e.dataTransfer.getData('application/json');
       const textData = e.dataTransfer.getData('text/plain');
       
-      console.log('📥 Drop data received:', { 
-        jsonData: jsonData?.slice(0, 100), 
-        textData, 
-        draggedTaskExists: !!draggedTask,
-        draggedTaskId: draggedTask?.id 
-      });
+      console.log('📥 Drop data received:', { jsonData: jsonData?.slice(0, 100), textData });
       
       if (jsonData) {
         const parsedData = JSON.parse(jsonData);
@@ -212,13 +207,8 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         }
         
       } else if (textData && draggedTask) {
-        // Existing daily task being rescheduled
-        console.log('🔄 Processing existing task move:', {
-          taskId: textData,
-          draggedTaskId: draggedTask.id,
-          draggedTaskTitle: draggedTask.task?.title,
-          targetTimeSlot: timeSlot
-        });
+        // Fallback: Existing daily task being rescheduled (legacy path)
+        console.log('🔄 Processing task rescheduling (legacy path):', draggedTask);
         const estimatedTime = draggedTask.task?.estimatedTime || 30;
         const endTime = calculateEndTime(timeSlot, estimatedTime);
 
@@ -245,14 +235,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         // Call parent callback to refresh data
         onTaskUpdate?.(draggedTask.id, updates);
         onRefresh?.();
-      } else {
-        console.warn('🚫 Drop event ignored - no matching condition:', {
-          hasJsonData: !!jsonData,
-          hasTextData: !!textData,
-          hasDraggedTask: !!draggedTask,
-          jsonDataPreview: jsonData?.slice(0, 50),
-          textDataValue: textData
-        });
       }
       
     } catch (error) {
@@ -511,80 +493,313 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     const startMinutes = (hours - 6) * 60 + minutes; // Minutes from 06:00
     const duration = task.task?.estimatedTime || 30;
     
-    // Responsive slot heights - mobile: 32px, desktop: 40px per 30min slot
-    const isMobile = window.innerWidth < 640; // sm breakpoint
-    const slotHeight = isMobile ? 32 : 40;
+    // Each slot is 40px high (represents 30 minutes) - matching h-10 class
+    const slotHeight = 40;
     
     return {
-      top: `${(startMinutes / 30) * slotHeight}px`,
-      height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`,
+      top: `${(startMinutes / 30) * slotHeight}px`, // 40px per 30min slot
+      height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`, // Minimum one slot height
     };
   };
 
-  // Get priority color
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'border-l-red-500 bg-red-50';
-      case 'medium':
-        return 'border-l-yellow-500 bg-yellow-50';
-      case 'low':
-        return 'border-l-green-500 bg-green-50';
-      default:
-        return 'border-l-gray-500 bg-gray-50';
+  // Get enhanced task color based on status, priority, and category
+  const getTaskColor = (task: DailyTask) => {
+    // Priority colors (status takes precedence)
+    const statusColorMap = {
+      'completed': 'border-l-green-500 bg-green-50/80 shadow-green-100',
+      'in_progress': 'border-l-blue-500 bg-blue-50/80 shadow-blue-100',
+      'planned': 'border-l-gray-400 bg-gray-50/80 shadow-gray-100',
+      'skipped': 'border-l-red-400 bg-red-50/80 shadow-red-100'
+    };
+
+    // If task has specific status, use status color
+    if (task.status && statusColorMap[task.status as keyof typeof statusColorMap]) {
+      return statusColorMap[task.status as keyof typeof statusColorMap];
     }
+
+    // Otherwise use priority color
+    const priorityColorMap = {
+      'high': 'border-l-red-500 bg-red-50/80 shadow-red-100',
+      'medium': 'border-l-yellow-500 bg-yellow-50/80 shadow-yellow-100',  
+      'low': 'border-l-green-500 bg-green-50/80 shadow-green-100'
+    };
+
+    const priority = task.priority || 'medium';
+    return priorityColorMap[priority as keyof typeof priorityColorMap] || 'border-l-gray-500 bg-gray-50/80 shadow-gray-100';
+  };
+
+  // Get category color for task type identification
+  const getCategoryColor = (category: string) => {
+    const categoryColors = {
+      'exercise': 'bg-emerald-100 text-emerald-700 border-emerald-200',     // 运动 - 翠绿色
+      'reading': 'bg-indigo-100 text-indigo-700 border-indigo-200',        // 阅读 - 靛蓝色
+      'learning': 'bg-amber-100 text-amber-700 border-amber-200',          // 学习 - 琥珀色
+      'creativity': 'bg-purple-100 text-purple-700 border-purple-200',     // 创意 - 紫色
+      'chores': 'bg-slate-100 text-slate-700 border-slate-200',           // 家务 - 石板色
+      'other': 'bg-cyan-100 text-cyan-700 border-cyan-200'                // 其他 - 青色
+    };
+    return categoryColors[category as keyof typeof categoryColors] || 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
+  // Get status badge color
+  const getStatusBadgeColor = (status: string) => {
+    const statusBadgeColors = {
+      'completed': 'bg-green-100 text-green-700 border-green-200',
+      'in_progress': 'bg-blue-100 text-blue-700 border-blue-200', 
+      'planned': 'bg-gray-100 text-gray-600 border-gray-200',
+      'skipped': 'bg-red-100 text-red-700 border-red-200'
+    };
+    return statusBadgeColors[status as keyof typeof statusBadgeColors] || 'bg-gray-100 text-gray-600 border-gray-200';
+  };
+
+  // Get priority indicator
+  const getPriorityIndicator = (priority: string) => {
+    const indicators = {
+      'high': { emoji: '🔴', text: '高优先级', color: 'text-red-600' },
+      'medium': { emoji: '🟡', text: '中优先级', color: 'text-yellow-600' },
+      'low': { emoji: '🟢', text: '低优先级', color: 'text-green-600' }
+    };
+    return indicators[priority as keyof typeof indicators] || indicators.medium;
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm">
       {/* Header */}
       <div className="p-6 border-b border-gray-200">
-        <div className="flex items-center">
-          <span className="text-2xl mr-3">📅</span>
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">时间轴视图</h2>
-            <p className="text-sm text-gray-600">
-              拖拽任务到时间轴安排您的一天 - {date}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <span className="text-2xl mr-3">📅</span>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">时间轴视图</h2>
+              <p className="text-sm text-gray-600">
+                拖拽任务到时间轴安排您的一天 - {date}
+              </p>
+            </div>
+          </div>
+          
+          {/* Color Legend */}
+          <div className="hidden lg:flex items-center space-x-4 text-xs">
+            <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+              <div className="font-medium text-gray-700 mb-2">颜色说明</div>
+              
+              {/* Status Colors */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-green-100 border-l-4 border-green-500 rounded-sm"></div>
+                  <span className="text-gray-600">已完成</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-blue-100 border-l-4 border-blue-500 rounded-sm"></div>
+                  <span className="text-gray-600">进行中</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-gray-100 border-l-4 border-gray-400 rounded-sm"></div>
+                  <span className="text-gray-600">计划中</span>
+                </div>
+              </div>
+              
+              {/* Priority Indicators */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-1">
+                  <span>🔴</span>
+                  <span className="text-gray-600">高优先级</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <span>🟡</span>
+                  <span className="text-gray-600">中优先级</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <span>🟢</span>
+                  <span className="text-gray-600">低优先级</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-3 sm:p-6">
         {/* Timeline */}
         <div>
-            <div className="relative bg-gray-50 rounded-lg p-4 min-h-[700px]">
-              {/* Time Labels and Timeline Grid Layout */}
-              <div className="grid grid-cols-12 gap-0 sm:gap-1">
-                {/* Left: Time Scale Column */}
-                <div className="col-span-4 sm:col-span-2 pr-2 sm:pr-3">
-                  <div className="text-xs font-medium text-gray-500 mb-3 text-center">时间</div>
-                  {timeSlots.filter((_, index) => index % 2 === 0).map((slot) => (
+          {/* Mobile Timeline View (< 768px) */}
+          <div className="block md:hidden">
+            <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-3 border border-gray-200">
+              {/* Mobile Header */}
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">今日安排</h3>
+                <div className="text-sm text-gray-500">
+                  {scheduledTasks.length} 项任务
+                </div>
+              </div>
+
+              {/* Mobile Task List */}
+              <div className="space-y-3">
+                {scheduledTasks.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <div className="text-4xl mb-2">📋</div>
+                    <p>暂无安排的任务</p>
+                    <p className="text-sm mt-1">从任务库拖拽任务到此处</p>
+                  </div>
+                ) : (
+                  scheduledTasks.map((task) => {
+                    const priorityInfo = getPriorityIndicator(task.priority || 'medium');
+                    return (
+                      <div
+                        key={task.id}
+                        className={`relative rounded-lg border-l-4 p-4 shadow-sm ${getTaskColor(task)} bg-white/90`}
+                        onClick={() => handleTaskClick(task)}
+                      >
+                        {/* Time and Priority */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="bg-primary-100 text-primary-700 px-2 py-1 rounded text-sm font-medium">
+                              {task.plannedTime}
+                            </div>
+                            <div className={`text-sm ${priorityInfo.color}`} title={priorityInfo.text}>
+                              {priorityInfo.emoji}
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {task.task?.estimatedTime}分钟
+                          </div>
+                        </div>
+
+                        {/* Task Title and Category */}
+                        <div className="flex items-center space-x-2 mb-3">
+                          <TaskCategoryIcon 
+                            category={task.task?.category || 'other'} 
+                            size="sm"
+                          />
+                          <h4 className="font-medium text-gray-900 flex-1">
+                            {task.task?.title}
+                          </h4>
+                        </div>
+
+                        {/* Status and Category Badges */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getStatusBadgeColor(task.status || 'planned')}`}>
+                            {task.status === 'completed' ? '✅ 已完成' :
+                             task.status === 'in_progress' ? '🔄 进行中' :
+                             task.status === 'skipped' ? '⏭️ 跳过' : '📋 计划中'}
+                          </div>
+                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getCategoryColor(task.task?.category || 'other')}`}>
+                            {task.task?.category === 'exercise' ? '🏃‍♂️ 运动' :
+                             task.task?.category === 'reading' ? '📚 阅读' :
+                             task.task?.category === 'learning' ? '🧠 学习' :
+                             task.task?.category === 'creativity' ? '🎨 创意' :
+                             task.task?.category === 'chores' ? '🧹 家务' : '⭐ 其他'}
+                          </div>
+                        </div>
+
+                        {/* Mobile Actions */}
+                        <div className="flex items-center justify-end mt-3 space-x-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFromTimeline(task);
+                            }}
+                            className="text-xs px-3 py-1 bg-red-50 text-red-600 rounded-full border border-red-200 hover:bg-red-100 transition-colors"
+                          >
+                            移除
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Mobile Color Legend */}
+              <div className="mt-4 p-3 bg-white/80 rounded-lg border border-gray-200">
+                <div className="text-xs font-medium text-gray-700 mb-2">图例说明</div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-green-100 border-l-2 border-green-500 rounded-sm"></div>
+                    <span className="text-gray-600">已完成</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <div className="w-2 h-2 bg-blue-100 border-l-2 border-blue-500 rounded-sm"></div>
+                    <span className="text-gray-600">进行中</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span>🔴</span>
+                    <span className="text-gray-600">高优先级</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span>🟡</span>
+                    <span className="text-gray-600">中优先级</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Quick Add */}
+              <div className="mt-4">
+                <button
+                  onClick={() => setShowQuickCreate(true)}
+                  className="w-full py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2 active:bg-primary-800"
+                >
+                  <span>➕</span>
+                  <span>快速添加任务</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Timeline View (≥ 768px) */}
+          <div className="hidden md:block">
+            <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 min-h-[700px] border border-gray-200">
+              {/* Timeline Main Structure with Central Axis */}
+              <div className="flex">
+                {/* Time Scale Column */}
+                <div className="w-24 flex-shrink-0 mr-4">
+                  <div className="text-xs font-medium text-gray-500 mb-4 text-center">时间</div>
+                  {timeSlots.filter((_, index) => index % 2 === 0).map((slot, hourIndex) => (
                     <div
                       key={slot.time}
-                      className="h-16 sm:h-20 flex items-center justify-center text-xs text-gray-600 font-medium border-r border-gray-200"
+                      className="h-20 flex items-center justify-end pr-4 text-xs text-gray-700 font-medium relative"
                     >
-                      <div className="text-center">
-                        <div className="font-semibold text-sm sm:text-base mb-1">{slot.time}</div>
-                        <div className="text-xs text-gray-500 hidden sm:block">{slot.displayTime}</div>
+                      <div className="text-right">
+                        <div className="font-semibold text-sm">{slot.time}</div>
+                        <div className="text-xs text-gray-500 mt-1">{slot.displayTime}</div>
                       </div>
+                      {/* Time axis dot */}
+                      <div className="absolute right-0 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-primary-500 rounded-full border-2 border-white shadow-sm z-20"></div>
                     </div>
                   ))}
                 </div>
 
-                {/* Right: Task Schedule Column */}
-                <div className="col-span-8 sm:col-span-10 relative">
-                  <div className="text-xs font-medium text-gray-500 mb-3 text-center">任务安排</div>
-                  {/* Time Slots */}
+                {/* Central Timeline Axis */}
+                <div className="relative w-px bg-primary-500 flex-shrink-0 shadow-sm"></div>
+
+                {/* Task Schedule Column */}
+                <div className="flex-1 ml-4 relative">
+                  <div className="text-xs font-medium text-gray-500 mb-4 text-center">任务安排</div>
+                  
+                  {/* Time Grid Background */}
+                  <div className="absolute inset-0 top-8">
+                    {timeSlots.map((slot, index) => (
+                      <div
+                        key={`grid-${slot.time}`}
+                        className={`h-10 relative border-b transition-colors duration-200 ${
+                          index % 2 === 0 
+                            ? 'border-gray-200 bg-white/50' 
+                            : 'border-gray-100 bg-gray-50/30'
+                        }`}
+                      >
+                        {/* Grid lines for precise alignment */}
+                        {index % 2 === 0 && (
+                          <div className="absolute left-0 right-0 top-0 h-px bg-primary-200 opacity-30"></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Interactive Drop Zones */}
                   {timeSlots.map((slot, index) => (
                     <div
-                      key={slot.time}
-                      className={`h-8 sm:h-10 relative cursor-pointer transition-colors duration-200 ${
-                        index % 2 === 0 
-                          ? 'bg-white border-t-2 border-gray-300 hover:bg-blue-50' 
-                          : 'bg-gray-50 border-t border-gray-200 hover:bg-blue-25'
-                      } ${
-                        dragOverSlot === slot.time ? 'bg-blue-100 border-blue-400' : ''
+                      key={`drop-${slot.time}`}
+                      className={`h-10 relative cursor-pointer transition-all duration-200 ${
+                        dragOverSlot === slot.time ? 'bg-blue-100 border-blue-400 shadow-sm' : 'hover:bg-blue-50/50'
                       }`}
                       onDragOver={(e) => handleDragOver(e, slot.time)}
                       onDragLeave={handleDragLeave}
@@ -592,133 +807,130 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                       onClick={() => handleTimeSlotClick(slot.time)}
                       title={`点击创建任务 - ${slot.time}`}
                     >
-                      {/* Hour marker - show at every even slot (start of hour) */}
+                      {/* Snap-to-grid indicators */}
                       {index % 2 === 0 && (
-                        <div className="absolute left-1 sm:left-2 top-1 text-xs text-gray-400 font-medium">
-                          <span className="sm:hidden">{slot.time}</span>
-                          <span className="hidden sm:inline">{slot.displayTime}</span>
-                        </div>
+                        <div className="absolute left-0 top-0 w-2 h-px bg-primary-300 opacity-50"></div>
                       )}
                       
-                      {/* Empty state hint for odd hours - only on desktop */}
+                      {/* Empty state hint */}
                       {index % 4 === 1 && !scheduledTasks.some(task => {
                         if (!task.plannedTime) return false;
                         const [taskHour, taskMinute] = task.plannedTime.split(':').map(Number);
                         const [slotHour, slotMinute] = slot.time.split(':').map(Number);
                         return taskHour === slotHour && Math.abs(taskMinute - slotMinute) < 30;
                       }) && (
-                        <div className="absolute inset-0 hidden sm:flex items-center justify-center">
-                          <div className="text-xs text-gray-300 opacity-50">空闲时段</div>
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                          <div className="text-xs text-gray-400 bg-white/80 px-2 py-1 rounded shadow">空闲时段</div>
                         </div>
                       )}
                       
-                      {/* Mobile: Show plus icon for empty slots */}
-                      {!scheduledTasks.some(task => {
-                        if (!task.plannedTime) return false;
-                        const [taskHour, taskMinute] = task.plannedTime.split(':').map(Number);
-                        const [slotHour, slotMinute] = slot.time.split(':').map(Number);
-                        return taskHour === slotHour && Math.abs(taskMinute - slotMinute) < 15;
-                      }) && (
-                        <div className="absolute inset-0 flex sm:hidden items-center justify-center">
-                          <div className="text-gray-300 text-lg opacity-60">+</div>
-                        </div>
-                      )}
-                      
+                      {/* Enhanced drop indicator */}
                       {dragOverSlot === slot.time && (
-                        <div className="absolute inset-0 bg-blue-200 bg-opacity-50 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center">
-                          <div className="text-center text-blue-700 font-medium text-xs sm:text-sm">
-                            <span className="hidden sm:inline">📋 拖放任务到此时间段</span>
-                            <span className="sm:hidden">📋 放置任务</span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-blue-50 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center shadow-md">
+                          <div className="text-center text-blue-700 font-medium text-sm flex items-center space-x-2">
+                            <span>📋</span>
+                            <span>拖放任务到此时间段</span>
+                            <span className="text-xs bg-blue-200 px-2 py-1 rounded">{slot.time}</span>
                           </div>
                         </div>
                       )}
                     </div>
                   ))}
 
-                  {/* Scheduled Tasks - Absolute positioned over the grid */}
-                  {scheduledTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      data-task-id={task.id}
-                      style={getTaskStyle(task)}
-                      className={`absolute left-2 right-2 sm:left-3 sm:right-3 rounded-lg border-l-4 p-2 sm:p-3 shadow-md cursor-pointer group ${getPriorityColor(task.priority || 'medium')} z-10 hover:shadow-lg transition-all duration-200 hover:scale-[1.02]`}
-                      onClick={() => handleTaskClick(task)}
-                      draggable
-                      onDragStart={(e) => {
-                        console.log('🚀 Starting drag for existing task:', task.id, task);
-                        setDraggedTask(task);
-                        // Set both text and JSON data for better handling
-                        e.dataTransfer.setData('text/plain', task.id);
-                        // Mark as existing task by using a special prefix
-                        e.dataTransfer.setData('application/json', JSON.stringify({
-                          isExistingTask: true,
-                          taskId: task.id,
-                          dailyTaskId: task.id,
-                          taskData: task
-                        }));
-                        e.dataTransfer.effectAllowed = 'move';
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center space-x-1 sm:space-x-2 flex-1 min-w-0">
-                          <div className="flex-shrink-0">
+                  {/* Scheduled Tasks with Enhanced Alignment and Color Coding */}
+                  {scheduledTasks.map((task) => {
+                    const priorityInfo = getPriorityIndicator(task.priority || 'medium');
+                    return (
+                      <div
+                        key={task.id}
+                        data-task-id={task.id}
+                        style={getTaskStyle(task)}
+                        className={`absolute left-2 right-2 rounded-lg border-l-4 p-3 shadow-lg cursor-pointer group ${getTaskColor(task)} z-10 hover:shadow-xl transition-all duration-200 hover:scale-[1.01] bg-white/90 backdrop-blur-sm`}
+                        onClick={() => handleTaskClick(task)}
+                        draggable
+                        onDragStart={(e) => {
+                          console.log('🚀 Starting drag for existing task:', task.id, task);
+                          setDraggedTask(task);
+                          // Set both text and JSON data for better handling
+                          e.dataTransfer.setData('text/plain', task.id);
+                          // Mark as existing task by using a special prefix
+                          e.dataTransfer.setData('application/json', JSON.stringify({
+                            isExistingTask: true,
+                            taskId: task.id,
+                            dailyTaskId: task.id,
+                            taskData: task
+                          }));
+                          e.dataTransfer.effectAllowed = 'move';
+                        }}
+                      >
+                        {/* Timeline connection line */}
+                        <div className="absolute left-0 top-1/2 transform -translate-x-6 -translate-y-1/2 w-4 h-px bg-primary-300"></div>
+                        
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2 flex-1 min-w-0">
                             <TaskCategoryIcon 
                               category={task.task?.category || 'other'} 
                               size="sm"
                             />
+                            <h4 className="font-medium text-gray-900 text-sm truncate flex-1">
+                              {task.task?.title}
+                            </h4>
+                            {/* Priority indicator */}
+                            <div className={`text-xs ${priorityInfo.color}`} title={priorityInfo.text}>
+                              {priorityInfo.emoji}
+                            </div>
                           </div>
-                          <h4 className="font-medium text-gray-900 text-xs sm:text-sm truncate flex-1">
-                            {task.task?.title}
-                          </h4>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveFromTimeline(task);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-all text-sm p-1 rounded hover:bg-red-50"
+                            title="移除任务安排"
+                          >
+                            ✕
+                          </button>
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveFromTimeline(task);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-opacity text-xs sm:text-sm flex-shrink-0 ml-1"
-                          title="移除任务安排"
+                        
+                        <div className="flex items-center justify-between text-xs text-gray-600 mb-2">
+                          <span className="font-medium bg-gray-100 px-2 py-1 rounded text-xs">
+                            {task.plannedTime} - {task.plannedEndTime}
+                          </span>
+                          <span className="text-primary-600 font-medium text-xs">
+                            {task.task?.estimatedTime}分钟
+                          </span>
+                        </div>
+                        
+                        {/* Enhanced status and category badges */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {/* Status Badge */}
+                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getStatusBadgeColor(task.status || 'planned')}`}>
+                            {task.status === 'completed' ? '✅ 已完成' :
+                             task.status === 'in_progress' ? '🔄 进行中' :
+                             task.status === 'skipped' ? '⏭️ 跳过' : '📋 计划中'}
+                          </div>
+                          
+                          {/* Category Badge */}
+                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getCategoryColor(task.task?.category || 'other')}`}>
+                            {task.task?.category === 'exercise' ? '🏃‍♂️ 运动' :
+                             task.task?.category === 'reading' ? '📚 阅读' :
+                             task.task?.category === 'learning' ? '🧠 学习' :
+                             task.task?.category === 'creativity' ? '🎨 创意' :
+                             task.task?.category === 'chores' ? '🧹 家务' : '⭐ 其他'}
+                          </div>
+                        </div>
+                        
+                        {/* Enhanced Resize Handle */}
+                        <div
+                          className="absolute bottom-0 left-0 right-0 h-3 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-gradient-to-r from-primary-400 to-primary-500 hover:from-primary-500 hover:to-primary-600 transition-all duration-200 rounded-b-lg flex items-center justify-center"
+                          onMouseDown={(e) => handleResizeStart(e, task)}
+                          title="拖拽调整任务时长"
                         >
-                          ✕
-                        </button>
+                          <div className="w-8 h-1 bg-white/50 rounded"></div>
+                        </div>
                       </div>
-                      
-                      {/* Time and Duration - Mobile optimized */}
-                      <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                        <span className="font-medium truncate">
-                          <span className="hidden sm:inline">{task.plannedTime} - {task.plannedEndTime}</span>
-                          <span className="sm:hidden">{task.plannedTime}</span>
-                        </span>
-                        <span className="text-primary-600 font-medium flex-shrink-0 ml-2">
-                          <span className="hidden sm:inline">{task.task?.estimatedTime}分钟</span>
-                          <span className="sm:hidden">{task.task?.estimatedTime}分</span>
-                        </span>
-                      </div>
-                      
-                      {/* Status badge - Mobile optimized */}
-                      <div className={`text-xs px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full text-center font-medium ${
-                        task.status === 'completed' ? 'bg-green-100 text-green-700' :
-                        task.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
-                        'bg-gray-100 text-gray-600'
-                      }`}>
-                        <span className="hidden sm:inline">
-                          {task.status === 'completed' ? '✅ 已完成' :
-                           task.status === 'in_progress' ? '🔄 进行中' : '📋 计划中'}
-                        </span>
-                        <span className="sm:hidden text-xs">
-                          {task.status === 'completed' ? '✅' :
-                           task.status === 'in_progress' ? '🔄' : '📋'}
-                        </span>
-                      </div>
-                      
-                      {/* Resize Handle - Hidden on mobile for better touch experience */}
-                      <div
-                        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 transition-all duration-200 rounded-b-lg hidden sm:block"
-                        onMouseDown={(e) => handleResizeStart(e, task)}
-                        title="拖拽调整任务时长"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -732,6 +944,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                 </div>
               )}
             </div>
+          </div>
         </div>
 
         {/* Conflict Warning */}
@@ -772,38 +985,30 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
           </div>
         )}
 
-        {/* Quick Create Task Modal */}
+        {/* Quick Create Task Modal - Mobile Optimized */}
         {showQuickCreate && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">快速创建任务</h3>
-                <button
-                  onClick={() => setShowQuickCreate(false)}
-                  className="text-gray-400 hover:text-gray-600 text-xl"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center text-sm text-blue-800">
-                  <span className="text-lg mr-2">⏰</span>
-                  <span className="font-medium">安排时间: {quickCreateTime}</span>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center z-50">
+            <div className="bg-white rounded-t-xl sm:rounded-lg p-4 sm:p-6 w-full sm:w-96 max-w-full sm:mx-4 max-h-[80vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4 text-center sm:text-left">快速创建任务</h3>
+              {quickCreateTime && (
+                <div className="flex items-center justify-center sm:justify-start mb-4">
+                  <div className="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm font-medium">
+                    ⏰ 时间: {quickCreateTime}
+                  </div>
                 </div>
-              </div>
+              )}
               
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    任务标题 *
+                    任务标题
                   </label>
                   <input
                     type="text"
                     value={quickTaskTitle}
                     onChange={(e) => setQuickTaskTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="例如：完成数学作业、运动30分钟..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base"
+                    placeholder="输入任务标题..."
                     autoFocus
                   />
                 </div>
@@ -814,48 +1019,49 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
-                      type="range"
+                      type="number"
                       min="15"
-                      max="120"
+                      max="480"
                       step="15"
                       value={quickTaskDuration}
                       onChange={(e) => setQuickTaskDuration(Number(e.target.value))}
-                      className="flex-1"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base"
                     />
-                    <span className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded min-w-[60px] text-center">
-                      {quickTaskDuration}分
-                    </span>
+                    <div className="text-sm text-gray-500">分钟</div>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>15分</span>
-                    <span>2小时</span>
+                  
+                  {/* Quick Duration Buttons for Mobile */}
+                  <div className="flex flex-wrap gap-2 mt-2 sm:hidden">
+                    {[15, 30, 60, 90, 120].map(duration => (
+                      <button
+                        key={duration}
+                        onClick={() => setQuickTaskDuration(duration)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                          quickTaskDuration === duration 
+                            ? 'bg-primary-600 text-white' 
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {duration}分钟
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row sm:justify-end space-y-2 sm:space-y-0 sm:space-x-3 mt-6">
                 <button
                   onClick={() => setShowQuickCreate(false)}
-                  className="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors order-2 sm:order-1"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
                 >
                   取消
                 </button>
                 <button
                   onClick={handleQuickTaskCreate}
                   disabled={!quickTaskTitle.trim() || loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 order-1 sm:order-2 flex-1"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>创建中...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>✨</span>
-                      <span>创建任务</span>
-                    </>
-                  )}
+                  {loading ? '创建中...' : '创建任务'}
                 </button>
               </div>
             </div>
