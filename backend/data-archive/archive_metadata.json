@@ -1,0 +1,23 @@
+{
+  "archives": [
+    {
+      "date": "2025-08-24",
+      "collectionsArchived": 4,
+      "recordsArchived": 0,
+      "totalSize": 0,
+      "duration": 67,
+      "errors": 0
+    },
+    {
+      "date": "2025-08-24",
+      "collectionsArchived": 4,
+      "recordsArchived": 0,
+      "totalSize": 0,
+      "duration": 78,
+      "errors": 0
+    }
+  ],
+  "totalArchives": 2,
+  "totalRecordsArchived": 0,
+  "lastArchiveDate": "2025-08-24"
+}

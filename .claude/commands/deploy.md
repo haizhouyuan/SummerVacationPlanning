@@ -1,0 +1,2 @@
+进入 D:/SummerVacationPlanning-deploy 这个worktree 
+用aliyun-devops-deployer 在我的阿里云服务器上拉取远程最新的master分支部署在我的阿里云服务器上

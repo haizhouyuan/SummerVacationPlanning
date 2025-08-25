@@ -464,7 +464,53 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     }
   };
 
-  // Get task style based on its position on timeline
+  // Calculate time overlap between two tasks
+  const tasksOverlap = (task1: DailyTask, task2: DailyTask): boolean => {
+    if (!task1.plannedTime || !task2.plannedTime) return false;
+    
+    const getMinutes = (timeStr: string) => {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + minutes;
+    };
+    
+    const task1Start = getMinutes(task1.plannedTime);
+    const task1End = task1.plannedEndTime ? getMinutes(task1.plannedEndTime) : task1Start + (task1.task?.estimatedTime || 30);
+    
+    const task2Start = getMinutes(task2.plannedTime);
+    const task2End = task2.plannedEndTime ? getMinutes(task2.plannedEndTime) : task2Start + (task2.task?.estimatedTime || 30);
+    
+    return task1Start < task2End && task2Start < task1End;
+  };
+
+  // Calculate parallel task layout for overlapping tasks
+  const calculateParallelLayout = (currentTask: DailyTask, allTasks: DailyTask[]) => {
+    if (!currentTask.plannedTime) return { leftPercent: 0, widthPercent: 100, column: 0, totalColumns: 1 };
+    
+    // Find all tasks that overlap with the current task
+    const overlappingTasks = allTasks.filter(task => 
+      task.id !== currentTask.id && tasksOverlap(currentTask, task)
+    );
+    
+    if (overlappingTasks.length === 0) {
+      return { leftPercent: 0, widthPercent: 100, column: 0, totalColumns: 1 };
+    }
+    
+    // Sort all overlapping tasks (including current) by start time, then by id for consistency
+    const allOverlappingTasks = [currentTask, ...overlappingTasks].sort((a, b) => {
+      const aStart = a.plannedTime!.localeCompare(b.plannedTime!);
+      return aStart !== 0 ? aStart : a.id.localeCompare(b.id);
+    });
+    
+    const totalColumns = allOverlappingTasks.length;
+    const currentColumn = allOverlappingTasks.findIndex(task => task.id === currentTask.id);
+    
+    const widthPercent = Math.floor(100 / totalColumns);
+    const leftPercent = currentColumn * widthPercent;
+    
+    return { leftPercent, widthPercent, column: currentColumn, totalColumns };
+  };
+
+  // Get task style based on its position on timeline with parallel layout support
   const getTaskStyle = (task: DailyTask): React.CSSProperties => {
     if (!task.plannedTime) return {};
     
@@ -482,9 +528,15 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     // Each slot is 40px high (represents 30 minutes) - matching h-10 class
     const slotHeight = 40;
     
+    // Calculate parallel layout
+    const { leftPercent, widthPercent } = calculateParallelLayout(task, scheduledTasks);
+    
     return {
       top: `${(startMinutes / 30) * slotHeight}px`, // 40px per 30min slot
       height: `${Math.max((duration / 30) * slotHeight, slotHeight)}px`, // Minimum one slot height
+      left: `calc(8px + ${leftPercent}%)`, // 8px base margin + percentage position
+      right: 'auto',
+      width: `calc(${widthPercent}% - 4px)`, // Full width minus small gap between parallel tasks
     };
   };
 
@@ -661,20 +713,25 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                           </h4>
                         </div>
 
-                        {/* Status and Category Badges */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getStatusBadgeColor(task.status || 'planned')}`}>
-                            {task.status === 'completed' ? '✅ 已完成' :
-                             task.status === 'in_progress' ? '🔄 进行中' :
-                             task.status === 'skipped' ? '⏭️ 跳过' : '📋 计划中'}
+                        {/* Compact Status and Category Badges for Mobile */}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${getStatusBadgeColor(task.status || 'planned')}`}>
+                            {task.status === 'completed' ? '✅' :
+                             task.status === 'in_progress' ? '🔄' :
+                             task.status === 'skipped' ? '⏭️' : '📋'}
                           </div>
-                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getCategoryColor(task.task?.category || 'other')}`}>
-                            {task.task?.category === 'exercise' ? '🏃‍♂️ 运动' :
-                             task.task?.category === 'reading' ? '📚 阅读' :
-                             task.task?.category === 'learning' ? '🧠 学习' :
-                             task.task?.category === 'creativity' ? '🎨 创意' :
-                             task.task?.category === 'chores' ? '🧹 家务' : '⭐ 其他'}
+                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${getCategoryColor(task.task?.category || 'other')}`}>
+                            {task.task?.category === 'exercise' ? '🏃‍♂️' :
+                             task.task?.category === 'reading' ? '📚' :
+                             task.task?.category === 'learning' ? '🧠' :
+                             task.task?.category === 'creativity' ? '🎨' :
+                             task.task?.category === 'chores' ? '🧹' : '⭐'}
                           </div>
+                          <span className="text-xs text-gray-500 ml-1">
+                            {task.status === 'completed' ? '已完成' :
+                             task.status === 'in_progress' ? '进行中' :
+                             task.status === 'skipped' ? '跳过' : '计划中'}
+                          </span>
                         </div>
 
                         {/* Mobile Actions */}
@@ -831,7 +888,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                         key={task.id}
                         data-task-id={task.id}
                         style={getTaskStyle(task)}
-                        className={`absolute left-2 right-2 rounded-lg border-l-4 p-3 shadow-lg cursor-pointer group ${getTaskColor(task)} z-10 hover:shadow-xl transition-all duration-200 hover:scale-[1.01] bg-white/90 backdrop-blur-sm`}
+                        className={`absolute rounded-lg border-l-4 p-3 shadow-lg cursor-pointer group ${getTaskColor(task)} z-10 hover:shadow-xl transition-all duration-200 hover:scale-[1.01] bg-white/90 backdrop-blur-sm`}
                         onClick={() => handleTaskClick(task)}
                         draggable
                         onDragStart={(e) => {
@@ -886,23 +943,30 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                           </span>
                         </div>
                         
-                        {/* Enhanced status and category badges */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {/* Status Badge */}
-                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getStatusBadgeColor(task.status || 'planned')}`}>
-                            {task.status === 'completed' ? '✅ 已完成' :
-                             task.status === 'in_progress' ? '🔄 进行中' :
-                             task.status === 'skipped' ? '⏭️ 跳过' : '📋 计划中'}
+                        {/* Compact status and category badges */}
+                        <div className="flex items-center gap-1 flex-wrap">
+                          {/* Status Badge - more compact */}
+                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border text-center ${getStatusBadgeColor(task.status || 'planned')}`}>
+                            {task.status === 'completed' ? '✅' :
+                             task.status === 'in_progress' ? '🔄' :
+                             task.status === 'skipped' ? '⏭️' : '📋'}
                           </div>
                           
-                          {/* Category Badge */}
-                          <div className={`text-xs px-2 py-1 rounded-full font-medium border ${getCategoryColor(task.task?.category || 'other')}`}>
-                            {task.task?.category === 'exercise' ? '🏃‍♂️ 运动' :
-                             task.task?.category === 'reading' ? '📚 阅读' :
-                             task.task?.category === 'learning' ? '🧠 学习' :
-                             task.task?.category === 'creativity' ? '🎨 创意' :
-                             task.task?.category === 'chores' ? '🧹 家务' : '⭐ 其他'}
+                          {/* Category Badge - more compact */}
+                          <div className={`text-xs px-1.5 py-0.5 rounded font-medium border text-center ${getCategoryColor(task.task?.category || 'other')}`}>
+                            {task.task?.category === 'exercise' ? '🏃‍♂️' :
+                             task.task?.category === 'reading' ? '📚' :
+                             task.task?.category === 'learning' ? '🧠' :
+                             task.task?.category === 'creativity' ? '🎨' :
+                             task.task?.category === 'chores' ? '🧹' : '⭐'}
                           </div>
+                          
+                          {/* Status text - compact */}
+                          <span className="text-xs text-gray-500 ml-1">
+                            {task.status === 'completed' ? '已完成' :
+                             task.status === 'in_progress' ? '进行中' :
+                             task.status === 'skipped' ? '跳过' : '计划中'}
+                          </span>
                         </div>
                         
                         {/* Enhanced Resize Handle */}

@@ -305,7 +305,35 @@ Evidence workflow: Uploaded evidence files are tied to tasks with a review/appro
 
 Development Record Management
 
-Dev Notes Archive: For each feature or significant change, document any key decisions, requirement clarifications, or Claude AI summaries in the .logs/dev-notes.md file. This centralized log of development notes ensures that important context and rationale are preserved for future reference.
+MANDATORY DEVELOPMENT LOGGING:
+Claude Code MUST automatically append development records to .logs/dev-notes.md in the following situations:
+
+**REQUIRED LOGGING TRIGGERS:**
+1. **Before any git commit** - Document what was accomplished and any lessons learned
+2. **When encountering and resolving critical issues** - Record the problem, solution, and prevention measures
+3. **When making architectural decisions** - Document the decision rationale and alternatives considered
+4. **When completing significant TodoWrite tasks** - Summarize outcomes and any surprises encountered
+5. **When discovering important insights** - Record knowledge that would help future development
+
+**MANDATORY LOG FORMAT:**
+```markdown
+### [YYYY-MM-DD HH:mm] - [COMMIT/ISSUE/DECISION/INSIGHT]
+- **Context**: Brief description of what was being worked on
+- **Key Actions**: What was done (files changed, problems solved)
+- **Lessons Learned**: Critical insights, gotchas, or best practices discovered
+- **Impact**: Files affected, potential future considerations
+- **Status**: ✅ Complete / ⚠️ Needs follow-up / ❌ Blocked
+```
+
+**CRITICAL FOCUS AREAS:**
+- Authentication and security implementations
+- Database schema changes and migration issues  
+- Build and deployment problems and solutions
+- Performance bottlenecks and optimization strategies
+- Integration challenges between frontend/backend/database
+- Testing failures and debugging insights
+
+This logging is MANDATORY, not optional. Every development session that results in code changes must produce at least one dev-notes.md entry before committing.
 
 Claude Memory Markers: In conversations with Claude (the AI coding assistant), mark important information or decisions as memory points. This helps the assistant recall crucial context across sessions. (For example, you might explicitly instruct Claude to remember a summary of new requirements or a design decision, so it can be easily referenced later in the development process.)
 

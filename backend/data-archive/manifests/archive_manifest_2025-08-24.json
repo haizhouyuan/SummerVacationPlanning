@@ -1,0 +1,46 @@
+{
+  "archiveDate": "2025-08-24",
+  "createdAt": "2025-08-24T11:37:14.354Z",
+  "totalCollections": 4,
+  "totalRecords": 0,
+  "totalArchivedRecords": 0,
+  "totalSize": 0,
+  "collections": {
+    "activity_logs": {
+      "totalRecords": 0,
+      "archivedRecords": 0,
+      "archivedFiles": 0,
+      "archiveSize": 0,
+      "errors": []
+    },
+    "audit_logs": {
+      "totalRecords": 0,
+      "archivedRecords": 0,
+      "archivedFiles": 0,
+      "archiveSize": 0,
+      "errors": []
+    },
+    "daily_tasks": {
+      "totalRecords": 0,
+      "archivedRecords": 0,
+      "archivedFiles": 0,
+      "archiveSize": 0,
+      "errors": []
+    },
+    "redemptions": {
+      "totalRecords": 0,
+      "archivedRecords": 0,
+      "archivedFiles": 0,
+      "archiveSize": 0,
+      "errors": []
+    }
+  },
+  "config": {
+    "batchSize": 1000,
+    "compression": {
+      "enabled": true,
+      "level": 6
+    },
+    "format": "json"
+  }
+}
