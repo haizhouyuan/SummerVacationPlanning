@@ -351,7 +351,7 @@ const TaskPlanning: React.FC = () => {
                       .sort((a, b) => a.plannedTime?.localeCompare(b.plannedTime || '') || 0)
                       .map((task) => (
                         <div key={task.id} className="bg-gray-50 rounded-lg p-3">
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-3 mb-3">
                             <span className="text-lg">
                               {categories.find(c => c.key === task.task?.category)?.emoji || '⭐'}
                             </span>
@@ -369,16 +369,38 @@ const TaskPlanning: React.FC = () => {
                                 </span>
                               </div>
                             </div>
-                            <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              task.status === 'completed' 
-                                ? 'bg-green-100 text-green-800' 
-                                : task.status === 'in_progress'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800'
+                          </div>
+                          {/* 状态和类别标签 - 移到任务块内部 */}
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
+                              task.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' :
+                              task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                              task.status === 'skipped' ? 'bg-red-100 text-red-700 border-red-200' :
+                              'bg-gray-100 text-gray-600 border-gray-200'
                             }`}>
-                              {task.status === 'completed' ? '已完成' :
-                               task.status === 'in_progress' ? '进行中' : '计划中'}
+                              {task.status === 'completed' ? '✅' :
+                               task.status === 'in_progress' ? '🔄' :
+                               task.status === 'skipped' ? '⏭️' : '📋'}
                             </div>
+                            <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
+                              task.task?.category === 'exercise' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
+                              task.task?.category === 'reading' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
+                              task.task?.category === 'learning' ? 'bg-amber-100 text-amber-700 border-amber-200' :
+                              task.task?.category === 'creativity' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                              task.task?.category === 'chores' ? 'bg-slate-100 text-slate-700 border-slate-200' :
+                              'bg-cyan-100 text-cyan-700 border-cyan-200'
+                            }`}>
+                              {task.task?.category === 'exercise' ? '🏃‍♂️' :
+                               task.task?.category === 'reading' ? '📚' :
+                               task.task?.category === 'learning' ? '🧠' :
+                               task.task?.category === 'creativity' ? '🎨' :
+                               task.task?.category === 'chores' ? '🧹' : '⭐'}
+                            </div>
+                            <span className="text-xs text-gray-500 ml-1">
+                              {task.status === 'completed' ? '已完成' :
+                               task.status === 'in_progress' ? '进行中' :
+                               task.status === 'skipped' ? '跳过' : '计划中'}
+                            </span>
                           </div>
                         </div>
                       ))}
