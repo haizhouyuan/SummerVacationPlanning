@@ -145,62 +145,30 @@ export const register = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-  console.log('🔥 LOGIN FUNCTION CALLED!'); // 首行日志
   try {
     const { email, password } = req.body;
-    console.log('🔐 Login attempt for:', email, 'Password length:', password?.length);
-    console.log('💾 Collections available:', !!collections);
-    console.log('👥 Users collection:', !!collections?.users);
 
-    if (!email) {
-      console.log('❌ Missing username');
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        error: '账号名称不能为空',
+        error: 'Email and password are required',
       });
     }
 
-    if (!collections || !collections.users) {
-      console.log('❌ Database collections not initialized');
-      return res.status(500).json({
-        success: false,
-        error: 'Database connection error',
-      });
-    }
-
-    // Find user by displayName first, then by email
-    console.log('🔍 Searching for user...');
-    let user = await collections.users.findOne({ displayName: email });
-    if (!user) {
-      user = await collections.users.findOne({ email: email });
-    }
-    console.log('👤 User found:', user ? 'Yes' : 'No');
-    
-    if (user) {
-      console.log('👤 User details:', {
-        email: user.email,
-        displayName: user.displayName,
-        role: user.role,
-        hasPassword: !!user.password
-      });
-    }
+    // Find user by email
+    const user = await collections.users.findOne({ email });
 
     if (!user) {
-      console.log('❌ User not found in database');
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials',
       });
     }
 
-    // Check password (support empty passwords)
-    console.log('🔑 Checking password...');
-    const passwordToCheck = password || '';
-    const isPasswordValid = await bcrypt.compare(passwordToCheck, user.password);
-    console.log('✅ Password valid:', isPasswordValid);
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      console.log('❌ Password validation failed');
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials',
@@ -539,31 +507,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
 
     const userId = req.user.id;
 
-    // Handle demo users - return mock data directly
-    if (userId === 'demo-user-id') {
-      return res.json({
-        success: true,
-        data: {
-          user: req.user,
-          weeklyStats: {
-            tasksCompleted: 8,
-            totalTasks: 12,
-            pointsEarned: 85,
-            streak: 3
-          },
-          monthlyProgress: {
-            currentMonth: 65,
-            lastMonth: 58
-          },
-          achievements: ['连续完成3天', '本周完成8项任务'],
-          recentActivities: [
-            { type: 'task_completed', description: '完成数学练习', timestamp: new Date().toISOString() },
-            { type: 'points_earned', description: '获得15积分', timestamp: new Date().toISOString() }
-          ]
-        }
-      });
-    }
-
     // Get user details
     const user = await collections.users.findOne({ _id: new ObjectId(userId) });
     if (!user) {
@@ -771,16 +714,15 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     console.error('Get dashboard stats error:', error);
     
     // Provide fallback statistics in case of database issues
-    const userInfo = req.user || { id: '', displayName: '', email: '', points: 0, currentStreak: 0, medals: {} };
     const fallbackStats = {
       user: {
-        id: userInfo.id,
-        name: userInfo.displayName,
-        email: userInfo.email,
-        points: userInfo.points || 0,
-        level: Math.floor((userInfo.points || 0) / 100) + 1,
-        currentStreak: userInfo.currentStreak || 0,
-        medals: userInfo.medals || { bronze: false, silver: false, gold: false, diamond: false },
+        id: req.user.id,
+        name: req.user.displayName,
+        email: req.user.email,
+        points: req.user.points || 0,
+        level: Math.floor((req.user.points || 0) / 100) + 1,
+        currentStreak: req.user.currentStreak || 0,
+        medals: req.user.medals || { bronze: false, silver: false, gold: false, diamond: false },
       },
       weeklyStats: {
         completed: 0,
@@ -804,8 +746,8 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       performance: {
         thisWeekCompletion: 0,
         pointsPerTask: 0,
-        streakProgress: userInfo.currentStreak || 0,
-        nextLevelPoints: (Math.floor((userInfo.points || 0) / 100) + 1) * 100 - (userInfo.points || 0),
+        streakProgress: req.user.currentStreak || 0,
+        nextLevelPoints: (Math.floor((req.user.points || 0) / 100) + 1) * 100 - (req.user.points || 0),
       }
     };
     
