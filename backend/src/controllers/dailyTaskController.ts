@@ -907,12 +907,14 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
 
     // If rejecting, handle points clawback and task status
     if (action === 'reject') {
+      const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+      
       // Log task rejection
       businessLogger.taskOperation(dailyTask.userId, dailyTask._id.toString(), 'REJECTED', {
         rejectedBy: req.user.id,
         approvalNotes,
-        taskCategory: task.category,
-        taskActivity: task.activity
+        taskCategory: task?.category || 'other',
+        taskActivity: task?.activity || 'general'
       });
 
       // Clawback points if they were already awarded

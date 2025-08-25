@@ -127,7 +127,12 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       const jsonData = e.dataTransfer.getData('application/json');
       const textData = e.dataTransfer.getData('text/plain');
       
-      console.log('📥 Drop data received:', { jsonData: jsonData?.slice(0, 100), textData });
+      console.log('📥 Drop data received:', { 
+        jsonData: jsonData?.slice(0, 100), 
+        textData, 
+        draggedTaskExists: !!draggedTask,
+        draggedTaskId: draggedTask?.id 
+      });
       
       if (jsonData) {
         console.log('📋 Processing new task from sidebar');
@@ -171,6 +176,12 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         
       } else if (textData && draggedTask) {
         // Existing daily task being rescheduled
+        console.log('🔄 Processing existing task move:', {
+          taskId: textData,
+          draggedTaskId: draggedTask.id,
+          draggedTaskTitle: draggedTask.task?.title,
+          targetTimeSlot: timeSlot
+        });
         const estimatedTime = draggedTask.task?.estimatedTime || 30;
         const endTime = calculateEndTime(timeSlot, estimatedTime);
 
@@ -197,6 +208,14 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         // Call parent callback to refresh data
         onTaskUpdate?.(draggedTask.id, updates);
         onRefresh?.();
+      } else {
+        console.warn('🚫 Drop event ignored - no matching condition:', {
+          hasJsonData: !!jsonData,
+          hasTextData: !!textData,
+          hasDraggedTask: !!draggedTask,
+          jsonDataPreview: jsonData?.slice(0, 50),
+          textDataValue: textData
+        });
       }
       
     } catch (error) {
