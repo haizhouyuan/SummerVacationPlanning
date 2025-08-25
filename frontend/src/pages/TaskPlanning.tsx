@@ -150,19 +150,6 @@ const TaskPlanning: React.FC = () => {
             </div>
           </div>
           
-          {/* Date Selection - Below header */}
-          <div className="mt-4">
-            <div className="flex items-center space-x-3">
-              <span className="text-sm font-medium text-gray-700">📅 日期:</span>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                min={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-          </div>
         </div>
       </div>
 
