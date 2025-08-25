@@ -135,44 +135,81 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       });
       
       if (jsonData) {
-        console.log('📋 Processing new task from sidebar');
-        // New task from TaskPlanning sidebar
-        const task = JSON.parse(jsonData);
-        const estimatedTime = task.estimatedTime || 30;
-        const endTime = calculateEndTime(timeSlot, estimatedTime);
-
-        setLoading(true);
-
-        // Check for conflicts
-        const conflictData = await checkTimeConflict(timeSlot, estimatedTime);
+        const parsedData = JSON.parse(jsonData);
         
-        if (conflictData.hasConflicts) {
-          setConflictInfo(conflictData);
-          setLoading(false);
-          return;
+        if (parsedData.isExistingTask) {
+          // Existing daily task being rescheduled
+          console.log('🔄 Processing existing task rescheduling:', parsedData);
+          const taskToMove = parsedData.taskData;
+          const estimatedTime = taskToMove.task?.estimatedTime || 30;
+          const endTime = calculateEndTime(timeSlot, estimatedTime);
+
+          setLoading(true);
+
+          // Check for conflicts (exclude the current task)
+          const conflictData = await checkTimeConflict(timeSlot, estimatedTime, taskToMove.id);
+          
+          if (conflictData.hasConflicts) {
+            setConflictInfo(conflictData);
+            setLoading(false);
+            return;
+          }
+
+          // Update the existing daily task with new time
+          const updates = {
+            plannedTime: timeSlot,
+            plannedEndTime: endTime,
+          };
+
+          console.log('📝 Updating daily task:', taskToMove.id, 'with new time:', updates);
+          const apiService = detectNetworkAndGetApiServiceSync();
+          await apiService.updateDailyTask(taskToMove.id, updates);
+          
+          // Call parent callback to refresh data
+          onTaskUpdate?.(taskToMove.id, updates);
+          onRefresh?.();
+          console.log('✅ Task rescheduled successfully');
+          
+        } else {
+          // New task from TaskPlanning sidebar
+          console.log('📋 Processing new task from sidebar:', parsedData);
+          const task = parsedData;
+          const estimatedTime = task.estimatedTime || 30;
+          const endTime = calculateEndTime(timeSlot, estimatedTime);
+
+          setLoading(true);
+
+          // Check for conflicts
+          const conflictData = await checkTimeConflict(timeSlot, estimatedTime);
+          
+          if (conflictData.hasConflicts) {
+            setConflictInfo(conflictData);
+            setLoading(false);
+            return;
+          }
+
+          // Create new daily task with scheduled time
+          console.log('🔧 Creating daily task with API service');
+          const apiService = detectNetworkAndGetApiServiceSync();
+          console.log('📞 Calling createDailyTask with params:', {
+            taskId: task.id,
+            date: date,
+            plannedTime: timeSlot,
+            plannedEndTime: endTime,
+          });
+          
+          const createResult = await apiService.createDailyTask({
+            taskId: task.id,
+            date: date,
+            plannedTime: timeSlot,
+            plannedEndTime: endTime,
+          });
+          
+          console.log('✅ Daily task created successfully:', createResult);
+          console.log('🔄 Calling onRefresh to update timeline');
+          onRefresh?.();
+          console.log('✨ Task drop completed successfully');
         }
-
-        // Create new daily task with scheduled time
-        console.log('🔧 Creating daily task with API service');
-        const apiService = detectNetworkAndGetApiServiceSync();
-        console.log('📞 Calling createDailyTask with params:', {
-          taskId: task.id,
-          date: date,
-          plannedTime: timeSlot,
-          plannedEndTime: endTime,
-        });
-        
-        const createResult = await apiService.createDailyTask({
-          taskId: task.id,
-          date: date,
-          plannedTime: timeSlot,
-          plannedEndTime: endTime,
-        });
-        
-        console.log('✅ Daily task created successfully:', createResult);
-        console.log('🔄 Calling onRefresh to update timeline');
-        onRefresh?.();
-        console.log('✨ Task drop completed successfully');
         
       } else if (textData && draggedTask) {
         // Existing daily task being rescheduled
@@ -608,8 +645,17 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                       onClick={() => handleTaskClick(task)}
                       draggable
                       onDragStart={(e) => {
+                        console.log('🚀 Starting drag for existing task:', task.id, task);
                         setDraggedTask(task);
+                        // Set both text and JSON data for better handling
                         e.dataTransfer.setData('text/plain', task.id);
+                        // Mark as existing task by using a special prefix
+                        e.dataTransfer.setData('application/json', JSON.stringify({
+                          isExistingTask: true,
+                          taskId: task.id,
+                          dailyTaskId: task.id,
+                          taskData: task
+                        }));
                         e.dataTransfer.effectAllowed = 'move';
                       }}
                     >
