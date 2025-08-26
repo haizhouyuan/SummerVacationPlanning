@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -126,12 +126,8 @@
 <a name='L61'></a><a href='#L61'>61</a>
 <a name='L62'></a><a href='#L62'>62</a>
 <a name='L63'></a><a href='#L63'>63</a>
-<a name='L64'></a><a href='#L64'>64</a>
-<a name='L65'></a><a href='#L65'>65</a>
-<a name='L66'></a><a href='#L66'>66</a>
-<a name='L67'></a><a href='#L67'>67</a>
-<a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L64'></a><a href='#L64'>64</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -151,21 +147,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -209,13 +199,15 @@ interface WelcomeBannerProps {
     role: 'student' | 'parent';
     points: number;
   };
-  userLevel: number;
+  userLevel?: number;
+  todayPoints?: number;
   className?: string;
 }
 &nbsp;
 const WelcomeBanner: React.FC&lt;WelcomeBannerProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span></span>
   user,
   userLevel,
+  todayPoints = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
   className = <span class="branch-0 cbranch-no" title="branch not covered" >''</span>
 }) =&gt; {
   // Get time-based greeting
@@ -230,35 +222,28 @@ const WelcomeBanner: React.FC&lt;WelcomeBannerProps&gt; = <span class="cstat-no"
     &lt;Card className={`col-span-full ${className}`} animate={true}&gt;
       &lt;div className="text-center"&gt;
         {/* Main Icon */}
-        &lt;div className="text-4xl sm:text-6xl mb-3 sm:mb-4 animate-float"&gt;
+        &lt;div className="text-3xl sm:text-6xl mb-2 sm:mb-4 animate-float"&gt;
           {user?.role === 'student' ? '🎓' : '👨‍👩‍👧‍👦'}
         &lt;/div&gt;
         
         {/* Welcome Message */}
-        &lt;h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-cartoon-dark mb-2 font-fun animate-bounce-in px-2"&gt;
-          欢迎回来，{user?.displayName}！
+        &lt;h2 className="text-base sm:text-xl lg:text-2xl font-bold text-cartoon-dark mb-3 sm:mb-4 font-fun animate-bounce-in px-2"&gt;
+          你好，今天的任务准备好了吗？
         &lt;/h2&gt;
         
-        {/* Role-based Description */}
-        &lt;p className="text-sm sm:text-base text-cartoon-gray mb-4 sm:mb-6 animate-bounce-in px-2"&gt;
-          {user?.role === 'student' 
-            ? '准备好开始今天的冒险了吗？ 🚀' 
-            : '查看您孩子的精彩进展 📊'}
-        &lt;/p&gt;
-        
-        {/* Time-based Greeting */}
-        &lt;div className="inline-block bg-cartoon-blue/10 text-cartoon-blue px-3 sm:px-4 py-2 rounded-cartoon font-medium text-xs sm:text-sm mb-3 sm:mb-4 animate-pop"&gt;
+        {/* Time-based Greeting - Hidden on mobile */}
+        &lt;div className="hidden sm:inline-block bg-cartoon-blue/10 text-cartoon-blue px-3 sm:px-4 py-2 rounded-cartoon font-medium text-xs sm:text-sm mb-3 sm:mb-4 animate-pop"&gt;
           {getTimeGreeting()}
         &lt;/div&gt;
         
-        {/* Points and Level Display */}
-        &lt;div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:space-x-4 mb-4"&gt;
-          &lt;div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 animate-pop"&gt;
+        {/* Points Overview */}
+        &lt;div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 sm:space-x-4 mb-3 sm:mb-4"&gt;
+          &lt;div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-3 sm:px-6 py-1.5 sm:py-3 animate-pop"&gt;
             &lt;PointsDisplay points={user?.points || 0} size="md" /&gt;
           &lt;/div&gt;
-          &lt;div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-4 sm:px-6 py-2 sm:py-3 text-white animate-pop"&gt;
+          &lt;div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-3 sm:px-6 py-1.5 sm:py-3 text-white animate-pop"&gt;
             &lt;span className="font-bold text-sm sm:text-base"&gt;
-              🌟 等级 {userLevel}
+              📊 今日积分 {todayPoints}
             &lt;/span&gt;
           &lt;/div&gt;
         &lt;/div&gt;
@@ -274,7 +259,7 @@ export default WelcomeBanner;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-23T07:01:43.414Z
+                at 2025-08-26T06:40:33.331Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

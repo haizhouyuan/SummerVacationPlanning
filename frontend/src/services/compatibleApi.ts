@@ -998,15 +998,14 @@ export const detectNetworkAndGetApiService = async (options: {
   const { forceRefresh = false } = options;
 
   try {
-    // 检查演示模式的多种方式
+    // 检查演示模式的多种方式 (移除中文邮箱强制demo判断)
     const isDemoMode = 
       localStorage.getItem('isDemo') === 'true' ||
       localStorage.getItem('currentUser')?.includes('demo') ||
       localStorage.getItem('user_email')?.includes('demo') ||
       localStorage.getItem('auth_token')?.includes('demo_jwt_token') ||
       localStorage.getItem('auth_token')?.startsWith('demo-token') ||
-      /[\u4e00-\u9fff]/.test(localStorage.getItem('user_email') || '') || // Chinese characters
-      ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || '');
+      ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || ''); // 保留特定演示账号
 
     const forceCompatibleMode = 
       process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
@@ -1051,15 +1050,14 @@ export const detectNetworkAndGetApiService = async (options: {
  * Synchronous version for cases where async detection isn't possible
  */
 export const detectNetworkAndGetApiServiceSync = () => {
-  // 检查演示模式的多种方式
+  // 检查演示模式的多种方式 (移除中文邮箱强制demo判断)
   const isDemoMode = 
     localStorage.getItem('isDemo') === 'true' ||
     localStorage.getItem('currentUser')?.includes('demo') ||
     localStorage.getItem('user_email')?.includes('demo') ||
     localStorage.getItem('auth_token')?.includes('demo_jwt_token') ||
     localStorage.getItem('auth_token')?.startsWith('demo-token') ||
-    /[\u4e00-\u9fff]/.test(localStorage.getItem('user_email') || '') || // Chinese characters
-    ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || '');
+    ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || ''); // 保留特定演示账号
 
   const forceCompatibleMode = 
     process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 

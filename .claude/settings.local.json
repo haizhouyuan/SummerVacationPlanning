@@ -292,7 +292,8 @@
       "WebFetch(domain:github.com)",
       "mcp__playwright__browser_drag",
       "mcp__playwright__browser_network_requests",
-      "mcp__playwright__browser_tabs"
+      "mcp__playwright__browser_tabs",
+      "mcp__aliyun__ExitPlanMode"
     ],
     "deny": []
   }

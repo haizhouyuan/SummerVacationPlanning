@@ -38,7 +38,7 @@ const SpecialRewardRequest: React.FC<SpecialRewardRequestProps> = ({ onRequestSu
       
       setIsOpen(false);
       onRequestSuccess();
-      alert('特殊奖励申请已提交，等待家长审批！');
+      alert('🎉 奖励申请已提交成功！\n✅ 申请状态：待家长审批\n💰 积分状态：暂不扣除，审批通过后才会扣除积分\n📝 请耐心等待家长审批结果');
     } catch (error) {
       console.error('Special reward request failed:', error);
       alert('申请失败，请重试');

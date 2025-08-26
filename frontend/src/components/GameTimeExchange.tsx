@@ -40,7 +40,9 @@ const GameTimeExchange: React.FC<GameTimeExchangeProps> = ({ onExchangeSuccess }
         points: pointsToExchange,
       });
 
-      // Refresh user data to show updated points
+      // The backend should provide updated points balance which refreshUser() will fetch
+
+      // Refresh user data to show updated points (this should now get real data)
       await refreshUser();
 
       // Call success callback
@@ -48,8 +50,9 @@ const GameTimeExchange: React.FC<GameTimeExchangeProps> = ({ onExchangeSuccess }
         onExchangeSuccess();
       }
 
-      // Show success message
-      alert(`🎉 兑换成功！获得 ${getMinutesFromPoints()} 分钟${selectedGameType === 'normal' ? '普通' : '教育'}游戏时间！`);
+      // Show success message with actual remaining points
+      const remainingPoints = user.points - pointsToExchange;
+      alert(`🎉 兑换成功！获得 ${getMinutesFromPoints()} 分钟${selectedGameType === 'normal' ? '普通' : '教育'}游戏时间！剩余积分：${remainingPoints}`);
       
       // Reset form
       setPointsToExchange(5);

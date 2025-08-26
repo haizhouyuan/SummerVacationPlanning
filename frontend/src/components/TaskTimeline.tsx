@@ -135,7 +135,6 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   const handleDrop = async (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
     e.stopPropagation();
-    e.stopImmediatePropagation();
     setDragOverSlot(null);
     
     try {
