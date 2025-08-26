@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import TopNavigation from '../components/TopNavigation';
-import AchievementBadge from '../components/AchievementBadge';
 import PointsHistory from '../components/PointsHistory';
 import SpecialRewardRequest from '../components/SpecialRewardRequest';
 
@@ -323,32 +322,6 @@ const Rewards: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Achievement Badges Section */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <span className="mr-2">🏆</span>
-                成就徽章
-              </h2>
-              <div className="overflow-x-auto">
-                <div className="flex space-x-4 pb-4 min-w-max">
-                  {achievements.map((achievement, index) => (
-                    <div key={index} className="flex-shrink-0">
-                      <AchievementBadge
-                        type={achievement.type as any}
-                        level={achievement.level}
-                        title={achievement.title}
-                        description={achievement.description}
-                        isUnlocked={achievement.isUnlocked}
-                        progress={achievement.progress}
-                        maxProgress={achievement.maxProgress}
-                        size="md"
-                        showProgress={true}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
 
             {/* Points History Section */}
             <PointsHistory 
