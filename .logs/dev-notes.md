@@ -8,6 +8,25 @@
 - 日期
 - 功能/更改描述
 - 关键决策和原因
+
+### [2025-08-26 14:42] - 修复任务时间轴和积分显示问题
+
+- **Context**: 基于20250826问题分析.md中识别的两个核心问题进行修复
+- **Key Actions**: 
+  1. 修复TaskSchedule.tsx中日期参数格式错误：将`getDailyTasks(date)`改为`getDailyTasks({ date })`
+  2. 优化compatibleApi.ts中的演示模式判断：移除中文邮箱强制demo判断，避免误判
+  3. 改善用户提示信息：SpecialRewardRequest和Rewards页面明确区分"申请提交"vs"兑换完成"
+  4. 修复TaskTimeline.tsx中React DragEvent的stopImmediatePropagation错误
+  5. 清理编译警告和未使用变量
+
+- **Lessons Learned**: 
+  - 前后端API参数格式一致性至关重要，一个参数格式错误就能导致数据查询失败
+  - 演示模式检测逻辑不应基于语言特征，应使用显式配置控制
+  - 用户界面消息需要准确反映后端操作状态，避免用户产生错误预期
+  - React合成事件API与原生DOM事件存在差异，需要注意兼容性
+
+- **Impact**: 修复了任务时间轴刷新异常和积分扣减显示不一致的核心问题
+- **Status**: ✅ Complete - 所有修复已完成并通过编译验证
 - 影响的模块/文件
 - 是否需要更新 CLAUDE.md
 

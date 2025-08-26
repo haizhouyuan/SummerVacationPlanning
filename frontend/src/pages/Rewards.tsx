@@ -187,9 +187,9 @@ const Rewards: React.FC = () => {
       }
 
       alert(
-        `🎉 兑换成功！\n获得 ${(response as any).data.minutesGranted} 分钟游戏时间\n${
-          (response as any).data.isFreeTime ? '(免费教育游戏时间)' : `消耗 ${(response as any).data.pointsSpent} 积分`
-        }`
+        `🎉 游戏时间兑换成功！\n🎮 获得游戏时间：${(response as any).data.minutesGranted} 分钟\n${
+          (response as any).data.isFreeTime ? '💡 (免费教育游戏时间，不扣积分)' : `💰 已扣除积分：${(response as any).data.pointsSpent} 分`
+        }\n✨ 快去享受游戏时光吧！`
       );
 
       // Reload data to show updated stats

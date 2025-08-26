@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">78.31% </span>
+                <span class="strong">78.04% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>65/83</span>
+                <span class='fraction'>64/82</span>
             </div>
         
             
@@ -459,15 +459,7 @@
 <a name='L394'></a><a href='#L394'>394</a>
 <a name='L395'></a><a href='#L395'>395</a>
 <a name='L396'></a><a href='#L396'>396</a>
-<a name='L397'></a><a href='#L397'>397</a>
-<a name='L398'></a><a href='#L398'>398</a>
-<a name='L399'></a><a href='#L399'>399</a>
-<a name='L400'></a><a href='#L400'>400</a>
-<a name='L401'></a><a href='#L401'>401</a>
-<a name='L402'></a><a href='#L402'>402</a>
-<a name='L403'></a><a href='#L403'>403</a>
-<a name='L404'></a><a href='#L404'>404</a>
-<a name='L405'></a><a href='#L405'>405</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L397'></a><a href='#L397'>397</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -513,7 +505,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -528,9 +519,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
@@ -548,9 +537,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">103x</span>
@@ -569,13 +556,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -917,81 +901,73 @@ export enum ErrorType {
 /**
  * Create initial data state
  */
-export const createInitialDataState = function&lt;T = any&gt;(initialData: T | null = null): DataState&lt;T&gt; {
-  return {
-    data: initialData,
-    loading: {
-      isLoading: false,
-    },
-    error: {
-      hasError: false,
-      canRetry: true,
-    },
-  };
-};
+export const createInitialDataState = &lt;T = any,&gt;(initialData: T | null = null): DataState&lt;T&gt; =&gt; ({
+  data: initialData,
+  loading: {
+    isLoading: false,
+  },
+  error: {
+    hasError: false,
+    canRetry: true,
+  },
+});
 &nbsp;
 /**
  * Update loading state
  */
-export const setLoadingState = function&lt;T&gt;(
+export const setLoadingState = &lt;T,&gt;(
   currentState: DataState&lt;T&gt;,
   loading: Partial&lt;LoadingState&gt;
-): DataState&lt;T&gt; {
-  return {
-    ...currentState,
-    loading: {
-      ...currentState.loading,
-      ...loading,
-    },
-    error: {
-      ...currentState.error,
-      hasError: false, // Clear errors when starting new loading
-    },
-  };
-};
+): DataState&lt;T&gt; =&gt; ({
+  ...currentState,
+  loading: {
+    ...currentState.loading,
+    ...loading,
+  },
+  error: {
+    ...currentState.error,
+    hasError: false, // Clear errors when starting new loading
+  },
+});
 &nbsp;
 /**
  * Update error state
  */
-export const setErrorState = function&lt;T&gt;(
+export const setErrorState = &lt;T,&gt;(
   currentState: DataState&lt;T&gt;,
   error: Partial&lt;ErrorState&gt;
-): DataState&lt;T&gt; {
-  return {
-    ...currentState,
-    loading: {
-      ...currentState.loading,
-      isLoading: false, // Stop loading when error occurs
-    },
-    error: {
-      ...currentState.error,
-      hasError: true,
-      ...error,
-    },
-  };
-};
+): DataState&lt;T&gt; =&gt; ({
+  ...currentState,
+  loading: {
+    ...currentState.loading,
+    isLoading: false, // Stop loading when error occurs
+  },
+  error: {
+    ...currentState.error,
+    hasError: true,
+    ...error,
+  },
+});
 &nbsp;
 /**
  * Update data state on success
  */
-export const setDataState = function&lt;T&gt;(
+export const setDataState = &lt;T,&gt;(
   currentState: DataState&lt;T&gt;,
   data: T
-): DataState&lt;T&gt; {
-  return {
-    ...currentState,
-    data,
-    loading: {
-      ...currentState.loading,
-      isLoading: false,
-    },
-    error: {
-      ...currentState.error,
-      hasError: false,
-    },
-    lastUpdated: new Date(),
-  };
-};
+): DataState&lt;T&gt; =&gt; ({
+  ...currentState,
+  data,
+  loading: {
+    ...currentState.loading,
+    isLoading: false,
+  },
+  error: {
+    ...currentState.error,
+    hasError: false,
+  },
+  lastUpdated: new Date(),
+});
 &nbsp;
 /**
  * Categorize error based on error object or message
@@ -1204,7 +1180,7 @@ export const EmptyState: React.FC&lt;{
 /**
  * Custom hook for managing data state with error handling
  */
-export const useDataState = function&lt;T = any&gt;(initialData?: T) {
+export const useDataState = &lt;T = any,&gt;(initialData?: T) =&gt; {
   const [state, setState] = React.useState&lt;DataState&lt;T&gt;&gt;(createInitialDataState(initialData));
 &nbsp;
   const setLoading = React.useCallback(<span class="fstat-no" title="function not covered" >(l</span>oading: Partial&lt;LoadingState&gt;) =&gt; {
@@ -1236,7 +1212,7 @@ export const useDataState = function&lt;T = any&gt;(initialData?: T) {
 /**
  * Retry logic with exponential backoff
  */
-export const withRetry = async function&lt;T&gt;(
+export const withRetry = async &lt;T,&gt;(
   operation: () =&gt; Promise&lt;T&gt;,
   options: {
     maxRetries?: number;
@@ -1244,7 +1220,7 @@ export const withRetry = async function&lt;T&gt;(
     maxDelay?: number;
     onRetry?: (attempt: number, error: any) =&gt; void;
   } = {}
-): Promise&lt;T&gt; {
+): Promise&lt;T&gt; =&gt; {
   const {
     maxRetries = 3,
     baseDelay = 1000,
@@ -1282,7 +1258,7 @@ export const withRetry = async function&lt;T&gt;(
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-23T07:01:43.414Z
+                at 2025-08-26T06:40:33.331Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

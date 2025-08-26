@@ -26,7 +26,7 @@ const TaskSchedule: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const response: any = await apiService.getDailyTasks(date);
+      const response: any = await apiService.getDailyTasks({ date });
       if (response.success && response.data) {
         setDailyTasks(response.data.dailyTasks || []);
       } else {
