@@ -6,7 +6,6 @@ import { DailyTask } from '../types';
 import { apiService } from '../services/api';
 import DailyTaskCard from '../components/DailyTaskCard';
 import PointsDisplay from '../components/PointsDisplay';
-import AchievementBadge from '../components/AchievementBadge';
 import GameTimeExchange from '../components/GameTimeExchange';
 import EvidenceModal from '../components/EvidenceModal';
 import WeatherWidget from '../components/WeatherWidget';

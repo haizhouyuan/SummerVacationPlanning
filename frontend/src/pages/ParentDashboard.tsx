@@ -5,7 +5,6 @@ import { apiService } from '../services/api';
 import PointsDisplay from '../components/PointsDisplay';
 import ProgressBar from '../components/ProgressBar';
 import CelebrationModal from '../components/CelebrationModal';
-import AchievementBadge from '../components/AchievementBadge';
 import TaskCategoryIcon from '../components/TaskCategoryIcon';
 import DailyTaskCard from '../components/DailyTaskCard';
 import FamilyManagement from '../components/FamilyManagement';
@@ -413,23 +412,6 @@ const ParentDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Achievements */}
-              <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6">
-                <h3 className="font-semibold text-cartoon-dark mb-4 font-fun">🏆 成就徽章</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {currentStats.achievements.map((achievement, index) => (
-                    <AchievementBadge
-                      key={index}
-                      type={achievement.type}
-                      level={achievement.level}
-                      title={achievement.title}
-                      description={achievement.description}
-                      isUnlocked={achievement.isUnlocked}
-                      size="sm"
-                    />
-                  ))}
-                </div>
-              </div>
 
               {/* Family Leaderboard */}
               <FamilyLeaderboard />

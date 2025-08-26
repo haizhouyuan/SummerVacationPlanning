@@ -12,7 +12,7 @@ import TaskPlanning from './pages/TaskPlanning';
 import TaskSchedule from './pages/TaskSchedule';
 import TodayTasks from './pages/TodayTasks';
 import Rewards from './pages/Rewards';
-import AchievementSquare from './pages/AchievementSquare';
+import RewardsCenter from './pages/RewardsCenter';
 import RecurringTasksManagement from './pages/RecurringTasksManagement';
 import PointsRulesManagement from './pages/PointsRulesManagement';
 import TaskApprovalPage from './pages/TaskApprovalPage';
@@ -94,9 +94,11 @@ const AppContent: React.FC = () => {
         }
       />
       <Route
-        path="/achievements"
+        path="/rewards-center"
         element={
-          <AchievementSquare />
+          <ProtectedRoute>
+            <RewardsCenter />
+          </ProtectedRoute>
         }
       />
       <Route
