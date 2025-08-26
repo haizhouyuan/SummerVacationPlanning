@@ -75,7 +75,7 @@ export class MockCollections {
       status: 'completed',
       priority: 'medium',
       pointsEarned: 15,
-      evidenceText: '我完成了所有数学题目',
+      evidence: [{ type: 'text', content: '我完成了所有数学题目', timestamp: new Date() }],
       approvalStatus: 'pending',
       completedAt: new Date(),
       createdAt: new Date(),

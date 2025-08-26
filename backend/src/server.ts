@@ -69,6 +69,8 @@ import dailyTaskRoutes from './routes/dailyTaskRoutes';
 import redemptionRoutes from './routes/redemptionRoutes';
 import rewardsRoutes from './routes/rewardsRoutes';
 import pointsConfigRoutes from './routes/pointsConfigRoutes';
+import pointsBalanceRoutes from './routes/pointsBalanceRoutes';
+import pointsCalibrationRoutes from './routes/pointsCalibrationRoutes';
 import recurringTaskRoutes from './routes/recurringTaskRoutes';
 import path from 'path';
 
@@ -85,6 +87,8 @@ app.use('/api/daily-tasks', dailyTaskRoutes);
 app.use('/api/redemptions', redemptionRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/points-config', pointsConfigRoutes);
+app.use('/api/points-balance', pointsBalanceRoutes);
+app.use('/api/points-calibration', pointsCalibrationRoutes);
 app.use('/api/recurring-tasks', recurringTaskRoutes);
 
 // 🚨 EMERGENCY: Add routes without /api prefix for compatibility
@@ -95,6 +99,8 @@ app.use('/daily-tasks', dailyTaskRoutes);
 app.use('/redemptions', redemptionRoutes);
 app.use('/rewards', rewardsRoutes);
 app.use('/points-config', pointsConfigRoutes);
+app.use('/points-balance', pointsBalanceRoutes);
+app.use('/points-calibration', pointsCalibrationRoutes);
 app.use('/recurring-tasks', recurringTaskRoutes);
 
 // 静态资源服务，开放 /uploads 目录
@@ -122,16 +128,19 @@ const PORT = parseInt(process.env.PORT || '5000', 10);
 
 const startServer = async () => {
   try {
-    await mongodb.connect();
-    initializeCollections();
+    console.log('🚀 Starting server without database connection for testing...');
+    // Temporarily disable MongoDB connection for testing
+    // await mongodb.connect();
+    // initializeCollections();
     
     // Start the recurring task scheduler
-    CronScheduler.startRecurringTaskScheduler();
+    // Temporarily disabled to test special rewards system
+    // CronScheduler.startRecurringTaskScheduler();
     
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📱 Health check: http://localhost:${PORT}/health`);
-      console.log(`⚡ Recurring task scheduler started`);
+      console.log(`⚡ Server started without database connection`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { body, param } from 'express-validator';
 import {
   calculateGameTime,
   getTodayGameTime,
@@ -7,6 +7,10 @@ import {
   getSpecialRewards,
   exchangeGameTime,
   getGameTimeExchanges,
+  requestSpecialReward,
+  getSpecialRewardRequests,
+  approveSpecialRedemption,
+  rejectSpecialRedemption,
 } from '../controllers/rewardsController';
 import { authenticateToken } from '../middleware/mongoAuth';
 import { validateRequest } from '../middleware/validation';
@@ -58,5 +62,29 @@ router.get('/test-route', (req, res) => {
 
 // Special rewards
 router.get('/special', getSpecialRewards);
+
+// Special reward request validation
+const specialRewardRequestValidation = [
+  body('rewardTitle').isString().isLength({ min: 1, max: 200 }).withMessage('Reward title is required and must be 1-200 characters'),
+  body('rewardDescription').optional().isString().isLength({ max: 500 }).withMessage('Reward description must be under 500 characters'),
+  body('pointsCost').isInt({ min: 1, max: 1000 }).withMessage('Points cost must be between 1-1000'),
+  body('notes').optional().isString().isLength({ max: 200 }).withMessage('Notes must be under 200 characters'),
+];
+
+const specialRewardApprovalValidation = [
+  param('requestId').isMongoId().withMessage('Invalid request ID'),
+  body('approvalNotes').optional().isString().isLength({ max: 300 }).withMessage('Approval notes must be under 300 characters'),
+];
+
+const specialRewardRejectionValidation = [
+  param('requestId').isMongoId().withMessage('Invalid request ID'),
+  body('rejectionReason').isString().isLength({ min: 1, max: 300 }).withMessage('Rejection reason is required and must be 1-300 characters'),
+];
+
+// Special reward request routes
+router.post('/special/request', specialRewardRequestValidation, validateRequest, requestSpecialReward);
+router.get('/special/requests', getSpecialRewardRequests);
+router.put('/special/:requestId/approve', specialRewardApprovalValidation, validateRequest, approveSpecialRedemption);
+router.put('/special/:requestId/reject', specialRewardRejectionValidation, validateRequest, rejectSpecialRedemption);
 
 export default router;

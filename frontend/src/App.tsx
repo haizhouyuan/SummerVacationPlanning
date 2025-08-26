@@ -16,6 +16,7 @@ import AchievementSquare from './pages/AchievementSquare';
 import RecurringTasksManagement from './pages/RecurringTasksManagement';
 import PointsRulesManagement from './pages/PointsRulesManagement';
 import TaskApprovalPage from './pages/TaskApprovalPage';
+import ParentRewardsPage from './pages/ParentRewardsPage';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -128,6 +129,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <TaskApprovalPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/parent-rewards"
+        element={
+          <ProtectedRoute>
+            <ParentRewardsPage />
           </ProtectedRoute>
         }
       />

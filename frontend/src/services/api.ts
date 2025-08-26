@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001';
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 class ApiService {
   private getAuthToken(): string | null {
@@ -242,7 +242,148 @@ class ApiService {
     const queryParams = new URLSearchParams(filters).toString();
     return this.request(`/tasks/recommended${queryParams ? `?${queryParams}` : ''}`);
   }
-// Special rewards API endpoints  async requestSpecialReward(data: {    rewardTitle: string;    rewardDescription?: string;    pointsCost: number;    notes?: string;  }): Promise<any> {    return this.request("/rewards/special/request", {      method: "POST",      body: JSON.stringify(data),    });  }  async getSpecialRewardRequests(filters?: { status?: string; studentId?: string }): Promise<any> {    const queryParams = filters ? new URLSearchParams(filters as any).toString() : "";    return this.request(`/rewards/special/requests${queryParams ? `?${queryParams}` : ""}`);  }  async approveSpecialRedemption(requestId: string, data: { approvalNotes?: string }): Promise<any> {    return this.request(`/rewards/special/${requestId}/approve`, {      method: "PUT",      body: JSON.stringify(data),    });  }  async rejectSpecialRedemption(requestId: string, data: { rejectionReason: string }): Promise<any> {    return this.request(`/rewards/special/${requestId}/reject`, {      method: "PUT",      body: JSON.stringify(data),    });  }
+
+  // Special rewards API endpoints
+  async requestSpecialReward(data: {
+    rewardTitle: string;
+    rewardDescription?: string;
+    pointsCost: number;
+    notes?: string;
+  }): Promise<any> {
+    return this.request("/rewards/special/request", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getSpecialRewardRequests(filters?: { status?: string; studentId?: string }): Promise<any> {
+    const queryParams = filters ? new URLSearchParams(filters as any).toString() : "";
+    return this.request(`/rewards/special/requests${queryParams ? `?${queryParams}` : ""}`);
+  }
+
+  async approveSpecialRedemption(requestId: string, data: { approvalNotes?: string }): Promise<any> {
+    return this.request(`/rewards/special/${requestId}/approve`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async rejectSpecialRedemption(requestId: string, data: { rejectionReason: string }): Promise<any> {
+    return this.request(`/rewards/special/${requestId}/reject`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Points Balance API endpoints
+  async checkPointsLimits(data: {
+    date: string;
+    pointsToAdd: number;
+    activityType?: string;
+  }): Promise<any> {
+    return this.request('/points-balance/check-limits', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async addPointsWithLimits(data: {
+    date: string;
+    pointsToAdd: number;
+    activityType: string;
+    reason: string;
+    dailyTaskId?: string;
+  }): Promise<any> {
+    return this.request('/points-balance/add-points', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUserPointsSummary(date?: string): Promise<any> {
+    const queryParams = date ? new URLSearchParams({ date }).toString() : '';
+    return this.request(`/points-balance/summary${queryParams ? `?${queryParams}` : ''}`);
+  }
+
+  async getDailyPointsStatus(date?: string, activityType?: string): Promise<any> {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    if (activityType) params.append('activityType', activityType);
+    const queryParams = params.toString();
+    return this.request(`/points-balance/daily-status${queryParams ? `?${queryParams}` : ''}`);
+  }
+
+  async getWeeklyPointsStatus(date?: string): Promise<any> {
+    const queryParams = date ? new URLSearchParams({ date }).toString() : '';
+    return this.request(`/points-balance/weekly-status${queryParams ? `?${queryParams}` : ''}`);
+  }
+
+  async resetUserPointsLimits(data: {
+    date: string;
+    targetUserId?: string;
+  }): Promise<any> {
+    return this.request('/points-balance/reset-limits', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Points Calibration API endpoints
+  async calculateCalibratedPoints(data: {
+    activityType: string;
+    basePoints: number;
+    difficulty?: 'easy' | 'medium' | 'hard' | 'expert';
+    quality?: 'poor' | 'average' | 'good' | 'excellent';
+    duration?: number;
+    wordCount?: number;
+    accuracy?: number;
+    completedAheadOfSchedule?: boolean;
+    extraEffort?: boolean;
+  }): Promise<any> {
+    return this.request('/points-calibration/calculate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async autoAdjustPointsRule(activityType: string): Promise<any> {
+    return this.request('/points-calibration/auto-adjust', {
+      method: 'POST',
+      body: JSON.stringify({ activityType }),
+    });
+  }
+
+  async applySuggestedAdjustments(data: {
+    activityType: string;
+    adjustments: {
+      basePoints?: number;
+      dailyLimit?: number;
+      multipliers?: any;
+    };
+  }): Promise<any> {
+    return this.request('/points-calibration/apply-adjustments', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getPointsSystemBalance(): Promise<any> {
+    return this.request('/points-calibration/system-balance');
+  }
+
+  async getActivityEffectivenessAnalysis(): Promise<any> {
+    return this.request('/points-calibration/activity-analysis');
+  }
+
+  async batchAdjustPointsRules(data: {
+    adjustmentType: 'basePoints' | 'dailyLimit' | 'difficulty';
+    adjustmentValue: number | { multiplier?: number; difficulty?: any };
+  }): Promise<any> {
+    return this.request('/points-calibration/batch-adjust', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();

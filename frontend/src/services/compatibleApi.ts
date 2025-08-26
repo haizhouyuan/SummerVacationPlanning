@@ -912,7 +912,7 @@ const testApiConnection = async (timeout: number = 5000): Promise<boolean> => {
     // Try to connect to the actual API endpoint
     const testUrl = process.env.REACT_APP_API_URL 
       ? `${process.env.REACT_APP_API_URL}/health`
-      : 'http://localhost:5001/health';
+      : 'http://localhost:5000/health';
 
     const response = await fetch(testUrl, {
       method: 'GET',

@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { collections, mongodb } from '../config/mongodb';
-import { User } from '../types';
+import { User, SpecialRewardRequest } from '../types';
 import { AuthRequest } from '../middleware/mongoAuth';
 import { ObjectId } from 'mongodb';
 
@@ -151,7 +151,7 @@ export const calculateGameTime = async (req: AuthRequest, res: Response) => {
         
         // Deduct points from user
         await collections.users.updateOne(
-          { _id: new ObjectId(req.user.id) },
+          { _id: new ObjectId(req.user?.id) },
           {
             $inc: { points: -pointsToSpend },
             $set: { updatedAt: new Date() }
@@ -493,7 +493,7 @@ export const exchangeGameTime = async (req: AuthRequest, res: Response) => {
 
     // Use transaction to ensure atomic operation
     const session = mongodb['client'].startSession();
-    let result;
+    let result: any;
     try {
       await session.withTransaction(async () => {
         // Insert exchange record
@@ -502,7 +502,7 @@ export const exchangeGameTime = async (req: AuthRequest, res: Response) => {
         
         // Update user points
         await collections.users.updateOne(
-          { _id: new ObjectId(req.user.id) },
+          { _id: new ObjectId(req.user?.id) },
           { $inc: { points: -points } },
           { session }
         );
@@ -516,7 +516,7 @@ export const exchangeGameTime = async (req: AuthRequest, res: Response) => {
       data: {
         exchange: {
           ...exchange,
-          id: result.insertedId.toString(),
+          id: result?.insertedId?.toString() || 'unknown',
         },
         pointsSpent: points,
         minutesGranted,
@@ -581,6 +581,373 @@ export const getGameTimeExchanges = async (req: AuthRequest, res: Response) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to get game time exchanges',
+    });
+  }
+};
+
+// Special Reward Request Controllers
+
+export const requestSpecialReward = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    const { rewardTitle, rewardDescription, pointsCost, notes } = req.body;
+
+    // Validate required fields
+    if (!rewardTitle || !pointsCost) {
+      return res.status(400).json({
+        success: false,
+        error: 'Reward title and points cost are required',
+      });
+    }
+
+    if (pointsCost <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Points cost must be greater than 0',
+      });
+    }
+
+    // Check if user has enough points
+    if (req.user.points < pointsCost) {
+      return res.status(400).json({
+        success: false,
+        error: 'Insufficient points for this reward',
+      });
+    }
+
+    // Get user's display name
+    const userDoc = await collections.users.findOne({ _id: new ObjectId(req.user.id) });
+    if (!userDoc) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      });
+    }
+
+    // Create special reward request
+    const specialRewardRequest: Omit<SpecialRewardRequest, 'id'> = {
+      studentId: req.user.id,
+      studentName: userDoc.displayName || userDoc.email,
+      rewardTitle,
+      rewardDescription: rewardDescription || '',
+      pointsCost,
+      notes: notes || '',
+      status: 'pending',
+      submittedAt: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await collections.specialRewardRequests.insertOne(specialRewardRequest);
+
+    res.status(201).json({
+      success: true,
+      data: {
+        id: result.insertedId.toString(),
+        ...specialRewardRequest,
+      },
+      message: 'Special reward request submitted successfully!',
+    });
+  } catch (error: any) {
+    console.error('Request special reward error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to request special reward',
+    });
+  }
+};
+
+export const getSpecialRewardRequests = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    // Only parents can view special reward requests
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. Only parents can view special reward requests.',
+      });
+    }
+
+    const { status } = req.query;
+    const query: any = {};
+
+    // Filter by status if provided
+    if (status && ['pending', 'approved', 'rejected'].includes(status as string)) {
+      query.status = status;
+    }
+
+    // For parents, only show requests from their children
+    if (req.user.children && req.user.children.length > 0) {
+      query.studentId = { $in: req.user.children };
+    } else {
+      // If parent has no children, return empty array
+      return res.status(200).json({
+        success: true,
+        data: [],
+      });
+    }
+
+    const requests = await collections.specialRewardRequests
+      .find(query)
+      .sort({ submittedAt: -1 })
+      .toArray();
+
+    // Transform the results to match frontend expectations
+    const formattedRequests = requests.map((request: any) => ({
+      id: request._id.toString(),
+      studentId: request.studentId,
+      studentName: request.studentName,
+      rewardTitle: request.rewardTitle,
+      rewardDescription: request.rewardDescription,
+      pointsCost: request.pointsCost,
+      notes: request.notes,
+      status: request.status,
+      submittedAt: request.submittedAt.toISOString(),
+      approvalNotes: request.approvalNotes,
+      rejectionReason: request.rejectionReason,
+      approvedBy: request.approvedBy,
+      approvedAt: request.approvedAt?.toISOString(),
+      rejectedBy: request.rejectedBy,
+      rejectedAt: request.rejectedAt?.toISOString(),
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formattedRequests,
+    });
+  } catch (error: any) {
+    console.error('Get special reward requests error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to get special reward requests',
+    });
+  }
+};
+
+export const approveSpecialRedemption = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    // Only parents can approve special reward requests
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. Only parents can approve special rewards.',
+      });
+    }
+
+    const { requestId } = req.params;
+    const { approvalNotes } = req.body;
+
+    if (!requestId || !ObjectId.isValid(requestId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request ID',
+      });
+    }
+
+    // Find the special reward request
+    const request = await collections.specialRewardRequests.findOne({
+      _id: new ObjectId(requestId),
+    });
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        error: 'Special reward request not found',
+      });
+    }
+
+    // Check if request is already processed
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        error: `Request has already been ${request.status}`,
+      });
+    }
+
+    // Verify the student belongs to this parent
+    if (!req.user.children?.includes(request.studentId)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. You can only approve requests from your children.',
+      });
+    }
+
+    // Get student user to verify points
+    const student = await collections.users.findOne({ _id: new ObjectId(request.studentId) });
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        error: 'Student not found',
+      });
+    }
+
+    // Check if student still has enough points
+    if (student.points < request.pointsCost) {
+      return res.status(400).json({
+        success: false,
+        error: 'Student no longer has sufficient points for this reward',
+      });
+    }
+
+    // Use transaction to ensure atomic operation
+    const session = mongodb['client'].startSession();
+    try {
+      await session.withTransaction(async () => {
+        // Update the special reward request
+        await collections.specialRewardRequests.updateOne(
+          { _id: new ObjectId(requestId) },
+          {
+            $set: {
+              status: 'approved',
+              approvedBy: req.user?.id,
+              approvedAt: new Date(),
+              approvalNotes: approvalNotes || 'Approved by parent',
+              updatedAt: new Date(),
+            },
+          },
+          { session }
+        );
+
+        // Deduct points from student
+        await collections.users.updateOne(
+          { _id: new ObjectId(request.studentId) },
+          {
+            $inc: { points: -request.pointsCost },
+            $set: { updatedAt: new Date() },
+          },
+          { session }
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Special reward request approved successfully!',
+      data: {
+        requestId,
+        pointsDeducted: request.pointsCost,
+        studentNewBalance: student.points - request.pointsCost,
+      },
+    });
+  } catch (error: any) {
+    console.error('Approve special redemption error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to approve special reward request',
+    });
+  }
+};
+
+export const rejectSpecialRedemption = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User not authenticated',
+      });
+    }
+
+    // Only parents can reject special reward requests
+    if (req.user.role !== 'parent') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. Only parents can reject special rewards.',
+      });
+    }
+
+    const { requestId } = req.params;
+    const { rejectionReason } = req.body;
+
+    if (!requestId || !ObjectId.isValid(requestId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid request ID',
+      });
+    }
+
+    if (!rejectionReason || !rejectionReason.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Rejection reason is required',
+      });
+    }
+
+    // Find the special reward request
+    const request = await collections.specialRewardRequests.findOne({
+      _id: new ObjectId(requestId),
+    });
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        error: 'Special reward request not found',
+      });
+    }
+
+    // Check if request is already processed
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        error: `Request has already been ${request.status}`,
+      });
+    }
+
+    // Verify the student belongs to this parent
+    if (!req.user.children?.includes(request.studentId)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. You can only reject requests from your children.',
+      });
+    }
+
+    // Update the special reward request
+    await collections.specialRewardRequests.updateOne(
+      { _id: new ObjectId(requestId) },
+      {
+        $set: {
+          status: 'rejected',
+          rejectedBy: req.user.id,
+          rejectedAt: new Date(),
+          rejectionReason: rejectionReason.trim(),
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Special reward request rejected successfully!',
+      data: {
+        requestId,
+        rejectionReason: rejectionReason.trim(),
+      },
+    });
+  } catch (error: any) {
+    console.error('Reject special redemption error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to reject special reward request',
     });
   }
 };

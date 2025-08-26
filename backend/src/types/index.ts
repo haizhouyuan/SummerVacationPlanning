@@ -115,6 +115,26 @@ export interface Redemption {
   notes?: string;
 }
 
+export interface SpecialRewardRequest {
+  id: string;
+  studentId: string;
+  studentName: string;
+  rewardTitle: string;
+  rewardDescription?: string;
+  pointsCost: number;
+  notes?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: Date;
+  approvalNotes?: string;
+  rejectionReason?: string;
+  approvedBy?: string; // Parent ID
+  approvedAt?: Date;
+  rejectedBy?: string; // Parent ID
+  rejectedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   data?: T;

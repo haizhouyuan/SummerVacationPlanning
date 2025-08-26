@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection } from 'mongodb';
-import { User, UserDocument, Task, DailyTask, Redemption, PointsRule, GameTimeConfig, UserPointsLimit, PointsTransaction } from '../types';
+import { User, UserDocument, Task, DailyTask, Redemption, SpecialRewardRequest, PointsRule, GameTimeConfig, UserPointsLimit, PointsTransaction } from '../types';
 
 interface GameTimeExchange {
   userId: string;
@@ -53,6 +53,7 @@ class MongoDB {
       tasks: this.db.collection<Task>('tasks'),
       dailyTasks: this.db.collection<DailyTask>('dailyTasks'),
       redemptions: this.db.collection<Redemption>('redemptions'),
+      specialRewardRequests: this.db.collection<SpecialRewardRequest>('specialRewardRequests'),
       gameTimeExchanges: this.db.collection<GameTimeExchange>('gameTimeExchanges'),
       gameSessions: this.db.collection<GameSession>('gameSessions'),
       pointsRules: this.db.collection<PointsRule>('pointsRules'),

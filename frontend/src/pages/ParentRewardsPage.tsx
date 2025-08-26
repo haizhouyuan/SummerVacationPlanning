@@ -375,7 +375,16 @@ const ParentRewardsPage: React.FC = () => {
               )}
             </div>
 
-            {/* Special Rewards Approval */}            <div className="bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6 mb-4 sm:mb-6">              <SpecialRewardApproval />            </div>
+            {/* Special Rewards Approval */}
+            <div className="bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6 mb-4 sm:mb-6">
+              <SpecialRewardApproval 
+                onRequestSuccess={() => {
+                  // Refresh pending approvals
+                  console.log('Special reward approval completed');
+                }}
+                userPoints={0} // TODO: Get from parent user context
+              />
+            </div>
             {/* Points Management Guide */}
             <div className="bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6">
               <h2 className="text-lg sm:text-xl font-bold text-cartoon-dark font-fun mb-3 sm:mb-4">📖 积分管理指南</h2>

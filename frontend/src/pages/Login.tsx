@@ -25,6 +25,22 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleDemoLogin = async (role: 'student' | 'parent') => {
+    setError('');
+    setLoading(true);
+
+    try {
+      // Use demo credentials based on role
+      const demoEmail = role === 'student' ? '袁绍學' : '爸爸';
+      const demoPassword = ''; // Demo accounts can have empty passwords
+      
+      await login(demoEmail, demoPassword);
+    } catch (error: any) {
+      setError(error.message || `${role === 'student' ? '学生' : '家长'}演示登录失败`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
@@ -113,6 +129,28 @@ const Login: React.FC = () => {
             </button>
           </div>
 
+          {/* Demo Login Buttons */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-center text-sm text-gray-600 mb-4">快速演示登录</p>
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('student')}
+                className="w-full flex justify-center items-center py-2 px-4 border border-green-300 text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+              >
+                <span className="mr-2">👨‍🎓</span>
+                学生演示
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDemoLogin('parent')}
+                className="w-full flex justify-center items-center py-2 px-4 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+              >
+                <span className="mr-2">👨‍👩‍👧‍👦</span>
+                家长演示
+              </button>
+            </div>
+          </div>
 
         </form>
       </div>
