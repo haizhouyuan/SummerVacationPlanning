@@ -76,6 +76,7 @@ import dailyTaskRoutes from './routes/dailyTaskRoutes';
 import redemptionRoutes from './routes/redemptionRoutes';
 import rewardsRoutes from './routes/rewardsRoutes';
 import pointsConfigRoutes from './routes/pointsConfigRoutes';
+import rewardsCenterRoutes from './routes/rewardsCenterRoutes';
 
 // Debug middleware for all API routes
 app.use('/api', (req, res, next) => {
@@ -89,6 +90,7 @@ app.use('/api/daily-tasks', dailyTaskRoutes);
 app.use('/api/redemptions', redemptionRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/points-config', pointsConfigRoutes);
+app.use('/api/rewards-center', rewardsCenterRoutes);
 
 // 静态资源服务，开放 /uploads 目录
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

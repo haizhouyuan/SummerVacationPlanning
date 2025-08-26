@@ -259,3 +259,55 @@ export interface DailyTaskWithClawback extends DailyTask {
   pointsClawback?: number; // Points that were clawed back due to rejection
   transactionHistory?: string[]; // Array of transaction IDs
 }
+
+// Rewards Center Related Types
+export interface PointsStats {
+  currentPoints: number;
+  weeklyEarned: number;
+  monthlyEarned: number;
+  totalEarned: number;
+  weeklySpent: number;
+  monthlySpent: number;
+  totalSpent: number;
+  level: number;
+  nextLevelPoints: number;
+  pointsToNextLevel: number;
+}
+
+export interface GameTimeStats {
+  dailyUsed: number; // Minutes used today
+  dailyAvailable: number; // Minutes available today (base + from points)
+  weeklyUsed: number;
+  weeklyAvailable: number;
+  accumulatedPoints: number; // Stored points that can be converted to game time
+  conversionRate: number; // Points per minute
+}
+
+export interface TaskCompletionRecord {
+  id: string;
+  taskTitle: string;
+  taskCategory: string;
+  pointsEarned: number;
+  completedAt: Date;
+  evidenceProvided: boolean;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+}
+
+export interface RedemptionHistoryItem {
+  id: string;
+  type: 'game_time' | 'special_reward';
+  description: string;
+  pointsCost: number;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: Date;
+  processedAt?: Date;
+  processedBy?: string;
+  notes?: string;
+}
+
+export interface RewardsCenterData {
+  pointsStats: PointsStats;
+  gameTimeStats: GameTimeStats;
+  recentTasks: TaskCompletionRecord[];
+  redemptionHistory: RedemptionHistoryItem[];
+}

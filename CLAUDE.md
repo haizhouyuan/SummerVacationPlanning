@@ -21,15 +21,18 @@ npm start         # Start production server (built code)
 npm run create-indexes  # Create MongoDB database indexes
 npm run db:optimize     # Optimize database with indexes
 
-Statistics System Testing
-# Run statistics logic validation
+Testing (Use test-case-designer agent for test planning and implementation)
+
+# Simplified unit tests (RECOMMENDED - proven reliable approach)
+cd frontend && npm test -- --testPathPatterns="\.simple\." --watchAll=false
+cd backend && npm test -- --testPathPatterns="\.simple\."
+
+# Statistics System Testing
 node test-statistics-logic.js  # Validate core statistics calculations
 
-# Backend unit tests (requires Jest setup)
-# cd backend && npm test (test files in backend/src/__tests__/)
-
-# Frontend unit tests with coverage
+# Standard unit tests (use when simplified tests are insufficient)
 cd frontend && npm test -- --coverage --watchAll=false
+cd backend && npm test
 
 End-to-End Testing (Playwright)
 cd frontend
@@ -43,7 +46,7 @@ cd backend && npm run dev
 npx playwright test   # Run all tests headlessly
 
 
-Note: During development, Claude will by default execute all Playwright E2E tests using npx playwright test. To run a single test spec, use the command /run-playwright file=frontend/tests/<specName>.ts, which will execute that specific spec and generate a report.
+Note: For comprehensive test case design and E2E testing strategy, use the test-case-designer agent. During development, Claude will by default execute all Playwright E2E tests using npx playwright test. To run a single test spec, use the command /run-playwright file=frontend/tests/<specName>.ts, which will execute that specific spec and generate a report.
 
 Dependencies Installation
 # Frontend
@@ -212,30 +215,37 @@ uploads/
         └── {filename}
 
 Testing Strategy
-Unit Tests (Jest + React Testing Library)
 
-Components: Comprehensive tests for UI components and interactions.
+**IMPORTANT: Use the test-case-designer agent for all testing tasks**
 
-Services: Tests for API service calls and backend integration points.
+For comprehensive test case design, testing strategy, and test implementation guidance, use the specialized test-case-designer agent (`.claude/agents/test-case-designer.md`). This agent contains proven testing best practices and lessons learned from this project.
 
-Hooks: Tests for custom React hooks.
+**When to use test-case-designer:**
+- Planning test cases for new features
+- Identifying testing gaps and edge cases
+- Designing test strategies for complex components
+- Creating comprehensive test coverage plans
+- Implementing simplified vs complex testing approaches
 
-Coverage: Aim for high coverage of core functionality (e.g., >90%).
+**Quick Testing Approach Guide (see test-case-designer.md for details):**
 
-Mocks: External calls (e.g., API, Firebase) are mocked in setupTests.ts.
+Simplified Unit Tests (RECOMMENDED for new components):
+- Focus on basic rendering and core functionality
+- Use minimal mocking to avoid dependency issues
+- Test actual component behavior, not assumed behavior
+- Example: TaskTimeline.simple.test.tsx (15/15 pass rate)
 
-E2E Tests (Playwright)
-
-Authentication flow: User login, registration, and validation flows.
-
-Task management: Creating tasks, marking completion, and uploading evidence.
-
-Dashboard interactions: Different views for student and parent dashboards.
-
-Test selectors: Use stable data attributes (e.g., data-cy) for reliable element selection.
+Complex Integration Tests (use selectively):
+- For critical business logic and complete workflows
+- Require more setup but provide comprehensive coverage
+- Use when simple tests are insufficient
 
 Test Commands
-# Unit tests
+# Simplified unit tests (RECOMMENDED for development)
+cd frontend && npm test -- --testPathPatterns="\.simple\." --watchAll=false
+cd backend && npm test -- --testPathPatterns="\.simple\."
+
+# Standard unit tests
 npm test                    # Run all unit tests
 npm test ComponentName      # Run tests for a specific component/file
 npm test -- --coverage      # Run tests with coverage report
@@ -289,7 +299,7 @@ Authentication: JWT-based auth with role-based access control
 
 Storage: Local file storage (10 MB max upload size)
 
-Testing: Jest, React Testing Library, Cypress, Playwright
+Testing: Jest + React Testing Library (simplified approach), Playwright E2E tests
 
 Architecture Patterns
 
@@ -299,7 +309,7 @@ RESTful API: Organized Express routes for clean, resource-based endpoints.
 
 Type safety: Shared TypeScript interfaces and types between frontend and backend for consistency.
 
-Component testing: Emphasis on isolated tests for React components and logic.
+Component testing: Emphasis on simplified, reliable tests that focus on actual component behavior rather than complex mocking scenarios.
 
 Evidence workflow: Uploaded evidence files are tied to tasks with a review/approval process.
 
