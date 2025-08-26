@@ -37,13 +37,6 @@ export const authenticateToken = async (
         displayName: '演示学生',
         role: 'student',
         points: 150,
-        currentStreak: 3,
-        medals: {
-          bronze: true,
-          silver: false,
-          gold: false,
-          diamond: false
-        },
         createdAt: new Date(),
         updatedAt: new Date()
       } as User;

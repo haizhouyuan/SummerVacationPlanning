@@ -39,9 +39,7 @@ app.get('/api/auth/me', (req, res) => {
         email: 'student@test.com',
         displayName: 'Test Student',
         role: 'student',
-        points: 50,
-        currentStreak: 3,
-        medals: { bronze: true, silver: false, gold: false, diamond: false }
+        points: 50
       }
     }
   });

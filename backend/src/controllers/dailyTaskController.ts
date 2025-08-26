@@ -237,8 +237,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           const pointsResult = await calculateConfigurablePoints(
             task.category,
             task.activity || 'general', // Use the standardized activity field
-            baseData,
-            req.user.medals
+            baseData
           );
           
           updates.pointsEarned = pointsResult.totalPoints;
@@ -381,7 +380,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           };
           
           // Check if this completion triggers a streak update
-          await checkAndUpdateStreak(req.user.id, dailyTask.date);
+          // Streak tracking removed - no longer needed
         }
       }
     }
@@ -1038,86 +1037,7 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
 };
 
 // Helper function to calculate medal multiplier
-function calculateMedalMultiplier(medals: { bronze: boolean; silver: boolean; gold: boolean; diamond: boolean }): number {
-  let multiplier = 1;
-  
-  // Stack multipliers (multiply together)
-  if (medals.bronze) multiplier *= 1.1;
-  if (medals.silver) multiplier *= 1.2;
-  if (medals.gold) multiplier *= 1.3;
-  if (medals.diamond) multiplier *= 1.4;
-  
-  return multiplier;
-}
 
-// Helper function to check and update user streak
-async function checkAndUpdateStreak(userId: string, date: string): Promise<void> {
-  try {
-    // Get all daily tasks for the user on this date
-    const dailyTasks = await collections.dailyTasks.find({
-      userId: userId,
-      date: date,
-    }).toArray();
-
-    // Check if all tasks are completed (no tasks with status 'planned', 'in_progress', or 'skipped')
-    const allCompleted = dailyTasks.length > 0 && dailyTasks.every((task: any) => task.status === 'completed');
-    
-    const user = await collections.users.findOne({ _id: new ObjectId(userId) });
-    if (!user) return;
-
-    if (allCompleted) {
-      // Increment streak
-      const newStreak = (user.currentStreak || 0) + 1;
-      
-      // Check for medal unlocks
-      const medals = user.medals || { bronze: false, silver: false, gold: false, diamond: false };
-      let newMedals = { ...medals };
-      
-      // Check medal conditions
-      if (newStreak >= 60 && !medals.diamond) {
-        newMedals.diamond = true;
-      }
-      if (newStreak >= 30 && !medals.gold) {
-        newMedals.gold = true;
-      }
-      if (newStreak >= 14 && !medals.silver) {
-        newMedals.silver = true;
-      }
-      if (newStreak >= 7 && !medals.bronze) {
-        newMedals.bronze = true;
-      }
-      
-      // Update user with new streak and medals
-      await collections.users.updateOne(
-        { _id: new ObjectId(userId) },
-        {
-          $set: {
-            currentStreak: newStreak,
-            medals: newMedals,
-            updatedAt: new Date(),
-          }
-        }
-      );
-      
-      console.log(`User ${userId} streak updated to ${newStreak} for date ${date}`);
-    } else {
-      // Reset streak if not all tasks completed
-      await collections.users.updateOne(
-        { _id: new ObjectId(userId) },
-        {
-          $set: {
-            currentStreak: 0,
-            updatedAt: new Date(),
-          }
-        }
-      );
-      
-      console.log(`User ${userId} streak reset to 0 for date ${date}`);
-    }
-  } catch (error) {
-    console.error('Error updating streak:', error);
-  }
-}
 
 // Enhanced Task Planning Functions
 

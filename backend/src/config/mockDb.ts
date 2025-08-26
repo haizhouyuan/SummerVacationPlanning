@@ -9,8 +9,6 @@ export class MockCollections {
       role: 'student',
       parentId: 'parent-1',
       points: 50,
-      currentStreak: 3,
-      medals: { bronze: true, silver: false, gold: false, diamond: false },
       createdAt: new Date(),
       updatedAt: new Date(),
       password: '$2b$10$hashedpassword'
@@ -21,8 +19,6 @@ export class MockCollections {
       role: 'parent',
       children: ['student-1'],
       points: 0,
-      currentStreak: 0,
-      medals: { bronze: false, silver: false, gold: false, diamond: false },
       createdAt: new Date(),
       updatedAt: new Date(),
       password: '$2b$10$hashedpassword'

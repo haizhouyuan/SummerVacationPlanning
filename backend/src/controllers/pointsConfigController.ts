@@ -288,8 +288,7 @@ export const calculateConfigurablePoints = async (
     wordCount?: number;
     quality?: string;
     difficulty?: string;
-  },
-  userMedals?: { bronze: boolean; silver: boolean; gold: boolean; diamond: boolean }
+  }
 ): Promise<{ basePoints: number; bonusPoints: number; totalPoints: number }> => {
   try {
     // Find the matching points rule
@@ -352,15 +351,6 @@ export const calculateConfigurablePoints = async (
         totalPoints = Math.round(totalPoints * multiplier);
       }
 
-      // Medal multiplier
-      if (pointsRule.multipliers.medal && userMedals) {
-        let medalMultiplier = 1;
-        if (userMedals.bronze) medalMultiplier *= pointsRule.multipliers.medal.bronze || 1.1;
-        if (userMedals.silver) medalMultiplier *= pointsRule.multipliers.medal.silver || 1.2;
-        if (userMedals.gold) medalMultiplier *= pointsRule.multipliers.medal.gold || 1.3;
-        if (userMedals.diamond) medalMultiplier *= pointsRule.multipliers.medal.diamond || 1.4;
-        totalPoints = Math.round(totalPoints * medalMultiplier);
-      }
     }
 
     return {

@@ -75,13 +75,6 @@ export const register = async (req: Request, res: Response) => {
       parentId,
       children: role === 'parent' ? [] : undefined,
       points: 0,
-      currentStreak: 0,
-      medals: {
-        bronze: false,
-        silver: false,
-        gold: false,
-        diamond: false,
-      },
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -113,13 +106,6 @@ export const register = async (req: Request, res: Response) => {
       parentId,
       children: role === 'parent' ? [] : undefined,
       points: 0,
-      currentStreak: 0,
-      medals: {
-        bronze: false,
-        silver: false,
-        gold: false,
-        diamond: false,
-      },
       createdAt: userData.createdAt,
       updatedAt: userData.updatedAt,
     };
@@ -185,13 +171,6 @@ export const login = async (req: Request, res: Response) => {
       children: user.children,
       points: user.points,
       avatar: user.avatar,
-      currentStreak: user.currentStreak || 0,
-      medals: user.medals || {
-        bronze: false,
-        silver: false,
-        gold: false,
-        diamond: false,
-      },
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
@@ -279,13 +258,6 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       children: updatedUser.children,
       points: updatedUser.points,
       avatar: updatedUser.avatar,
-      currentStreak: updatedUser.currentStreak || 0,
-      medals: updatedUser.medals || {
-        bronze: false,
-        silver: false,
-        gold: false,
-        diamond: false,
-      },
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
     };
@@ -348,7 +320,6 @@ export const getChildren = async (req: AuthRequest, res: Response) => {
       points: child.points || 0,
       level: Math.floor((child.points || 0) / 100) + 1,
       avatar: child.avatar,
-      streakDays: child.currentStreak || 0,
       // We'll calculate these from tasks in a real implementation
       tasksCompleted: 0,
       weeklyGoal: 7,
@@ -458,22 +429,7 @@ export const getChildStats = async (req: AuthRequest, res: Response) => {
     }
 
     // Simple achievements based on current data
-    const achievements = [
-      {
-        type: 'streak',
-        level: Math.floor((child.currentStreak || 0) / 3) + 1,
-        title: '连续达人',
-        description: `连续${child.currentStreak || 0}天完成任务`,
-        isUnlocked: (child.currentStreak || 0) >= 3,
-      },
-      {
-        type: 'points',
-        level: Math.floor((child.points || 0) / 100) + 1,
-        title: '积分大师',
-        description: `获得${child.points || 0}积分`,
-        isUnlocked: (child.points || 0) >= 100,
-      },
-    ];
+    const achievements: any[] = [];
 
     const childStats = {
       dailyTasks: tasksWithDetails,
@@ -539,134 +495,7 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
     };
 
     // Enhanced achievements calculation
-    const achievements = [];
-    
-    // Streak achievements with multiple tiers
-    const streakValue = user.currentStreak || 0;
-    if (streakValue >= 3) {
-      let streakLevel = 1;
-      let nextMilestone = 7;
-      if (streakValue >= 7) { streakLevel = 2; nextMilestone = 14; }
-      if (streakValue >= 14) { streakLevel = 3; nextMilestone = 30; }
-      if (streakValue >= 30) { streakLevel = 4; nextMilestone = 60; }
-      if (streakValue >= 60) { streakLevel = 5; nextMilestone = 100; }
-      
-      achievements.push({
-        type: 'streak',
-        level: streakLevel,
-        title: '连续达人',
-        description: `连续${streakValue}天完成任务`,
-        isUnlocked: true,
-        progress: streakValue < nextMilestone ? streakValue : nextMilestone,
-        maxProgress: nextMilestone,
-      });
-    } else {
-      achievements.push({
-        type: 'streak',
-        level: 1,
-        title: '连续达人',
-        description: '连续完成每日任务',
-        isUnlocked: false,
-        progress: streakValue,
-        maxProgress: 3,
-      });
-    }
-    
-    // Points achievements with enhanced tiers
-    const pointsValue = user.points || 0;
-    let pointsLevel = Math.max(1, Math.floor(pointsValue / 100) + 1);
-    let pointsNextMilestone = pointsLevel * 100;
-    
-    achievements.push({
-      type: 'points',
-      level: pointsLevel,
-      title: '积分收集者',
-      description: `累计获得${pointsValue}积分`,
-      isUnlocked: pointsValue >= 100,
-      progress: pointsValue % 100,
-      maxProgress: 100,
-    });
-    
-    // Task completion achievements
-    const weeklyCompleted = weeklyStats.completed;
-    let taskLevel = 1;
-    let taskNextMilestone = 5;
-    if (weeklyCompleted >= 5) { taskLevel = 2; taskNextMilestone = 10; }
-    if (weeklyCompleted >= 10) { taskLevel = 3; taskNextMilestone = 15; }
-    if (weeklyCompleted >= 15) { taskLevel = 4; taskNextMilestone = 20; }
-    
-    achievements.push({
-      type: 'tasks',
-      level: taskLevel,
-      title: '任务完成者',
-      description: `本周完成${weeklyCompleted}个任务`,
-      isUnlocked: weeklyCompleted >= 5,
-      progress: weeklyCompleted % 5,
-      maxProgress: 5,
-    });
-    
-    // Medal-based achievements
-    const medals = user.medals || { bronze: false, silver: false, gold: false, diamond: false };
-    let medalCount = 0;
-    if (medals.bronze) medalCount++;
-    if (medals.silver) medalCount++;
-    if (medals.gold) medalCount++;
-    if (medals.diamond) medalCount++;
-    
-    if (medalCount > 0) {
-      achievements.push({
-        type: 'medals',
-        level: medalCount,
-        title: '徽章收集者',
-        description: `获得${medalCount}个徽章`,
-        isUnlocked: true,
-        progress: medalCount,
-        maxProgress: 4,
-      });
-    }
-    
-    // Category diversity achievement (bonus)
-    const categoryTasksPromise = collections.dailyTasks.aggregate([
-      {
-        $match: {
-          userId: userId,
-          status: 'completed',
-          date: { $gte: weekStart, $lte: weekEnd }
-        }
-      },
-      {
-        $lookup: {
-          from: 'tasks',
-          localField: 'taskId',
-          foreignField: '_id',
-          as: 'taskDetails'
-        }
-      },
-      {
-        $unwind: '$taskDetails'
-      },
-      {
-        $group: {
-          _id: '$taskDetails.category',
-          count: { $sum: 1 }
-        }
-      }
-    ]).toArray();
-    
-    const categoryTasks = await categoryTasksPromise;
-    const uniqueCategories = categoryTasks.length;
-    
-    if (uniqueCategories >= 3) {
-      achievements.push({
-        type: 'diversity',
-        level: Math.min(uniqueCategories, 6),
-        title: '全能发展',
-        description: `完成${uniqueCategories}种不同类型的任务`,
-        isUnlocked: true,
-        progress: uniqueCategories,
-        maxProgress: 6, // Total number of categories
-      });
-    }
+    const achievements: any[] = [];
 
     // Calculate today's tasks for quick overview
     const today = new Date().toISOString().split('T')[0];
@@ -690,8 +519,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         email: user.email,
         points: user.points || 0,
         level: Math.floor((user.points || 0) / 100) + 1,
-        currentStreak: user.currentStreak || 0,
-        medals: user.medals || { bronze: false, silver: false, gold: false, diamond: false },
       },
       weeklyStats,
       todayStats,
@@ -725,8 +552,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
         email: req.user.email,
         points: req.user.points || 0,
         level: Math.floor((req.user.points || 0) / 100) + 1,
-        currentStreak: req.user.currentStreak || 0,
-        medals: req.user.medals || { bronze: false, silver: false, gold: false, diamond: false },
       },
       weeklyStats: {
         completed: 0,
@@ -750,7 +575,6 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       performance: {
         thisWeekCompletion: 0,
         pointsPerTask: 0,
-        streakProgress: req.user.currentStreak || 0,
         nextLevelPoints: (Math.floor((req.user.points || 0) / 100) + 1) * 100 - (req.user.points || 0),
       }
     };
@@ -998,28 +822,7 @@ export const getFamilyLeaderboard = async (req: AuthRequest, res: Response) => {
       const completedTasks = childTasks.filter((task: any) => task.status === 'completed').length;
       
       // Calculate recent achievements
-      const recentAchievements = [];
-      if ((child.currentStreak || 0) >= 3) {
-        recentAchievements.push({
-          type: 'streak',
-          title: '连续达人',
-          isNew: (child.currentStreak || 0) === 3,
-        });
-      }
-      if ((child.points || 0) >= 100) {
-        recentAchievements.push({
-          type: 'points',
-          title: '积分大师',
-          isNew: (child.points || 0) >= 100 && (child.points || 0) < 120,
-        });
-      }
-      if (completedTasks >= 5) {
-        recentAchievements.push({
-          type: 'tasks',
-          title: '任务完成者',
-          isNew: completedTasks === 5,
-        });
-      }
+      const recentAchievements: any[] = [];
 
       return {
         id: child._id.toString(),
@@ -1027,7 +830,6 @@ export const getFamilyLeaderboard = async (req: AuthRequest, res: Response) => {
         points: child.points || 0,
         level: Math.floor((child.points || 0) / 100) + 1,
         tasksCompleted: completedTasks,
-        streakDays: child.currentStreak || 0,
         recentAchievements: recentAchievements.slice(0, 2), // Limit to 2 achievements
         rank: 0, // Will be set below
       };
