@@ -66,9 +66,6 @@ const TaskPlanning: React.FC = () => {
     ? tasks 
     : tasks.filter(task => task.category === activeCategory);
 
-  const isTaskPlanned = (task: Task) => {
-    return dailyTasks.some(dt => dt.taskId === task.id);
-  };
 
   // Removed unused utility functions
 
@@ -243,22 +240,14 @@ const TaskPlanning: React.FC = () => {
                     filteredTasks.map((task) => (
                       <div
                         key={task.id}
-                        draggable={!isTaskPlanned(task)}
+                        draggable={true}
                         onDragStart={(e) => {
-                          if (!isTaskPlanned(task)) {
-                            e.dataTransfer.setData('application/json', JSON.stringify(task));
-                            e.dataTransfer.effectAllowed = 'copy';
-                          } else {
-                            e.preventDefault();
-                          }
+                          e.dataTransfer.setData('application/json', JSON.stringify(task));
+                          e.dataTransfer.effectAllowed = 'copy';
                         }}
                         onDragEnd={(e) => {
                         }}
-                        className={`p-3 rounded-lg border-2 border-dashed transition-colors duration-200 ${
-                          isTaskPlanned(task) 
-                            ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed' 
-                            : 'border-gray-300 bg-white cursor-move hover:border-primary-400 hover:bg-primary-50'
-                        }`}
+                        className="p-3 rounded-lg border-2 border-dashed transition-colors duration-200 border-gray-300 bg-white cursor-move hover:border-primary-400 hover:bg-primary-50"
                       >
                         <div className="flex items-center space-x-2 mb-2">
                           <span className="text-lg">
@@ -278,9 +267,6 @@ const TaskPlanning: React.FC = () => {
                             </div>
                           </div>
                         </div>
-                        {isTaskPlanned(task) && (
-                          <div className="text-xs text-gray-500 text-center">已安排</div>
-                        )}
                       </div>
                     ))
                   )}
@@ -464,11 +450,7 @@ const TaskPlanning: React.FC = () => {
                     filteredTasks.map((task) => (
                       <div
                         key={task.id}
-                        className={`p-3 rounded-lg border-2 transition-colors duration-200 ${
-                          isTaskPlanned(task) 
-                            ? 'border-gray-200 bg-gray-50 opacity-50' 
-                            : 'border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50'
-                        }`}
+                        className="p-3 rounded-lg border-2 transition-colors duration-200 border-gray-300 bg-white hover:border-primary-400 hover:bg-primary-50"
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -487,34 +469,28 @@ const TaskPlanning: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          {isTaskPlanned(task) ? (
-                            <span className="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">
-                              已安排
-                            </span>
-                          ) : (
-                            <button
-                              onClick={async () => {
-                                try {
-                                  const apiService = detectNetworkAndGetApiServiceSync();
-                                  await apiService.createDailyTask({
-                                    taskId: task.id,
-                                    date: selectedDate,
-                                    // Don't set plannedTime so it appears as unscheduled
-                                  });
-                                  await loadDailyTasks();
-                                  // Show success message briefly
-                                  const successMessage = `✅ "${task.title}" 已添加到今日任务`;
-                                  alert(successMessage);
-                                } catch (error) {
-                                  console.error('Error adding task to daily tasks:', error);
-                                  alert(`❌ 添加任务失败：${(error as any)?.message || '未知错误'}`);
-                                }
-                              }}
-                              className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-primary-700 transition-colors"
-                            >
-                              添加
-                            </button>
-                          )}
+                          <button
+                            onClick={async () => {
+                              try {
+                                const apiService = detectNetworkAndGetApiServiceSync();
+                                await apiService.createDailyTask({
+                                  taskId: task.id,
+                                  date: selectedDate,
+                                  // Don't set plannedTime so it appears as unscheduled
+                                });
+                                await loadDailyTasks();
+                                // Show success message briefly
+                                const successMessage = `✅ "${task.title}" 已添加到今日任务`;
+                                alert(successMessage);
+                              } catch (error) {
+                                console.error('Error adding task to daily tasks:', error);
+                                alert(`❌ 添加任务失败：${(error as any)?.message || '未知错误'}`);
+                              }
+                            }}
+                            className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-primary-700 transition-colors"
+                          >
+                            添加
+                          </button>
                         </div>
                       </div>
                     ))
