@@ -151,7 +151,7 @@ export const calculateGameTime = async (req: AuthRequest, res: Response) => {
         
         // Deduct points from user
         await collections.users.updateOne(
-          { _id: new ObjectId(req.user.id) },
+          { _id: new ObjectId(req.user!.id) },
           {
             $inc: { points: -pointsToSpend },
             $set: { updatedAt: new Date() }
@@ -502,7 +502,7 @@ export const exchangeGameTime = async (req: AuthRequest, res: Response) => {
         
         // Update user points
         await collections.users.updateOne(
-          { _id: new ObjectId(req.user.id) },
+          { _id: new ObjectId(req.user!.id) },
           { $inc: { points: -points } },
           { session }
         );
@@ -516,7 +516,7 @@ export const exchangeGameTime = async (req: AuthRequest, res: Response) => {
       data: {
         exchange: {
           ...exchange,
-          id: result.insertedId.toString(),
+          id: result!.insertedId.toString(),
         },
         pointsSpent: points,
         minutesGranted,

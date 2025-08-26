@@ -192,7 +192,7 @@ export async function executeGameTimeExchangeTransaction(
     };
     
     const insertResult = await collections.gameTimeExchanges.insertOne(exchange, { session });
-    exchange._id = insertResult.insertedId;
+    (exchange as any)._id = insertResult.insertedId;
     
     // 扣除积分
     const updateResult = await collections.users.updateOne(

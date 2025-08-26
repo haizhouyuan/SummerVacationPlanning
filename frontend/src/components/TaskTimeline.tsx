@@ -105,6 +105,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drag over time slot
   const handleDragOver = (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverSlot(timeSlot);
     
     // Set appropriate dropEffect based on drag source
@@ -133,6 +134,8 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Handle drop on time slot
   const handleDrop = async (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
     setDragOverSlot(null);
     
     try {

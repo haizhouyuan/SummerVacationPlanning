@@ -103,8 +103,8 @@ app.put('/api/daily-tasks/:dailyTaskId', (req, res) => {
 
   const task = collections.dailyTasks.dailyTasks[taskIndex];
   task.status = status;
-  if (evidenceText) task.evidenceText = evidenceText;
-  if (evidenceMedia) task.evidenceMedia = evidenceMedia;
+  if (evidenceText) task.evidence = [{ type: 'text', content: evidenceText, timestamp: new Date() }];
+  if (evidenceMedia) task.evidence = [...(task.evidence || []), { type: 'photo', content: evidenceMedia, timestamp: new Date() }];
   if (status === 'completed') {
     task.completedAt = new Date();
     task.approvalStatus = evidenceText || evidenceMedia ? 'pending' : 'approved';
@@ -127,8 +127,8 @@ app.get('/api/daily-tasks/pending-approval', (req, res) => {
       studentId: task.userId,
       studentName: 'Test Student',
       task: collections.tasks.tasks.find(t => t.id === task.taskId),
-      evidenceText: task.evidenceText,
-      evidenceMedia: task.evidenceMedia || [],
+      evidenceText: task.evidence?.find(e => e.type === 'text')?.content || '',
+      evidenceMedia: task.evidence?.filter(e => e.type !== 'text').map(e => e.content) || [],
       notes: task.notes || '',
       submittedAt: task.completedAt,
       status: task.approvalStatus,

@@ -1,4 +1,4 @@
-const { mongodb, initializeCollections } = require('../src/config/mongodb');
+const { mongodb, initializeCollections } = require('../dist/config/mongodb');
 
 /**
  * Production-ready database indexing script
@@ -11,7 +11,7 @@ async function createProductionIndexes() {
     await mongodb.connect();
     initializeCollections();
     
-    const db = mongodb.db();
+    const db = mongodb.collections;
     console.log('✅ Connected to database:', db.databaseName);
     
     console.log('\n📊 Creating optimized database indexes...');
@@ -26,7 +26,7 @@ async function createProductionIndexes() {
     
     // Email for authentication (unique)
     try {
-      await db.collection('users').createIndex(
+      await db.users.createIndex(
         { email: 1 }, 
         { unique: true, name: 'idx_users_email_unique' }
       );
@@ -37,7 +37,7 @@ async function createProductionIndexes() {
     }
     
     // Role-based queries
-    await db.collection('users').createIndex(
+    await db.users.createIndex(
       { role: 1 }, 
       { name: 'idx_users_role' }
     );
@@ -45,7 +45,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Points leaderboard
-    await db.collection('users').createIndex(
+    await db.users.createIndex(
       { points: -1, role: 1 }, 
       { name: 'idx_users_points_leaderboard' }
     );
@@ -53,7 +53,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Parent-child relationships
-    await db.collection('users').createIndex(
+    await db.users.createIndex(
       { parentId: 1 }, 
       { name: 'idx_users_parent_id', sparse: true }
     );
@@ -66,7 +66,7 @@ async function createProductionIndexes() {
     console.log('\n📋 Tasks Collection Indexes:');
     
     // Public tasks with category filtering
-    await db.collection('tasks').createIndex(
+    await db.tasks.createIndex(
       { isPublic: 1, category: 1 }, 
       { name: 'idx_tasks_public_category' }
     );
@@ -74,7 +74,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Task recommendations
-    await db.collection('tasks').createIndex(
+    await db.tasks.createIndex(
       { category: 1, difficulty: 1, isPublic: 1 }, 
       { name: 'idx_tasks_recommendation_engine' }
     );
@@ -82,7 +82,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // User-created tasks
-    await db.collection('tasks').createIndex(
+    await db.tasks.createIndex(
       { createdBy: 1, createdAt: -1 }, 
       { name: 'idx_tasks_user_created' }
     );
@@ -95,7 +95,7 @@ async function createProductionIndexes() {
     console.log('\n📅 Daily Tasks Collection Indexes:');
     
     // Primary query: user's daily tasks
-    await db.collection('daily_tasks').createIndex(
+    await db.dailyTasks.createIndex(
       { userId: 1, date: -1 }, 
       { name: 'idx_daily_tasks_user_date' }
     );
@@ -103,7 +103,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Status filtering
-    await db.collection('daily_tasks').createIndex(
+    await db.dailyTasks.createIndex(
       { userId: 1, status: 1 }, 
       { name: 'idx_daily_tasks_user_status' }
     );
@@ -111,7 +111,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Parent approval workflow
-    await db.collection('daily_tasks').createIndex(
+    await db.dailyTasks.createIndex(
       { status: 1, completedAt: -1 }, 
       { name: 'idx_daily_tasks_approval_workflow' }
     );
@@ -119,7 +119,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Task performance analytics
-    await db.collection('daily_tasks').createIndex(
+    await db.dailyTasks.createIndex(
       { taskId: 1, status: 1, completedAt: -1 }, 
       { name: 'idx_daily_tasks_task_analytics' }
     );
@@ -127,7 +127,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Date range queries (for stats)
-    await db.collection('daily_tasks').createIndex(
+    await db.dailyTasks.createIndex(
       { userId: 1, date: -1, status: 1 }, 
       { name: 'idx_daily_tasks_date_range_stats' }
     );
@@ -135,7 +135,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Recommendation algorithm support
-    await db.collection('daily_tasks').createIndex(
+    await db.dailyTasks.createIndex(
       { userId: 1, completedAt: -1, pointsEarned: 1 }, 
       { name: 'idx_daily_tasks_recommendation_data' }
     );
@@ -148,7 +148,7 @@ async function createProductionIndexes() {
     console.log('\n🎁 Redemptions Collection Indexes:');
     
     // User redemption history
-    await db.collection('redemptions').createIndex(
+    await db.redemptions.createIndex(
       { userId: 1, requestedAt: -1 }, 
       { name: 'idx_redemptions_user_history' }
     );
@@ -156,7 +156,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Status-based queries (pending approvals)
-    await db.collection('redemptions').createIndex(
+    await db.redemptions.createIndex(
       { status: 1, requestedAt: -1 }, 
       { name: 'idx_redemptions_status_queue' }
     );
@@ -169,7 +169,7 @@ async function createProductionIndexes() {
     console.log('\n🎮 Game Time Exchanges Collection Indexes:');
     
     // Daily game time tracking
-    await db.collection('game_time_exchanges').createIndex(
+    await db.gameTimeExchanges.createIndex(
       { userId: 1, date: -1 }, 
       { name: 'idx_game_time_user_daily' }
     );
@@ -177,7 +177,7 @@ async function createProductionIndexes() {
     indexCount++;
     
     // Game type analytics
-    await db.collection('game_time_exchanges').createIndex(
+    await db.gameTimeExchanges.createIndex(
       { userId: 1, gameType: 1 }, 
       { name: 'idx_game_time_user_type' }
     );
@@ -190,7 +190,7 @@ async function createProductionIndexes() {
     console.log('\n🕹️ Game Sessions Collection Indexes:');
     
     // User session tracking
-    await db.collection('game_sessions').createIndex(
+    await db.gameSessions.createIndex(
       { userId: 1, startTime: -1 }, 
       { name: 'idx_game_sessions_user_time' }
     );
@@ -202,11 +202,11 @@ async function createProductionIndexes() {
     // ======================
     console.log('\n🔍 Verifying indexes...');
     
-    const collections = ['users', 'tasks', 'daily_tasks', 'redemptions', 'game_time_exchanges', 'game_sessions'];
+    const collections = ['users', 'tasks', 'dailyTasks', 'redemptions', 'gameTimeExchanges', 'gameSessions'];
     
     for (const collectionName of collections) {
       try {
-        const indexes = await db.collection(collectionName).listIndexes().toArray();
+        const indexes = await db[collectionName].listIndexes().toArray();
         const customIndexes = indexes.filter(idx => idx.name !== '_id_');
         console.log(`  📋 ${collectionName}: ${customIndexes.length} custom indexes`);
       } catch (error) {
@@ -237,7 +237,7 @@ async function createProductionIndexes() {
     console.error('❌ Error creating indexes:', error);
     throw error;
   } finally {
-    await mongodb.close();
+    await mongodb.disconnect();
     console.log('\n🔌 Database connection closed');
   }
 }
