@@ -1053,7 +1053,7 @@ export const detectNetworkAndGetApiService = async (options: {
 
   try {
     // 获取用户认证信息
-    const authToken = localStorage.getItem('token');
+    const authToken = localStorage.getItem('auth_token');
     const userEmail = localStorage.getItem('user_email');
     const isDemo = localStorage.getItem('isDemo');
     
@@ -1152,7 +1152,7 @@ export const detectNetworkAndGetApiService = async (options: {
  */
 export const detectNetworkAndGetApiServiceSync = () => {
   // 获取用户认证信息
-  const authToken = localStorage.getItem('token');
+  const authToken = localStorage.getItem('auth_token');
   const userEmail = localStorage.getItem('user_email');
   const isDemo = localStorage.getItem('isDemo');
   
@@ -1280,7 +1280,7 @@ export const resetApiState = async () => {
  * 诊断当前API状态的工具函数
  */
 export const diagnoseApiState = () => {
-  const authToken = localStorage.getItem('token');
+  const authToken = localStorage.getItem('auth_token');
   const userEmail = localStorage.getItem('user_email');
   const isDemo = localStorage.getItem('isDemo');
   const apiMode = localStorage.getItem('api_mode');

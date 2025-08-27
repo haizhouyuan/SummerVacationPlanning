@@ -2,7 +2,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.REACT_APP_API_
 
 class ApiService {
   private getAuthToken(): string | null {
-    return localStorage.getItem('token');
+    return localStorage.getItem('auth_token');
   }
 
   private async request<T>(
