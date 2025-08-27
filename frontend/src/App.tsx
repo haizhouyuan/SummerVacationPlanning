@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+// 导入认证状态清理工具（开发调试用）
+import './utils/clearAuthState';
 import { NotificationProvider } from './components/NotificationSystem';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';

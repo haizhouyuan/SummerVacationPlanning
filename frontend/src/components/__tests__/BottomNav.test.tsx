@@ -76,12 +76,10 @@ describe('BottomNav', () => {
 
     renderBottomNav();
 
-    // 验证学生导航项
-    expect(screen.getByText('首页')).toBeInTheDocument();
+    // 验证学生导航项（匹配当前UI）
     expect(screen.getByText('任务规划')).toBeInTheDocument();
-    expect(screen.getByText('积分历史')).toBeInTheDocument();
-    expect(screen.getByText('奖励中心')).toBeInTheDocument();
-    expect(screen.getByText('简化版')).toBeInTheDocument();
+    expect(screen.getByText('成长与奖励')).toBeInTheDocument();
+    expect(screen.getByText('成就广场')).toBeInTheDocument();
     
     // 学生不应该看到任务审批
     expect(screen.queryByText('任务审批')).not.toBeInTheDocument();

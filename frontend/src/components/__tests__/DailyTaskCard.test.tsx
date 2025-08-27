@@ -204,7 +204,9 @@ describe('DailyTaskCard', () => {
       />
     );
 
-    expect(screen.getByText('📎 提交的证据')).toBeInTheDocument();
+    // The text is split across multiple elements, use a more specific selector
+    const evidenceSection = screen.getByText('提交的证据').closest('div');
+    expect(evidenceSection).toBeInTheDocument();
     expect(screen.getByText('I read Harry Potter')).toBeInTheDocument();
     expect(screen.getByText('book-photo.jpg')).toBeInTheDocument();
   });

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DailyTask } from '../types';
-import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
+import { detectNetworkAndGetApiServiceSync, compatibleApiService } from '../services/compatibleApi';
 import TaskCategoryIcon from './TaskCategoryIcon';
 import EvidenceModal from './EvidenceModal';
 
@@ -106,21 +106,13 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   const handleDragOver = (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log('🎯 TaskTimeline: Drag over timeSlot:', timeSlot);
     setDragOverSlot(timeSlot);
     
-    // Set appropriate dropEffect based on drag source
-    try {
-      const jsonData = e.dataTransfer.getData('application/json');
-      if (jsonData) {
-        const parsedData = JSON.parse(jsonData);
-        // If it's an existing task being moved, use 'move', otherwise use 'copy'
-        e.dataTransfer.dropEffect = parsedData.isExistingTask ? 'move' : 'copy';
-      } else {
-        // Fallback: check effectAllowed to determine appropriate dropEffect
-        e.dataTransfer.dropEffect = e.dataTransfer.effectAllowed === 'move' ? 'move' : 'copy';
-      }
-    } catch (error) {
-      // If parsing fails, default to 'copy' for new tasks
+    // Set dropEffect based on effectAllowed (safer than accessing getData in dragOver)
+    if (e.dataTransfer.effectAllowed === 'move') {
+      e.dataTransfer.dropEffect = 'move';
+    } else {
       e.dataTransfer.dropEffect = 'copy';
     }
   };
@@ -137,10 +129,14 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     e.stopPropagation();
     setDragOverSlot(null);
     
+    console.log('🎯 TaskTimeline: Drop event triggered on timeSlot:', timeSlot);
+    
     try {
       // Check if it's a new task from TaskPlanning sidebar or existing dailyTask
       const jsonData = e.dataTransfer.getData('application/json');
       const textData = e.dataTransfer.getData('text/plain');
+      
+      console.log('📋 TaskTimeline: Drag data received:', { jsonData, textData });
       
       
       if (jsonData) {
@@ -196,14 +192,195 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
           // Create new daily task with scheduled time
           const apiService = detectNetworkAndGetApiServiceSync();
           
-          const createResult = await apiService.createDailyTask({
-            taskId: task.id,
+          console.log('📤 TaskTimeline: About to call createDailyTask API with:', {
+            taskId: task._id || task.id,
             date: date,
             plannedTime: timeSlot,
             plannedEndTime: endTime,
           });
           
-          onRefresh?.();
+          // 添加API服务实例验证
+          console.log('🔍 API Service Instance Analysis:', {
+            apiServiceType: apiService.constructor.name,
+            isCompatibleApiService: apiService === compatibleApiService,
+            hasCreateDailyTaskMethod: typeof apiService.createDailyTask === 'function',
+            serviceString: apiService.toString().substring(0, 100)
+          });
+          
+          try {
+            console.log('📤 TaskTimeline: About to call createDailyTask API...');
+            console.log('🔗 Expected URL: POST /daily-tasks');
+            console.log('📝 Request payload:', {
+              taskId: task._id || task.id,
+              date: date,
+              plannedTime: timeSlot,
+              plannedEndTime: endTime,
+            });
+            
+            // CRITICAL DEBUG: 验证我们使用的是哪个API服务
+            console.log('🔧 CRITICAL DEBUG - API Service Verification:', {
+              serviceName: apiService.constructor.name,
+              isRealApiService: apiService.constructor.name === 'ApiService',
+              isCompatibleApiService: apiService === compatibleApiService,
+              serviceToString: apiService.toString().substring(0, 200)
+            });
+            
+            const startTime = Date.now();
+            
+            // 增强的网络请求监控 - 捕获真实的fetch调用
+            const originalFetch = window.fetch;
+            let actualRequestUrl = '';
+            let actualRequestMethod = '';
+            let actualRequestHeaders: HeadersInit = {};
+            let actualRequestPayload: any = null;
+            let actualResponseStatus = 0;
+            let actualResponseHeaders: Record<string, string> = {};
+            let actualResponseBody: any = null;
+            
+            // 临时拦截fetch以捕获实际网络请求
+            window.fetch = async function(input, init) {
+              if (typeof input === 'string' && input.includes('/daily-tasks')) {
+                actualRequestUrl = input;
+                actualRequestMethod = init?.method || 'GET';
+                actualRequestHeaders = init?.headers || {};
+                if (init?.body && typeof init.body === 'string') {
+                  try {
+                    actualRequestPayload = JSON.parse(init.body);
+                  } catch (e) {
+                    actualRequestPayload = init.body;
+                  }
+                } else if (init?.body) {
+                  actualRequestPayload = init.body;
+                }
+                
+                console.log('🌐 NETWORK INTERCEPT: Actual fetch request detected', {
+                  url: actualRequestUrl,
+                  method: actualRequestMethod,
+                  headers: actualRequestHeaders,
+                  payload: actualRequestPayload
+                });
+              }
+              
+              const response = await originalFetch(input, init);
+              
+              if (typeof input === 'string' && input.includes('/daily-tasks')) {
+                actualResponseStatus = response.status;
+                actualResponseHeaders = Object.fromEntries(response.headers.entries());
+                
+                // 克隆响应以读取body而不影响原始响应
+                const responseClone = response.clone();
+                try {
+                  actualResponseBody = await responseClone.json();
+                } catch (e) {
+                  try {
+                    actualResponseBody = await responseClone.text();
+                  } catch (e2) {
+                    actualResponseBody = 'Unable to parse response body';
+                  }
+                }
+                
+                console.log('🌐 NETWORK INTERCEPT: Actual fetch response received', {
+                  status: actualResponseStatus,
+                  headers: actualResponseHeaders,
+                  body: actualResponseBody
+                });
+              }
+              
+              return response;
+            };
+            
+            const createResult = await apiService.createDailyTask({
+              taskId: task._id || task.id,
+              date: date,
+              plannedTime: timeSlot,
+              plannedEndTime: endTime,
+            });
+            
+            // 恢复原始fetch
+            window.fetch = originalFetch;
+            
+            const responseTime = Date.now() - startTime;
+            console.log('✅ TaskTimeline: createDailyTask API call completed in', responseTime + 'ms');
+            console.log('📨 Response received:', createResult);
+            
+            // CRITICAL CHECKPOINT: 验证网络拦截是否执行
+            console.log('🔧 CRITICAL CHECKPOINT - Network Interception Results:', {
+              actualRequestUrl,
+              actualRequestMethod,
+              actualResponseStatus,
+              networkRequestDetected: !!actualRequestUrl,
+              interceptorExecuted: actualRequestUrl !== ''
+            });
+            
+            // 详细的网络请求状态检查
+            const createResultObj = createResult as any;
+            console.log('🔍 Detailed API response analysis:', {
+              responseType: typeof createResult,
+              hasSuccessProperty: createResultObj && typeof createResultObj === 'object' && 'success' in createResultObj,
+              successValue: createResultObj?.success,
+              hasDataProperty: createResultObj && typeof createResultObj === 'object' && 'data' in createResultObj,
+              dataType: typeof createResultObj?.data,
+              isPromise: createResult instanceof Promise,
+              isMockResponse: createResultObj && createResultObj.data?.dailyTask?.id?.startsWith?.('demo-') || false,
+              responseTime: responseTime + 'ms',
+              responseSize: JSON.stringify(createResult).length + ' bytes',
+              // 添加网络拦截数据
+              actualNetworkRequest: {
+                url: actualRequestUrl,
+                method: actualRequestMethod,
+                status: actualResponseStatus,
+                requestHeaders: actualRequestHeaders,
+                requestPayload: actualRequestPayload,
+                responseHeaders: actualResponseHeaders,
+                responseBody: actualResponseBody
+              }
+            });
+            
+            // 关键诊断：检查是否实际发送了网络请求
+            if (!actualRequestUrl) {
+              console.error('❌ CRITICAL: No actual network request was detected!');
+              console.error('❌ This indicates the API call is being handled by mock/compatible service');
+              console.error('❌ API service instance type:', apiService.constructor.name);
+              console.error('❌ API service methods:', Object.getOwnPropertyNames(apiService).filter(prop => typeof (apiService as any)[prop] === 'function'));
+              
+              // 立即测试API服务类型
+              const isCompatibleApi = apiService === compatibleApiService;
+              console.error('❌ Service type check:', {
+                isCompatibleApi,
+                hasCreateDailyTask: typeof (apiService as any).createDailyTask === 'function',
+                constructorName: apiService.constructor.name
+              });
+            } else {
+              console.log('✅ Network request was successfully sent to:', actualRequestUrl);
+            }
+            
+            // 检查响应是否包含有效的dailyTask数据
+            const dailyTaskData = (createResult as any)?.data?.dailyTask;
+            if (dailyTaskData && dailyTaskData.id) {
+              console.log('✅ Valid daily task created with ID:', dailyTaskData.id);
+              console.log('📋 Daily task details:', {
+                id: dailyTaskData.id,
+                taskId: dailyTaskData.taskId,
+                date: dailyTaskData.date,
+                plannedTime: dailyTaskData.plannedTime,
+                status: dailyTaskData.status
+              });
+            } else {
+              console.warn('⚠️ API response missing daily task data:', createResult);
+            }
+            
+            onRefresh?.();
+          } catch (error) {
+            console.error('❌ TaskTimeline: createDailyTask API call failed:', error);
+            console.error('❌ Error details:', {
+              message: (error as any)?.message,
+              name: (error as any)?.name,
+              stack: (error as any)?.stack
+            });
+            
+            // 显示错误提示给用户
+            alert(`创建每日任务失败: ${(error as any)?.message || '未知错误'}`);
+          }
         }
         
       } else if (textData && draggedTask) {
@@ -243,6 +420,9 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         stack: (error as any)?.stack,
         error: error
       });
+      
+      // Show error alert to user
+      alert(`拖拽失败: ${(error as any)?.message || '未知错误'}`);
     } finally {
       setLoading(false);
       setDraggedTask(null);

@@ -24,9 +24,24 @@ export const authenticateToken = async (
       });
     }
 
+    // 🔍 DEBUG: Log token info for diagnosis
+    console.log('🔍 AUTH DEBUG: Token received', {
+      tokenLength: token.length,
+      tokenStart: token.substring(0, 20) + '...',
+      tokenEnd: '...' + token.substring(token.length - 10),
+      isDemo: token.startsWith('demo-token-')
+    });
+
     // Verify JWT token
     const decoded = verifyToken(token);
     const userId = decoded.id;
+
+    console.log('🔍 AUTH DEBUG: Token decoded', {
+      userId: userId,
+      userEmail: decoded.email,
+      userRole: decoded.role,
+      isDemo: userId === 'demo-user-id'
+    });
 
     // Handle demo users
     if (userId === 'demo-user-id') {
@@ -44,14 +59,23 @@ export const authenticateToken = async (
     }
 
     // Get user data from MongoDB for real users
+    console.log('🔍 AUTH DEBUG: Querying MongoDB for user', { userId });
     const user = await collections.users.findOne({ _id: new ObjectId(userId) });
     
     if (!user) {
+      console.error('❌ AUTH DEBUG: User not found in MongoDB', { userId });
       return res.status(404).json({
         success: false,
         error: 'User not found',
       });
     }
+
+    console.log('✅ AUTH DEBUG: User found in MongoDB', {
+      userId: user._id.toString(),
+      userEmail: user.email,
+      displayName: user.displayName,
+      role: user.role
+    });
 
     // Convert MongoDB _id to id for consistency
     const { _id, ...userWithoutId } = user;

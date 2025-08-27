@@ -133,16 +133,16 @@ const getMockDailyTasks = () => {
   const today = new Date();
   const tasks = [];
   
-  // Generate some completed tasks for the past few days
+  // Generate some completed tasks for the past few days (FIXED: 使用固定种子避免随机性)
   for (let i = 0; i < 10; i++) {
     const pastDate = new Date(today);
     pastDate.setDate(today.getDate() - i);
     const dateStr = pastDate.toISOString().split('T')[0];
     
-    // Add 1-3 completed tasks per day
-    const dailyTaskCount = Math.floor(Math.random() * 3) + 1;
+    // Add fixed number of tasks per day (不再随机)
+    const dailyTaskCount = 2; // 固定每天2个任务
     for (let j = 0; j < dailyTaskCount; j++) {
-      const taskIndex = Math.floor(Math.random() * mockTasks.length);
+      const taskIndex = (i + j) % mockTasks.length; // 使用固定模式代替随机
       const baseTask = mockTasks[taskIndex];
       
       tasks.push({
@@ -468,6 +468,17 @@ export const compatibleApiService = {
   },
 
   async updateDailyTaskStatus(taskId: string, updateData: any) {
+    // 首先尝试调用真实API保存到数据库
+    try {
+      const realApiResult = await apiService.updateDailyTaskStatus(taskId, updateData);
+      console.log('✅ Daily task status updated in database:', realApiResult);
+      return realApiResult;
+    } catch (error) {
+      console.warn('⚠️ Database update failed, using mock data:', error);
+      // 如果API调用失败，回退到mock数据（但这只是临时的）
+    }
+
+    // Mock数据回退逻辑（仅作为备份）
     const taskIndex = mockDailyTasks.findIndex(t => t.id === taskId);
     if (taskIndex === -1) {
       throw new Error('任务未找到');
@@ -493,7 +504,17 @@ export const compatibleApiService = {
   },
 
   async updateDailyTask(taskId: string, updateData: any) {
-    // Use the enhanced implementation from master while maintaining simplified interface
+    // 首先尝试调用真实API保存到数据库
+    try {
+      const realApiResult = await apiService.updateDailyTask(taskId, updateData);
+      console.log('✅ Daily task updated in database:', realApiResult);
+      return realApiResult;
+    } catch (error) {
+      console.warn('⚠️ Database update failed, using mock data:', error);
+      // 如果API调用失败，回退到mock数据（但这只是临时的）
+    }
+
+    // Mock数据回退逻辑（仅作为备份）
     const taskIndex = mockDailyTasks.findIndex(t => t.id === taskId);
     if (taskIndex === -1) {
       throw new Error('任务未找到');
@@ -835,7 +856,7 @@ export const compatibleApiService = {
     const mockChildren = [
       {
         id: 'demo-user-123',
-        name: '袁绍學',
+        name: '袁绍宸',
         email: 'yuanshao@demo.com',
         points: 240,
         level: 3,
@@ -909,10 +930,34 @@ const testApiConnection = async (timeout: number = 5000): Promise<boolean> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    // Try to connect to the actual API endpoint
-    const testUrl = process.env.REACT_APP_API_URL 
-      ? `${process.env.REACT_APP_API_URL}/health`
-      : 'http://localhost:5001/health';
+    // 构造正确的健康检查URL
+    let testUrl: string;
+    const apiUrl = process.env.REACT_APP_API_URL;
+    const apiBaseUrl = process.env.REACT_APP_API_BASE_URL;
+    
+    console.log('🔧 Environment variables:', {
+      REACT_APP_API_URL: apiUrl,
+      REACT_APP_API_BASE_URL: apiBaseUrl,
+      NODE_ENV: process.env.NODE_ENV
+    });
+    
+    if (apiUrl) {
+      // 如果API URL包含/api路径，直接添加/health (例如：http://localhost:5000/api -> http://localhost:5000/api/health)
+      if (apiUrl.includes('/api')) {
+        testUrl = `${apiUrl}/health`;
+      } else {
+        // 否则使用基础URL + /health (例如：http://localhost:5000 -> http://localhost:5000/health)
+        testUrl = `${apiUrl}/health`;
+      }
+    } else if (apiBaseUrl) {
+      // 使用REACT_APP_API_BASE_URL
+      testUrl = `${apiBaseUrl}/health`;
+    } else {
+      // 默认回退到基础健康检查端点
+      testUrl = 'http://localhost:5000/health';
+    }
+
+    console.log(`🔍 Testing API connectivity: ${testUrl}`);
 
     const response = await fetch(testUrl, {
       method: 'GET',
@@ -924,15 +969,24 @@ const testApiConnection = async (timeout: number = 5000): Promise<boolean> => {
     });
 
     clearTimeout(timeoutId);
-    return response.ok;
+    
+    if (response.ok) {
+      console.log(`✅ API connectivity test successful: ${testUrl}`);
+      return true;
+    } else {
+      console.warn(`❌ API connectivity test failed: ${testUrl} - Status: ${response.status}`);
+      return false;
+    }
   } catch (error: any) {
-    console.warn('API connectivity test failed:', error.message);
+    console.warn(`❌ API connectivity test failed: ${error.message}`);
     
     // Check specific error types for better handling
     if (error.name === 'AbortError') {
-      console.warn('API request timed out - using compatible mode');
+      console.warn('🕰️ API request timed out - using compatible mode');
     } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      console.warn('Network error detected - using compatible mode');
+      console.warn('🌐 Network error detected - using compatible mode');
+    } else {
+      console.warn(`🔧 Unexpected error: ${error.name} - ${error.message}`);
     }
     
     return false;
@@ -998,28 +1052,77 @@ export const detectNetworkAndGetApiService = async (options: {
   const { forceRefresh = false } = options;
 
   try {
-    // 检查演示模式的多种方式 (移除中文邮箱强制demo判断)
-    const isDemoMode = 
-      localStorage.getItem('isDemo') === 'true' ||
-      localStorage.getItem('currentUser')?.includes('demo') ||
-      localStorage.getItem('user_email')?.includes('demo') ||
-      localStorage.getItem('auth_token')?.includes('demo_jwt_token') ||
-      localStorage.getItem('auth_token')?.startsWith('demo-token') ||
-      ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || ''); // 保留特定演示账号
+    // 获取用户认证信息
+    const authToken = localStorage.getItem('token');
+    const userEmail = localStorage.getItem('user_email');
+    const isDemo = localStorage.getItem('isDemo');
+    
+    console.log('🔍 API Service Detection Debug:', {
+      hasAuthToken: !!authToken,
+      tokenLength: authToken?.length,
+      tokenStart: authToken?.substring(0, 20) + '...',
+      userEmail: userEmail,
+      isDemo: isDemo,
+      isDemoToken: authToken?.startsWith('demo-token') || authToken?.includes('demo_jwt_token')
+    });
+    
+    // 检查是否为确认的演示模式
+    const isConfirmedDemoMode = 
+      isDemo === 'true' ||
+      ['爸爸', '妈妈'].includes(userEmail || '') || // 特定演示账号
+      userEmail?.includes('demo'); // demo email
 
-    const forceCompatibleMode = 
-      process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
-      localStorage.getItem('use_compatible_api') === 'true' ||
-      localStorage.getItem('api_mode') === 'compatible' ||
-      isDemoMode; // 演示模式强制使用兼容API
-
-    if (forceCompatibleMode) {
-      const reason = isDemoMode ? 'demo mode' : 'configuration';
-      console.log(`🔄 Using compatible API service (forced by ${reason})`);
+    // 检查是否有有效的真实JWT token
+    const hasValidRealJWT = authToken && 
+      !authToken.includes('demo_jwt_token') && 
+      !authToken.startsWith('demo-token') &&
+      authToken.length > 50 && // 真实JWT通常很长
+      authToken.includes('.'); // JWT格式通常包含点号
+    
+    // 如果确认是演示模式，使用兼容API
+    if (isConfirmedDemoMode) {
+      console.log(`🔄 Using compatible API service (confirmed demo mode for: ${userEmail})`);
+      return compatibleApiService;
+    }
+    
+    // 如果有有效的真实JWT token，尝试使用真实API
+    if (hasValidRealJWT && userEmail && !isConfirmedDemoMode) {
+      console.log(`✅ Attempting real API service (valid JWT for: ${userEmail})`);
+      
+      // 测试API连接性
+      const networkStatus = await getCachedNetworkStatus(forceRefresh);
+      
+      if (networkStatus.isOnline && networkStatus.apiWorking) {
+        console.log(`✅ Using real API service (API confirmed working)`);
+        localStorage.removeItem('api_mode'); 
+        return apiService;
+      } else {
+        console.warn(`⚠️ Real API unavailable (online: ${networkStatus.isOnline}, working: ${networkStatus.apiWorking})`);
+        console.warn(`🔄 Falling back to compatible mode for real user: ${userEmail}`);
+        localStorage.setItem('api_mode', 'compatible');
+        return compatibleApiService;
+      }
+    }
+    
+    // 如果有demo token但用户名不是demo用户，可能是认证失败的情况
+    if (authToken?.startsWith('demo-token') && userEmail && !isConfirmedDemoMode) {
+      console.warn(`⚠️ Demo token detected for non-demo user: ${userEmail}`);
+      console.warn(`🔄 This may indicate authentication failure - using compatible mode`);
       return compatibleApiService;
     }
 
-    // Check network status
+    // 检查强制兼容模式设置
+    const forceCompatibleMode = 
+      process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
+      localStorage.getItem('use_compatible_api') === 'true' ||
+      localStorage.getItem('api_mode') === 'compatible';
+
+    if (forceCompatibleMode) {
+      console.log(`🔄 Using compatible API service (forced by configuration)`);
+      return compatibleApiService;
+    }
+
+    // 默认情况：测试网络连接
     const networkStatus = await getCachedNetworkStatus(forceRefresh);
     
     if (!networkStatus.isOnline) {
@@ -1029,15 +1132,13 @@ export const detectNetworkAndGetApiService = async (options: {
 
     if (!networkStatus.apiWorking) {
       console.log('🔄 Using compatible API service (API unreachable)');
-      
-      // Store preference for subsequent requests
       localStorage.setItem('api_mode', 'compatible');
       return compatibleApiService;
     }
 
-    // API is working, use real service
-    console.log('✅ Using real API service');
-    localStorage.removeItem('api_mode'); // Clear any cached compatible mode preference
+    // 网络正常但没有有效token，尝试使用真实API（可能是未登录状态）
+    console.log('✅ Using real API service (network available, no authentication constraints)');
+    localStorage.removeItem('api_mode');
     return apiService;
 
   } catch (error) {
@@ -1050,30 +1151,60 @@ export const detectNetworkAndGetApiService = async (options: {
  * Synchronous version for cases where async detection isn't possible
  */
 export const detectNetworkAndGetApiServiceSync = () => {
-  // 检查演示模式的多种方式 (移除中文邮箱强制demo判断)
-  const isDemoMode = 
-    localStorage.getItem('isDemo') === 'true' ||
-    localStorage.getItem('currentUser')?.includes('demo') ||
-    localStorage.getItem('user_email')?.includes('demo') ||
-    localStorage.getItem('auth_token')?.includes('demo_jwt_token') ||
-    localStorage.getItem('auth_token')?.startsWith('demo-token') ||
-    ['爸爸', '妈妈', '袁绍學'].includes(localStorage.getItem('user_email') || ''); // 保留特定演示账号
+  // 获取用户认证信息
+  const authToken = localStorage.getItem('token');
+  const userEmail = localStorage.getItem('user_email');
+  const isDemo = localStorage.getItem('isDemo');
+  
+  console.log('🔍 API Service Detection Debug (Sync):', {
+    hasAuthToken: !!authToken,
+    tokenLength: authToken?.length,
+    tokenStart: authToken?.substring(0, 20) + '...',
+    userEmail: userEmail,
+    isDemo: isDemo,
+    isDemoToken: authToken?.startsWith('demo-token') || authToken?.includes('demo_jwt_token')
+  });
+  
+  // 检查是否为确认的演示模式
+  const isConfirmedDemoMode = 
+    isDemo === 'true' ||
+    ['爸爸', '妈妈'].includes(userEmail || '') || // 特定演示账号
+    userEmail?.includes('demo'); // demo email
 
+  // 检查是否有有效的真实JWT token
+  const hasValidRealJWT = authToken && 
+    !authToken.includes('demo_jwt_token') && 
+    !authToken.startsWith('demo-token') &&
+    authToken.length > 50 && // 真实JWT通常很长
+    authToken.includes('.'); // JWT格式通常包含点号
+  
+  // 如果确认是演示模式，使用兼容API
+  if (isConfirmedDemoMode) {
+    console.log(`🔄 Using compatible API service (sync - confirmed demo mode for: ${userEmail})`);
+    return compatibleApiService;
+  }
+  
+  // 如果有有效的真实JWT token，使用真实API
+  if (hasValidRealJWT && userEmail && !isConfirmedDemoMode) {
+    console.log(`✅ Using real API service (sync - valid JWT for: ${userEmail})`);
+    return apiService;
+  }
+  
+  // 如果有demo token但用户名不是demo用户，可能是认证失败的情况
+  if (authToken?.startsWith('demo-token') && userEmail && !isConfirmedDemoMode) {
+    console.warn(`⚠️ Demo token detected for non-demo user (sync): ${userEmail}`);
+    console.warn(`🔄 This may indicate authentication failure - using compatible mode`);
+    return compatibleApiService;
+  }
+
+  // 检查强制兼容模式设置
   const forceCompatibleMode = 
     process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
     localStorage.getItem('use_compatible_api') === 'true' ||
-    localStorage.getItem('api_mode') === 'compatible' ||
-    isDemoMode; // 演示模式强制使用兼容API
+    localStorage.getItem('api_mode') === 'compatible';
 
   if (forceCompatibleMode) {
-    const reason = isDemoMode ? 'demo mode' : 'configuration';
-    console.log(`🔄 Using compatible API service (sync - forced by ${reason})`);
-    console.log('📋 Demo mode indicators:', {
-      isDemo: localStorage.getItem('isDemo'),
-      currentUser: localStorage.getItem('currentUser')?.slice(0, 50),
-      userEmail: localStorage.getItem('user_email'),
-      authToken: localStorage.getItem('auth_token')?.slice(0, 30)
-    });
+    console.log(`🔄 Using compatible API service (sync - forced by configuration)`);
     return compatibleApiService;
   }
 
@@ -1092,8 +1223,8 @@ export const detectNetworkAndGetApiServiceSync = () => {
     }
   }
 
-  // Default to real API service for sync calls
-  console.log('✅ Using real API service (sync)');
+  // 默认使用真实API服务（同步调用）
+  console.log('✅ Using real API service (sync - network available)');
   return apiService;
 };
 
@@ -1108,6 +1239,79 @@ export const resetNetworkCache = () => {
   };
   localStorage.removeItem('api_mode');
   console.log('🔄 Network cache reset');
+};
+
+/**
+ * 全面重置API状态和缓存的工具函数
+ */
+export const resetApiState = async () => {
+  console.log('🛠️ Starting comprehensive API state reset...');
+  
+  // 重置网络状态缓存
+  resetNetworkCache();
+  
+  // 清除相关的localStorage项
+  const itemsToRemove = ['api_mode', 'use_compatible_api'];
+  itemsToRemove.forEach(item => {
+    if (localStorage.getItem(item)) {
+      console.log(`🗑️ Removing localStorage item: ${item}`);
+      localStorage.removeItem(item);
+    }
+  });
+  
+  // 测试API连接
+  console.log('🔍 Testing API connectivity after reset...');
+  const testResult = await testApiConnection(3000);
+  
+  console.log(`🎯 API connectivity test result: ${testResult ? '✅ Success' : '❌ Failed'}`);
+  
+  // 获取更新后的API服务
+  const apiService = await detectNetworkAndGetApiService({ forceRefresh: true });
+  console.log('🎯 Selected API service:', apiService === compatibleApiService ? 'Compatible (Demo)' : 'Real (MongoDB)');
+  
+  return {
+    networkReset: true,
+    apiConnectivity: testResult,
+    selectedService: apiService === compatibleApiService ? 'compatible' : 'real'
+  };
+};
+
+/**
+ * 诊断当前API状态的工具函数
+ */
+export const diagnoseApiState = () => {
+  const authToken = localStorage.getItem('token');
+  const userEmail = localStorage.getItem('user_email');
+  const isDemo = localStorage.getItem('isDemo');
+  const apiMode = localStorage.getItem('api_mode');
+  
+  const diagnostics = {
+    timestamp: new Date().toISOString(),
+    userInfo: {
+      email: userEmail,
+      hasToken: !!authToken,
+      tokenLength: authToken?.length || 0,
+      tokenType: authToken?.startsWith('demo-token') ? 'demo' : authToken?.includes('.') ? 'jwt' : 'unknown',
+      isDemoMode: isDemo
+    },
+    networkStatus: {
+      isOnline: navigator.onLine,
+      cacheAge: Date.now() - networkStatusCache.lastChecked,
+      cachedApiWorking: networkStatusCache.apiWorking
+    },
+    localStorage: {
+      apiMode: apiMode,
+      forceCompatible: localStorage.getItem('use_compatible_api')
+    },
+    environment: {
+      apiUrl: process.env.REACT_APP_API_URL,
+      apiBaseUrl: process.env.REACT_APP_API_BASE_URL,
+      forceCompatible: process.env.REACT_APP_USE_COMPATIBLE_API
+    }
+  };
+  
+  console.log('🔍 API State Diagnostics:', diagnostics);
+  return diagnostics;
 };
 
 /**

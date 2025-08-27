@@ -1,11 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, jest } from '@jest/globals';
 import { defaultTasks, initializeDefaultTasks } from '../defaultTasks';
 import { collections } from '../../config/mongodb';
 
-vi.mock('../../config/mongodb', () => ({
+jest.mock('../../config/mongodb', () => ({
   collections: {
     tasks: {
-      add: vi.fn().mockResolvedValue(undefined),
+      add: jest.fn().mockResolvedValue(undefined),
     },
   },
 }));
@@ -19,7 +19,7 @@ describe('defaultTasks utils', () => {
 
   it('initializes tasks to database', async () => {
     // Arrange
-    const mockAdd = vi.mocked(collections.tasks.add);
+    const mockAdd = jest.mocked(collections.tasks.add);
     // Act
     await initializeDefaultTasks('system');
     // Assert

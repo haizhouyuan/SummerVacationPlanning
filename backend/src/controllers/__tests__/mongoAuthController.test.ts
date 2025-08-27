@@ -7,17 +7,23 @@ import request from 'supertest';
 import { Express } from 'express';
 import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
+import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 import { createTestApp } from '../../test-utils/testApp';
-import { User } from '../../models/User';
+import { User, UserModel } from '../../models/User';
 
 describe('MongoAuth Controller', () => {
   let app: Express;
   let mongoServer: MongoMemoryServer;
   
   beforeAll(async () => {
+    // 断开现有连接
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
+    
     // 启动内存MongoDB
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
@@ -40,7 +46,7 @@ describe('MongoAuth Controller', () => {
   describe('POST /api/auth/register', () => {
     test('应该成功注册新学生用户', async () => {
       const userData = {
-        username: '测试学生',
+        displayName: '测试学生',
         email: 'student@test.com',
         password: 'SecurePass123!',
         role: 'student'
@@ -54,7 +60,7 @@ describe('MongoAuth Controller', () => {
       expect(response.body).toHaveProperty('token');
       expect(response.body).toHaveProperty('user');
       expect(response.body.user).toMatchObject({
-        username: userData.username,
+        displayName: userData.displayName,
         email: userData.email,
         role: 'student',
         points: 0
@@ -64,12 +70,12 @@ describe('MongoAuth Controller', () => {
       // 验证数据库中的用户
       const dbUser = await User.findById(response.body.user.id);
       expect(dbUser).toBeTruthy();
-      expect(dbUser?.username).toBe(userData.username);
+      expect(dbUser?.displayName).toBe(userData.displayName);
     });
     
     test('应该成功注册新家长用户', async () => {
       const userData = {
-        username: '测试家长',
+        displayName: '测试家长',
         email: 'parent@test.com',
         password: 'SecurePass123!',
         role: 'parent'
@@ -87,7 +93,7 @@ describe('MongoAuth Controller', () => {
     test('应该拒绝重复邮箱注册', async () => {
       // 先注册一个用户
       const existingUser = {
-        username: '已存在用户',
+        displayName: '已存在用户',
         email: 'existing@test.com',
         password: await bcrypt.hash('password123', 10),
         role: 'student' as const,
@@ -97,7 +103,7 @@ describe('MongoAuth Controller', () => {
       
       // 尝试用相同邮箱注册
       const userData = {
-        username: '另一个用户',
+        displayName: '另一个用户',
         email: 'existing@test.com',
         password: 'AnotherPass123!',
         role: 'student'
@@ -123,7 +129,7 @@ describe('MongoAuth Controller', () => {
         const response = await request(app)
           .post('/api/auth/register')
           .send({
-            username: '测试用户',
+            displayName: '测试用户',
             email: `test_${Date.now()}@test.com`,
             password,
             role: 'student'
@@ -136,10 +142,10 @@ describe('MongoAuth Controller', () => {
     
     test('应该验证必填字段', async () => {
       const incompleteData = [
-        { email: 'test@test.com', password: 'Pass123!', role: 'student' }, // 缺用户名
-        { username: '用户', password: 'Pass123!', role: 'student' }, // 缺邮箱
-        { username: '用户', email: 'test@test.com', role: 'student' }, // 缺密码
-        { username: '用户', email: 'test@test.com', password: 'Pass123!' } // 缺角色
+        { email: 'test@test.com', password: 'Pass123!', role: 'student' }, // 缺displayName
+        { displayName: '用户', password: 'Pass123!', role: 'student' }, // 缺邮箱
+        { displayName: '用户', email: 'test@test.com', role: 'student' }, // 缺密码
+        { displayName: '用户', email: 'test@test.com', password: 'Pass123!' } // 缺角色
       ];
       
       for (const data of incompleteData) {
@@ -157,7 +163,7 @@ describe('MongoAuth Controller', () => {
         await request(app)
           .post('/api/auth/register')
           .send({
-            username: '测试用户',
+            displayName: '测试用户',
             email,
             password: 'ValidPass123!',
             role: 'student'
@@ -170,7 +176,7 @@ describe('MongoAuth Controller', () => {
       await request(app)
         .post('/api/auth/register')
         .send({
-          username: '测试用户',
+          displayName: '测试用户',
           email: 'test@test.com',
           password: 'ValidPass123!',
           role: 'invalid_role'
@@ -185,7 +191,7 @@ describe('MongoAuth Controller', () => {
     beforeEach(async () => {
       // 创建测试用户
       testUser = await User.create({
-        username: '测试用户',
+        displayName: '测试用户',
         email: 'testuser@test.com',
         password: await bcrypt.hash('TestPass123!', 10),
         role: 'student',
@@ -206,7 +212,7 @@ describe('MongoAuth Controller', () => {
       expect(response.body).toHaveProperty('user');
       expect(response.body.user).toMatchObject({
         id: testUser._id.toString(),
-        username: '测试用户',
+        displayName: '测试用户',
         email: 'testuser@test.com',
         role: 'student',
         points: 100
@@ -264,7 +270,7 @@ describe('MongoAuth Controller', () => {
     
     beforeEach(async () => {
       testUser = await User.create({
-        username: '测试用户',
+        displayName: '测试用户',
         email: 'testuser@test.com',
         password: await bcrypt.hash('TestPass123!', 10),
         role: 'student',
@@ -326,7 +332,7 @@ describe('MongoAuth Controller', () => {
     
     beforeEach(async () => {
       testUser = await User.create({
-        username: '测试用户',
+        displayName: '测试用户',
         email: 'testuser@test.com',
         password: await bcrypt.hash('TestPass123!', 10),
         role: 'student',
@@ -361,7 +367,7 @@ describe('MongoAuth Controller', () => {
     test('密码应该被正确哈希', async () => {
       const password = 'TestPassword123!';
       const userData = {
-        username: '安全测试',
+        displayName: '安全测试',
         email: 'security@test.com',
         password,
         role: 'student'
@@ -372,20 +378,20 @@ describe('MongoAuth Controller', () => {
         .send(userData)
         .expect(201);
       
-      // 从数据库获取用户
-      const dbUser = await User.findById(response.body.user.id);
+      // 从数据库获取原始文档（包含密码字段）
+      const dbUserDoc = await UserModel.findRawDocument({ _id: new ObjectId(response.body.user.id) });
       
       // 密码不应该是明文
-      expect(dbUser?.password).not.toBe(password);
+      expect(dbUserDoc?.password).not.toBe(password);
       
       // 应该能用bcrypt验证
-      const isValidPassword = await bcrypt.compare(password, dbUser?.password || '');
+      const isValidPassword = await bcrypt.compare(password, dbUserDoc?.password || '');
       expect(isValidPassword).toBe(true);
     });
     
     test('响应中不应包含密码', async () => {
       const userData = {
-        username: '安全测试',
+        displayName: '安全测试',
         email: 'security@test.com',
         password: 'TestPassword123!',
         role: 'student'

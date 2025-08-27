@@ -6,6 +6,8 @@ import TopNavigation from '../components/TopNavigation';
 // import TaskCard from '../components/TaskCard';
 import TaskTimeline from '../components/TaskTimeline';
 import TaskCreationForm from '../components/TaskCreationForm';
+import ApiDebugPanel from '../components/ApiDebugPanel';
+import ApiTestPanel from '../components/ApiTestPanel';
 
 const TaskPlanning: React.FC = () => {
   const { user } = useAuth();
@@ -51,9 +53,13 @@ const TaskPlanning: React.FC = () => {
 
   const loadDailyTasks = async () => {
     try {
+      console.log('📥 TaskPlanning: Loading daily tasks for date:', selectedDate);
       const apiService = detectNetworkAndGetApiServiceSync();
       const response = await apiService.getDailyTasks({ date: selectedDate });
-      setDailyTasks((response as any).data.dailyTasks);
+      console.log('📥 TaskPlanning: Daily tasks response:', response);
+      const dailyTasksList = (response as any).data.dailyTasks;
+      console.log('📥 TaskPlanning: Setting daily tasks:', dailyTasksList);
+      setDailyTasks(dailyTasksList);
     } catch (error: any) {
       console.error('Error loading daily tasks:', error);
       console.error('Failed to load daily tasks:', error);
@@ -242,8 +248,12 @@ const TaskPlanning: React.FC = () => {
                         key={task.id}
                         draggable={true}
                         onDragStart={(e) => {
-                          e.dataTransfer.setData('application/json', JSON.stringify(task));
+                          console.log('🚀 TaskPlanning: Drag started for task:', task);
+                          const taskData = JSON.stringify(task);
+                          console.log('📦 TaskPlanning: Setting drag data:', taskData);
+                          e.dataTransfer.setData('application/json', taskData);
                           e.dataTransfer.effectAllowed = 'copy';
+                          console.log('✅ TaskPlanning: Drag data set successfully');
                         }}
                         onDragEnd={(e) => {
                         }}
@@ -514,6 +524,12 @@ const TaskPlanning: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* API Debug Panel */}
+      <ApiDebugPanel />
+      
+      {/* API Test Panel */}
+      <ApiTestPanel />
       </div>
     </div>
   );

@@ -104,10 +104,12 @@ describe('DateUtils Tests', () => {
     });
 
     it('应该处理年底的周号', () => {
-      const dec31 = new Date(2024, 11, 31);
+      // Use UTC date to avoid timezone issues
+      // December 31, 2024 is a Tuesday, which falls in week 1 of 2025
+      // according to ISO 8601 (week starts on Monday, week 1 contains first Thursday)
+      const dec31 = new Date(Date.UTC(2024, 11, 31));
       const weekNum = getWeekNumber(dec31);
-      expect(weekNum).toBeGreaterThan(50);
-      expect(weekNum).toBeLessThanOrEqual(53);
+      expect(weekNum).toBe(1); // Week 1 of 2025
     });
   });
 

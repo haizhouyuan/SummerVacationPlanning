@@ -27,7 +27,7 @@ jest.mock('../../config/mongodb', () => {
         find: jest.fn().mockReturnValue({ sort: jest.fn().mockReturnThis(), toArray: jest.fn().mockResolvedValue(dailyTasks) }),
       },
       tasks: {
-        find: vi.fn((query: any) => {
+        find: jest.fn((query: any) => {
           if (query && query._id && query._id.$in) {
             return { toArray: jest.fn().mockResolvedValue(analyzeTasks) };
           }

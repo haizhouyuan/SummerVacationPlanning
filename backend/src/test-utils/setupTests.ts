@@ -4,13 +4,16 @@
  */
 
 import 'jest';
+import { setupTestDatabase, teardownTestDatabase } from '../config/testDatabase';
 
 // 全局测试设置
-beforeAll(() => {
+beforeAll(async () => {
   // 设置测试环境变量
   process.env.NODE_ENV = 'test';
   process.env.JWT_SECRET = 'test-secret-key';
-  process.env.MONGODB_URI = 'memory://test';
+  
+  // 设置测试数据库
+  await setupTestDatabase();
   
   // 抑制console.log输出以保持测试输出清洁
   if (process.env.SUPPRESS_LOGS !== 'false') {
@@ -20,7 +23,10 @@ beforeAll(() => {
   }
 });
 
-afterAll(() => {
+afterAll(async () => {
+  // 清理测试数据库
+  await teardownTestDatabase();
+  
   // 恢复console输出
   if (process.env.SUPPRESS_LOGS !== 'false') {
     const logSpy = jest.spyOn(console, 'log');

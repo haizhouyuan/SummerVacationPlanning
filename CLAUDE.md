@@ -253,6 +253,66 @@ npm test -- --coverage      # Run tests with coverage report
 # E2E tests (Playwright)
 npx playwright test         # Run all end-to-end tests headlessly
 
+Playwright MCP 配置与使用规范
+
+**重要说明：** 项目已配置专用的 Playwright MCP 隔离机制，确保多终端并行工作且强制使用 Edge 浏览器。
+
+**启动方式：**
+```bash
+# Windows (推荐)
+scripts\start-claude-isolated.bat
+
+# Linux/macOS
+bash scripts/start-claude-isolated.sh
+
+# 手动生成配置
+node scripts/playwright-config-generator.js generate
+```
+
+**MCP 使用硬性规则（MUST FOLLOW）：**
+
+1. **数据返回限制：** 任何 Playwright 操作禁止返回 DOM、数组或大对象；只返回 "OK"/"FAIL"/简短字符串
+2. **选择器优先级：** 优先使用 `getByTestId` / `getByRole` / locator，避免 `page.evaluate`
+3. **evaluate 限制：** 若必须使用 evaluate，只返回标量，且不得超过 64 字符
+4. **资源过滤：** 自动阻断 image/media/font 和第三方资源以提升性能
+5. **静默模式：** 默认开启静默模式 (`silent=true`)，除非明确要求详细输出
+6. **超时控制：** 所有操作默认 30 秒超时，避免长时间等待
+7. **会话隔离：** 每个终端使用独立的用户数据目录和端口，避免冲突
+
+**推荐使用模式：**
+
+```javascript
+// ✅ 推荐 - 使用 testid
+await page.getByTestId('student-demo').click();
+
+// ✅ 推荐 - 使用角色选择器
+await page.getByRole('button', { name: '学生演示' }).click();
+
+// ✅ 推荐 - 受限的 evaluate
+const result = await page.evaluate(() => {
+  const btn = [...document.querySelectorAll('button')]
+    .find(b => b.textContent.includes('学生演示'));
+  if (btn) { btn.click(); return 'OK'; }
+  return 'NOT_FOUND';
+});
+
+// ❌ 避免 - 返回大对象
+// await page.evaluate(() => document.querySelector(...)) // 会被序列化成超大 JSON
+
+// ❌ 避免 - jQuery 风格选择器
+// button:contains("学生演示") // 不是标准 CSS 选择器
+```
+
+**性能优化工具：**
+- 使用 `tools/playwright-helpers.js` 中的优化方法
+- 自动资源过滤和数据截断
+- 智能重试和错误处理
+
+**Edge 浏览器配置：**
+- 强制使用 Microsoft Edge 而非 Chrome
+- 优化启动参数提升性能
+- 支持调试端口和用户数据隔离
+
 Recommended Playwright Workflow with Claude Code
 
 Use MCP for interactive debugging. Run step-by-step actions like navigation, clicking, resizing the viewport, or taking screenshots. For example:

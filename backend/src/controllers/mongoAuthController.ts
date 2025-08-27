@@ -134,7 +134,7 @@ export const login = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    if (!email || password === undefined || password === null) {
       return res.status(400).json({
         success: false,
         error: 'Email and password are required',
@@ -151,8 +151,16 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Check password - handle empty passwords for preset users
+    let isPasswordValid = false;
+    
+    if (password === '' || password === null || password === undefined) {
+      // For empty passwords, check if the stored hash matches an empty string hash
+      isPasswordValid = await bcrypt.compare('', user.password);
+    } else {
+      // For non-empty passwords, do normal comparison
+      isPasswordValid = await bcrypt.compare(password, user.password);
+    }
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -482,16 +490,25 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       date: { $gte: weekStart, $lte: weekEnd }
     }).toArray();
 
-    // Calculate comprehensive weekly statistics
+    // Calculate comprehensive weekly statistics including pending points
+    const weeklyApprovedTasks = weeklyTasks.filter((task: any) => task.approvalStatus === 'approved');
+    const weeklyPendingTasks = weeklyTasks.filter((task: any) => task.approvalStatus === 'pending' && task.status === 'completed');
+    
+    const weeklyPointsEarned = weeklyApprovedTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0);
+    const weeklyPointsPending = weeklyPendingTasks.reduce((sum: number, task: any) => sum + (task.pendingPoints || 0), 0);
+    
     const weeklyStats = {
       completed: weeklyTasks.filter((task: any) => task.status === 'completed').length,
       planned: weeklyTasks.filter((task: any) => task.status === 'planned').length,
       inProgress: weeklyTasks.filter((task: any) => task.status === 'in_progress').length,
       skipped: weeklyTasks.filter((task: any) => task.status === 'skipped').length,
       total: weeklyTasks.length,
-      totalPointsEarned: weeklyTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0),
+      totalPointsEarned: weeklyPointsEarned,
+      totalPointsPending: weeklyPointsPending,
+      totalPointsWeekly: weeklyPointsEarned + weeklyPointsPending, // Include both earned and pending
+      tasksAwaitingApproval: weeklyPendingTasks.length,
       completionRate: weeklyTasks.length > 0 ? Math.round((weeklyTasks.filter((task: any) => task.status === 'completed').length / weeklyTasks.length) * 100) : 0,
-      averagePointsPerTask: weeklyTasks.length > 0 ? Math.round(weeklyTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0) / weeklyTasks.length) : 0,
+      averagePointsPerTask: weeklyTasks.length > 0 ? Math.round((weeklyPointsEarned + weeklyPointsPending) / weeklyTasks.length) : 0,
     };
 
     // Enhanced achievements calculation
@@ -504,12 +521,22 @@ export const getDashboardStats = async (req: AuthRequest, res: Response) => {
       date: today
     }).toArray();
     
+    // Calculate today's points including both earned and pending points
+    const approvedTasksToday = todayTasks.filter((task: any) => task.approvalStatus === 'approved');
+    const pendingTasksToday = todayTasks.filter((task: any) => task.approvalStatus === 'pending' && task.status === 'completed');
+    
+    const todayPointsEarned = approvedTasksToday.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0);
+    const todayPointsPending = pendingTasksToday.reduce((sum: number, task: any) => sum + (task.pendingPoints || 0), 0);
+    
     const todayStats = {
       total: todayTasks.length,
       completed: todayTasks.filter((task: any) => task.status === 'completed').length,
       planned: todayTasks.filter((task: any) => task.status === 'planned').length,
       inProgress: todayTasks.filter((task: any) => task.status === 'in_progress').length,
-      pointsEarned: todayTasks.reduce((sum: number, task: any) => sum + (task.pointsEarned || 0), 0),
+      pointsEarned: todayPointsEarned,
+      pointsPending: todayPointsPending,
+      totalPointsToday: todayPointsEarned + todayPointsPending, // Include both approved and pending
+      tasksAwaitingApproval: pendingTasksToday.length,
     };
 
     const dashboardStats = {

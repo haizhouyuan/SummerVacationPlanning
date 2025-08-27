@@ -24,7 +24,7 @@ interface PendingTask {
     fileSize?: number;
   }>;
   notes: string;
-  submittedAt: Date;
+  submittedAt: Date | string; // 支持Date对象和字符串格式
   status: 'pending' | 'approved' | 'rejected';
   pointsEarned: number;
 }
@@ -62,10 +62,16 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
       if (response.success) {
         const tasks = response.data.tasks || [];
         
+        // 转换日期字段并处理数据
+        const processedTasks = tasks.map((task: any) => ({
+          ...task,
+          submittedAt: task.submittedAt ? (typeof task.submittedAt === 'string' ? new Date(task.submittedAt) : task.submittedAt) : new Date()
+        }));
+        
         // Separate tasks by approval status
-        setPendingTasks(tasks.filter((task: PendingTask) => task.status === 'pending'));
-        setApprovedTasks(tasks.filter((task: PendingTask) => task.status === 'approved'));
-        setRejectedTasks(tasks.filter((task: PendingTask) => task.status === 'rejected'));
+        setPendingTasks(processedTasks.filter((task: PendingTask) => task.status === 'pending'));
+        setApprovedTasks(processedTasks.filter((task: PendingTask) => task.status === 'approved'));
+        setRejectedTasks(processedTasks.filter((task: PendingTask) => task.status === 'rejected'));
       } else {
         setError('加载待审批任务失败');
       }
@@ -141,16 +147,29 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
     }
   };
 
-  const formatTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
+  const formatTimeAgo = (date: Date | string) => {
+    try {
+      // 确保输入被转换为Date对象
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      
+      // 检查日期是否有效
+      if (!dateObj || isNaN(dateObj.getTime())) {
+        return '时间未知';
+      }
 
-    if (diffHours < 1) return '刚刚';
-    if (diffHours < 24) return `${diffHours}小时前`;
-    if (diffDays < 7) return `${diffDays}天前`;
-    return date.toLocaleDateString();
+      const now = new Date();
+      const diffMs = now.getTime() - dateObj.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffHours < 1) return '刚刚';
+      if (diffHours < 24) return `${diffHours}小时前`;
+      if (diffDays < 7) return `${diffDays}天前`;
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      console.warn('Error formatting date:', error, 'Input:', date);
+      return '时间未知';
+    }
   };
 
   const getCurrentTasks = () => {
@@ -270,7 +289,7 @@ const TaskApprovalWorkflow: React.FC<TaskApprovalWorkflowProps> = ({ isOpen, onC
                         <p className="text-sm text-cartoon-gray mb-2">{task.task.description}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-cartoon-gray">
-                            提交于 {formatTimeAgo(task.submittedAt)}
+                            提交于 {task.submittedAt ? formatTimeAgo(task.submittedAt) : '时间未知'}
                           </span>
                           <span className="text-xs bg-cartoon-blue/10 text-cartoon-blue px-2 py-1 rounded-cartoon">
                             {(task.evidenceText ? 1 : 0) + (task.evidenceMedia?.length || 0)} 个证据

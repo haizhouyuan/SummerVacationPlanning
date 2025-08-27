@@ -134,10 +134,14 @@ export const calculateCompletionRate = (completed: number, total: number): numbe
 };
 
 /**
- * Calculate average value
+ * Calculate average value with proper rounding
+ * Uses custom rounding to handle negative numbers correctly
  */
 export const calculateAverage = (values: number[]): number => {
   if (values.length === 0) return 0;
   const sum = values.reduce((acc, val) => acc + val, 0);
-  return Math.round(sum / values.length);
+  const average = sum / values.length;
+  
+  // Custom rounding that handles negative numbers correctly
+  return average >= 0 ? Math.floor(average + 0.5) : Math.ceil(average - 0.5);
 };

@@ -26,7 +26,7 @@ export class TaskModel {
       difficulty: taskData.difficulty || 'medium',
       estimatedTime: taskData.estimatedTime || 30,
       points: taskData.points || 10,
-      requiresEvidence: taskData.requiresEvidence || false,
+      requiresEvidence: taskData.requiresEvidence !== undefined ? taskData.requiresEvidence : true,
       evidenceTypes: taskData.evidenceTypes || ['text'],
       tags: taskData.tags || [],
       createdBy: taskData.createdBy!,

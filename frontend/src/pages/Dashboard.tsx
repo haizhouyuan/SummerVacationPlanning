@@ -251,11 +251,11 @@ const Dashboard: React.FC = () => {
       const isDemoMode = localStorage.getItem('isDemo') === 'true';
       if (!isDemoMode) {
         const apiService = detectNetworkAndGetApiServiceSync();
-        // Use updateDailyTaskStatus instead of completeTask
+        // CRITICAL FIX: Don't pass pointsEarned - let backend handle approval flow
         await apiService.updateDailyTaskStatus(taskId, { 
           status: 'completed',
-          completedAt: new Date(),
-          pointsEarned: task.task?.points || 0
+          completedAt: new Date()
+          // Removed pointsEarned - backend will set pendingPoints and approvalStatus: 'pending'
         });
         
         // Refresh dashboard stats

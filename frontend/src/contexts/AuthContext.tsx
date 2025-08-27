@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, AuthContextType } from '../types';
-import { compatibleAuthService } from '../services/compatibleAuth';
+import { mongoAuthService } from '../services/mongoAuth';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -23,8 +23,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        if (compatibleAuthService.isAuthenticated()) {
-          const userProfile = await compatibleAuthService.getProfile();
+        if (mongoAuthService.isAuthenticated()) {
+          const userProfile = await mongoAuthService.getProfile();
           setUser(userProfile);
           
           // Hide the static homepage content when user is authenticated
@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string, navigate?: any) => {
     try {
-      const result = await compatibleAuthService.login(email, password);
+      const result = await mongoAuthService.login(email, password);
       setUser(result.user);
       
       // 根据角色自动跳转
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     parentEmail?: string
   ) => {
     try {
-      const result = await compatibleAuthService.register(email, password, displayName, role, parentEmail);
+      const result = await mongoAuthService.register(email, password, displayName, role, parentEmail);
       setUser(result.user);
       
       // Hide the static homepage content when user registers
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await compatibleAuthService.logout();
+      await mongoAuthService.logout();
       setUser(null);
       
       // Show the static homepage content when user logs out
@@ -109,7 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (displayName?: string, avatar?: string) => {
     try {
-      const updatedUser = await compatibleAuthService.updateProfile(displayName, avatar);
+      const updatedUser = await mongoAuthService.updateProfile(displayName, avatar);
       setUser(updatedUser);
     } catch (error) {
       throw error;
@@ -118,8 +118,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshUser = async () => {
     try {
-      if (compatibleAuthService.isAuthenticated()) {
-        const userProfile = await compatibleAuthService.getProfile();
+      if (mongoAuthService.isAuthenticated()) {
+        const userProfile = await mongoAuthService.getProfile();
         setUser(userProfile);
       }
     } catch (error) {

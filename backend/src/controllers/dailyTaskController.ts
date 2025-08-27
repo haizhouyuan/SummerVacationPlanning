@@ -8,14 +8,34 @@ import { getCurrentWeek } from '../utils/dateUtils';
 import { businessLogger } from '../config/logger';
 import { logBusinessOperation } from '../middleware/loggerMiddleware';
 
+// Helper function to validate ObjectId format
+const isValidObjectId = (id: string): boolean => {
+  return ObjectId.isValid(id);
+};
+
+// Helper function to safely convert string to ObjectId
+const toObjectId = (id: string): ObjectId => {
+  if (!isValidObjectId(id)) {
+    throw new Error(`Invalid ObjectId format: ${id}`);
+  }
+  return new ObjectId(id);
+};
+
 export const createDailyTask = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
+      console.log('🔐 createDailyTask: User not authenticated');
       return res.status(401).json({
         success: false,
         error: 'User not authenticated',
       });
     }
+
+    console.log('🚀 createDailyTask: Starting with user:', {
+      userId: req.user.id,
+      userRole: req.user.role,
+      userEmail: req.user.email
+    });
 
     const { 
       taskId, 
@@ -31,8 +51,17 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
       planningNotes
     } = req.body;
 
+    console.log('📝 createDailyTask: Request data:', {
+      taskId,
+      date,
+      plannedTime,
+      plannedEndTime,
+      userId: req.user.id
+    });
+
     // Validate required fields
     if (!taskId || !date) {
+      console.log('❌ createDailyTask: Missing required fields:', { taskId, date });
       return res.status(400).json({
         success: false,
         error: 'Task ID and date are required',
@@ -59,10 +88,17 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
     }
 
     // Check if task exists (only for real users)
+    console.log('🔍 createDailyTask: Looking for task with ID:', taskId);
     let task;
     try {
-      task = await collections.tasks.findOne({ _id: new ObjectId(taskId) });
+      task = await collections.tasks.findOne({ _id: toObjectId(taskId) });
+      console.log('✅ createDailyTask: Task found:', task ? { 
+        id: task._id.toString(), 
+        title: task.title, 
+        category: task.category 
+      } : 'null');
     } catch (error) {
+      console.log('❌ createDailyTask: Invalid task ID format:', taskId, error);
       return res.status(400).json({
         success: false,
         error: 'Invalid task ID format',
@@ -70,30 +106,111 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
     }
     
     if (!task) {
+      console.log('❌ createDailyTask: Task not found in database');
       return res.status(404).json({
         success: false,
         error: 'Task not found',
       });
     }
 
+    // 🔧 CRITICAL FIX: Ensure date format consistency for existing task check
+    const normalizedDateForCheck = typeof date === 'string' 
+      ? date.split('T')[0] // Extract YYYY-MM-DD from ISO string
+      : new Date(date).toISOString().split('T')[0]; // Convert Date object to YYYY-MM-DD
+
     // Check if daily task already exists for this date
+    console.log('🔍 createDailyTask: Checking for existing daily task:', {
+      userId: req.user.id,
+      taskId: taskId,
+      originalDate: date,
+      normalizedDate: normalizedDateForCheck
+    });
+    
     const existingDailyTask = await collections.dailyTasks.findOne({
       userId: req.user.id,
       taskId: taskId,
-      date: date,
+      date: normalizedDateForCheck, // Use normalized date for consistency
     });
 
+    console.log('📊 createDailyTask: Existing daily task check result:', 
+      existingDailyTask ? { 
+        id: existingDailyTask._id.toString(), 
+        status: existingDailyTask.status,
+        plannedTime: existingDailyTask.plannedTime
+      } : 'null');
+
+    // If a daily task already exists, update it instead of creating a new one
     if (existingDailyTask) {
-      return res.status(400).json({
-        success: false,
-        error: 'Daily task already exists for this date',
+      console.log('🔄 createDailyTask: Updating existing daily task');
+      
+      // Prepare update data
+      const updateData: any = {
+        plannedTime,
+        plannedEndTime,
+        reminderTime,
+        priority,
+        timePreference,
+        isRecurring,
+        recurringPattern,
+        notes,
+        planningNotes,
+        updatedAt: new Date(),
+      };
+
+      // Remove undefined values
+      Object.keys(updateData).forEach(key => {
+        if (updateData[key] === undefined) {
+          delete updateData[key];
+        }
+      });
+
+      console.log('📝 createDailyTask: Update data prepared:', updateData);
+
+      // Update existing daily task
+      const updateResult = await collections.dailyTasks.updateOne(
+        { _id: existingDailyTask._id },
+        { $set: updateData }
+      );
+      
+      console.log('📊 createDailyTask: Update result:', {
+        matchedCount: updateResult.matchedCount,
+        modifiedCount: updateResult.modifiedCount,
+        acknowledged: updateResult.acknowledged
+      });
+
+      // Get updated task
+      const updatedTask = await collections.dailyTasks.findOne({ _id: existingDailyTask._id });
+      console.log('✅ createDailyTask: Updated task retrieved:', updatedTask ? {
+        id: updatedTask._id.toString(),
+        plannedTime: updatedTask.plannedTime,
+        status: updatedTask.status
+      } : 'null');
+      
+      return res.status(200).json({
+        success: true,
+        data: { dailyTask: { ...updatedTask, id: updatedTask._id.toString() } },
+        message: 'Daily task updated successfully',
       });
     }
+
+    console.log('🆕 createDailyTask: Creating new daily task');
+    
+    // 🔧 CRITICAL FIX: Ensure date format consistency
+    // Convert date to string format YYYY-MM-DD for consistent storage and querying
+    const normalizedDate = typeof date === 'string' 
+      ? date.split('T')[0] // Extract YYYY-MM-DD from ISO string
+      : new Date(date).toISOString().split('T')[0]; // Convert Date object to YYYY-MM-DD
+
+    console.log('🔧 createDailyTask: Date normalization:', {
+      originalDate: date,
+      normalizedDate: normalizedDate,
+      dateType: typeof date
+    });
 
     const dailyTaskData: Omit<DailyTask, 'id'> = {
       userId: req.user.id,
       taskId,
-      date,
+      date: normalizedDate, // Use normalized date
       status: 'planned',
       plannedTime,
       plannedEndTime,
@@ -110,8 +227,28 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
       updatedAt: new Date(),
     };
 
+    console.log('📝 createDailyTask: Daily task data prepared:', {
+      userId: dailyTaskData.userId,
+      taskId: dailyTaskData.taskId,
+      date: dailyTaskData.date,
+      plannedTime: dailyTaskData.plannedTime,
+      status: dailyTaskData.status
+    });
+
     const result = await collections.dailyTasks.insertOne(dailyTaskData);
+    console.log('📊 createDailyTask: Insert result:', {
+      insertedId: result.insertedId.toString(),
+      acknowledged: result.acknowledged
+    });
+
     const dailyTask = { ...dailyTaskData, id: result.insertedId.toString() };
+    console.log('✅ createDailyTask: New daily task created successfully:', {
+      id: dailyTask.id,
+      userId: dailyTask.userId,
+      taskId: dailyTask.taskId,
+      date: dailyTask.date,
+      plannedTime: dailyTask.plannedTime
+    });
 
     res.status(201).json({
       success: true,
@@ -130,18 +267,33 @@ export const createDailyTask = async (req: AuthRequest, res: Response) => {
 export const getDailyTasks = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
+      console.log('🔐 getDailyTasks: User not authenticated');
       return res.status(401).json({
         success: false,
         error: 'User not authenticated',
       });
     }
 
+    console.log('🚀 getDailyTasks: Starting with user:', {
+      userId: req.user.id,
+      userRole: req.user.role,
+      userEmail: req.user.email
+    });
+
     const { date, status, userId } = req.query;
     const targetUserId = (userId as string) || req.user.id;
+
+    console.log('📝 getDailyTasks: Request parameters:', {
+      requestDate: date,
+      requestStatus: status,
+      requestUserId: userId,
+      targetUserId: targetUserId
+    });
 
     // Check if user can access the requested user's data
     if (targetUserId !== req.user.id) {
       if (req.user.role !== 'parent' || !req.user.children?.includes(targetUserId)) {
+        console.log('❌ getDailyTasks: Access denied for user');
         return res.status(403).json({
           success: false,
           error: 'Access denied',
@@ -158,15 +310,29 @@ export const getDailyTasks = async (req: AuthRequest, res: Response) => {
       query.status = status;
     }
 
+    console.log('🔍 getDailyTasks: Database query:', query);
+
     const dailyTasks = await collections.dailyTasks
       .find(query)
       .sort({ createdAt: -1 })
       .toArray();
 
+    console.log('📊 getDailyTasks: Raw query result:', {
+      count: dailyTasks.length,
+      tasks: dailyTasks.map((task: any) => ({
+        id: task._id.toString(),
+        userId: task.userId,
+        taskId: task.taskId,
+        date: task.date,
+        plannedTime: task.plannedTime,
+        status: task.status
+      }))
+    });
+
     // Get task details for each daily task
     const tasksWithDetails = await Promise.all(
       dailyTasks.map(async (dailyTask: any) => {
-        const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+        const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
         return {
           ...dailyTask,
           id: dailyTask._id.toString(),
@@ -174,6 +340,20 @@ export const getDailyTasks = async (req: AuthRequest, res: Response) => {
         };
       })
     );
+
+    console.log('📋 getDailyTasks: Final response data:', {
+      count: tasksWithDetails.length,
+      tasksWithDetails: tasksWithDetails.map((task: any) => ({
+        id: task.id,
+        userId: task.userId,
+        taskId: task.taskId,
+        date: task.date,
+        plannedTime: task.plannedTime,
+        status: task.status,
+        hasTaskDetails: !!task.task,
+        taskTitle: task.task?.title || 'No task details'
+      }))
+    });
 
     res.status(200).json({
       success: true,
@@ -200,7 +380,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
     const { dailyTaskId } = req.params;
     const { status, evidence, notes, evidenceText, evidenceMedia, isPublic, plannedTime, plannedEndTime } = req.body;
 
-    const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+    const dailyTask = await collections.dailyTasks.findOne({ _id: toObjectId(dailyTaskId) });
     if (!dailyTask) {
       return res.status(404).json({
         success: false,
@@ -223,7 +403,7 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
       
       // If completing task, calculate points using configurable system
       if (status === 'completed') {
-        const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+        const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
         if (task) {
           // Prepare data for configurable points calculation
           const baseData = {
@@ -243,10 +423,8 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           updates.pointsEarned = pointsResult.totalPoints;
           updates.completedAt = new Date();
           
-          // For tasks requiring evidence/approval, set status as pending approval
-          if (task.requiresEvidence) {
-            updates.approvalStatus = 'pending';
-          }
+          // All completed tasks require parent approval
+          updates.approvalStatus = 'pending';
           
           // Check daily limits before adding points
           const today = new Date().toISOString().split('T')[0];
@@ -317,65 +495,36 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
             }
           }
 
-          // Update points tracking and award points only if task doesn't require approval or is already approved
-          if (actualPointsAwarded > 0 && (!task.requiresEvidence || dailyTask.approvalStatus === 'approved')) {
-            // Log the points operation
-            businessLogger.pointsOperation(req.user.id, 'TASK_COMPLETION', actualPointsAwarded, {
-              taskId: dailyTask.taskId,
-              dailyTaskId: dailyTask._id.toString(),
-              taskCategory: task.category,
-              taskActivity: task.activity,
-              originalPoints: pointsResult.totalPoints,
-              limitApplied: isPointsTruncated || isLimitReached
-            });
+          // CRITICAL FIX: All completed tasks require approval, don't award points immediately
+          // Store the calculated points for later approval but don't award them yet
+          const potentialPoints = actualPointsAwarded;
+          actualPointsAwarded = 0; // Don't award points until parent approves
+          
+          // Store the pending points in the task for later approval
+          updates.pendingPoints = potentialPoints;
+          
+          // Log task completion (without points award)
+          businessLogger.taskOperation(req.user.id, dailyTask._id.toString(), 'COMPLETED_PENDING_APPROVAL', {
+            taskId: dailyTask.taskId,
+            taskCategory: task.category,
+            taskActivity: task.activity,
+            potentialPoints,
+            originalPoints: pointsResult.totalPoints,
+            limitApplied: isPointsTruncated || isLimitReached
+          });
 
-            // Use transaction to ensure atomic operations
-            const session = mongodb['client'].startSession();
-            try {
-              await session.withTransaction(async () => {
-                const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
-                
-                // Update user points limit
-                await collections.userPointsLimits.updateOne(
-                  { userId: req.user!.id, date: today },
-                  {
-                    $set: {
-                      [`activityPoints.${activity}`]: currentActivityPoints + actualPointsAwarded,
-                      totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + actualPointsAwarded,
-                      updatedAt: new Date(),
-                    }
-                  },
-                  { session }
-                );
-                
-                // Update user's total points
-                await collections.users.updateOne(
-                  { _id: new ObjectId(req.user!.id) },
-                  { 
-                    $inc: { points: actualPointsAwarded },
-                    $set: { updatedAt: new Date() }
-                  },
-                  { session }
-                );
-              });
-            } finally {
-              await session.endSession();
-            }
-          } else if (task.requiresEvidence && actualPointsAwarded > 0) {
-            // For approval-required tasks, store points but don't award them yet
-            actualPointsAwarded = 0; // Don't award points until approved
-          }
-
-          // Update the points earned in the task record
-          updates.pointsEarned = actualPointsAwarded;
+          // Update the task record - no points awarded yet, waiting for approval
+          updates.pointsEarned = 0; // Points will be awarded upon approval
           
           // Add limit information to response
           updates.pointsLimitInfo = {
             originalPoints: pointsResult.totalPoints,
-            actualPointsAwarded,
+            potentialPoints: updates.pendingPoints,
+            actualPointsAwarded: 0, // No points awarded yet
+            awaitingApproval: true,
             isLimitReached,
             isPointsTruncated,
-            currentTotalPoints: currentTotalPoints + actualPointsAwarded,
+            currentTotalPoints: currentTotalPoints,
             globalDailyLimit: GLOBAL_DAILY_POINTS_LIMIT,
           };
           
@@ -408,12 +557,12 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
     }
 
     await collections.dailyTasks.updateOne(
-      { _id: new ObjectId(dailyTaskId) },
+      { _id: toObjectId(dailyTaskId) },
       { $set: updates }
     );
 
     // Get updated daily task
-    const updatedDailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+    const updatedDailyTask = await collections.dailyTasks.findOne({ _id: toObjectId(dailyTaskId) });
     
     // Prepare response with limit information if applicable
     let responseMessage = 'Daily task updated successfully';
@@ -423,7 +572,9 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
       const limitInfo = updates.pointsLimitInfo;
       responseData.pointsLimitInfo = limitInfo;
       
-      if (limitInfo.isLimitReached && limitInfo.actualPointsAwarded === 0) {
+      if (limitInfo.awaitingApproval) {
+        responseMessage = `Task completed successfully! Awaiting parent approval for ${limitInfo.potentialPoints || limitInfo.originalPoints} points`;
+      } else if (limitInfo.isLimitReached && limitInfo.actualPointsAwarded === 0) {
         responseMessage = 'Task completed but daily points limit reached - no points awarded';
       } else if (limitInfo.isPointsTruncated) {
         responseMessage = `Task completed with ${limitInfo.actualPointsAwarded} points (truncated from ${limitInfo.originalPoints} due to daily limit)`;
@@ -456,7 +607,7 @@ export const deleteDailyTask = async (req: AuthRequest, res: Response) => {
     }
 
     const { dailyTaskId } = req.params;
-    const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+    const dailyTask = await collections.dailyTasks.findOne({ _id: toObjectId(dailyTaskId) });
 
     if (!dailyTask) {
       return res.status(404).json({
@@ -473,7 +624,7 @@ export const deleteDailyTask = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    await collections.dailyTasks.deleteOne({ _id: new ObjectId(dailyTaskId) });
+    await collections.dailyTasks.deleteOne({ _id: toObjectId(dailyTaskId) });
 
     res.status(200).json({
       success: true,
@@ -657,8 +808,8 @@ export const getPendingApprovalTasks = async (req: AuthRequest, res: Response) =
     // Get task details and user details for each pending task
     const tasksWithDetails = await Promise.all(
       pendingTasks.map(async (dailyTask: any) => {
-        const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
-        const student = await collections.users.findOne({ _id: new ObjectId(dailyTask.userId) });
+        const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
+        const student = await collections.users.findOne({ _id: toObjectId(dailyTask.userId) });
         
         return {
           id: dailyTask._id.toString(),
@@ -725,7 +876,7 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+    const dailyTask = await collections.dailyTasks.findOne({ _id: toObjectId(dailyTaskId) });
     if (!dailyTask) {
       return res.status(404).json({
         success: false,
@@ -749,11 +900,12 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
       updatedAt: new Date(),
     };
 
-    // If approving, award the original points plus any bonus points
+    // If approving, award the potential points plus any bonus points
     if (action === 'approve') {
-      const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+      const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
       if (task) {
-        const basePoints = dailyTask.pointsEarned || 0;
+        // Use stored pending points or calculate from task if not available
+        const basePoints = dailyTask.pendingPoints || dailyTask.pointsEarned || task.points;
         const bonusPointsValue = bonusPoints ? parseInt(bonusPoints) : 0;
         const totalPointsToAward = basePoints + bonusPointsValue;
         
@@ -855,7 +1007,7 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
                 
                 // Update user's total points
                 await collections.users.updateOne(
-                  { _id: new ObjectId(dailyTask.userId) },
+                  { _id: toObjectId(dailyTask.userId) },
                   { 
                     $inc: { points: actualPointsAwarded },
                     $set: { updatedAt: new Date() }
@@ -914,7 +1066,7 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
 
     // If rejecting, handle points clawback and task status
     if (action === 'reject') {
-      const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+      const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
       
       // Log task rejection
       businessLogger.taskOperation(dailyTask.userId, dailyTask._id.toString(), 'REJECTED', {
@@ -940,7 +1092,7 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
         const session = mongodb['client'].startSession();
         try {
           await session.withTransaction(async () => {
-            const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+            const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
             const activity = task?.activity || 'general';
             const today = new Date().toISOString().split('T')[0];
             
@@ -971,7 +1123,7 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
             
             // Deduct points from user's total
             await collections.users.updateOne(
-              { _id: new ObjectId(dailyTask.userId) },
+              { _id: toObjectId(dailyTask.userId) },
               { 
                 $inc: { points: -currentPointsEarned },
                 $set: { updatedAt: new Date() }
@@ -988,7 +1140,7 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
         updates.pointsEarned = 0; // Reset points to 0 after clawback
         
         // Create transaction record for clawback
-        const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+        const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
         await createPointsTransaction(
           dailyTask.userId,
           'clawback',
@@ -1010,12 +1162,12 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
     }
 
     await collections.dailyTasks.updateOne(
-      { _id: new ObjectId(dailyTaskId) },
+      { _id: toObjectId(dailyTaskId) },
       { $set: updates }
     );
 
     // Get updated task for response
-    const updatedTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+    const updatedTask = await collections.dailyTasks.findOne({ _id: toObjectId(dailyTaskId) });
 
     res.status(200).json({
       success: true,
@@ -1145,7 +1297,7 @@ export const checkSchedulingConflicts = async (req: AuthRequest, res: Response) 
     };
 
     if (excludeTaskId) {
-      query._id = { $ne: new ObjectId(excludeTaskId as string) };
+      query._id = { $ne: toObjectId(excludeTaskId as string) };
     }
 
     const existingTasks = await collections.dailyTasks.find(query).toArray();
@@ -1160,7 +1312,7 @@ export const checkSchedulingConflicts = async (req: AuthRequest, res: Response) 
       existingStart.setHours(existingHours, existingMinutes, 0, 0);
       
       // Get task details for estimated time
-      const taskDetails = await collections.tasks.findOne({ _id: new ObjectId(existingTask.taskId) });
+      const taskDetails = await collections.tasks.findOne({ _id: toObjectId(existingTask.taskId) });
       const existingEnd = new Date(existingStart);
       existingEnd.setMinutes(existingStart.getMinutes() + (taskDetails?.estimatedTime || 30));
       
@@ -1250,7 +1402,7 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
     
     for (const dailyTaskId of dailyTaskIds) {
       try {
-        const dailyTask = await collections.dailyTasks.findOne({ _id: new ObjectId(dailyTaskId) });
+        const dailyTask = await collections.dailyTasks.findOne({ _id: toObjectId(dailyTaskId) });
         
         if (!dailyTask) {
           results.push({ dailyTaskId, success: false, error: 'Task not found' });
@@ -1281,7 +1433,7 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
             
             // Add bonus points to user's total
             await collections.users.updateOne(
-              { _id: new ObjectId(dailyTask.userId) },
+              { _id: toObjectId(dailyTask.userId) },
               { 
                 $inc: { points: bonus },
                 $set: { updatedAt: new Date() }
@@ -1300,7 +1452,7 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
             const session = mongodb['client'].startSession();
             try {
               await session.withTransaction(async () => {
-                const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+                const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
                 const activity = task?.activity || 'general';
                 const today = new Date().toISOString().split('T')[0];
                 
@@ -1331,7 +1483,7 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
                 
                 // Deduct points from user's total
                 await collections.users.updateOne(
-                  { _id: new ObjectId(dailyTask.userId) },
+                  { _id: toObjectId(dailyTask.userId) },
                   { 
                     $inc: { points: -currentPointsEarned },
                     $set: { updatedAt: new Date() }
@@ -1348,7 +1500,7 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
             updates.pointsEarned = 0; // Reset points to 0 after clawback
             
             // Create transaction record for clawback
-            const task = await collections.tasks.findOne({ _id: new ObjectId(dailyTask.taskId) });
+            const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
             await createPointsTransaction(
               dailyTask.userId,
               'clawback',
@@ -1370,7 +1522,7 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
         }
 
         await collections.dailyTasks.updateOne(
-          { _id: new ObjectId(dailyTaskId) },
+          { _id: toObjectId(dailyTaskId) },
           { $set: updates }
         );
 
@@ -1424,7 +1576,7 @@ async function createPointsTransaction(
 ): Promise<string> {
   try {
     // Get current user points for transaction record
-    const user = await collections.users.findOne({ _id: new ObjectId(userId) });
+    const user = await collections.users.findOne({ _id: toObjectId(userId) });
     const previousTotal = user?.points || 0;
     const newTotal = previousTotal + (type === 'clawback' ? -amount : amount);
 

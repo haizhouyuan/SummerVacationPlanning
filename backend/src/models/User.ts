@@ -4,7 +4,7 @@
  */
 
 import { Collection, ObjectId } from 'mongodb';
-import { User, UserDocument } from '../types';
+import { User as UserType, UserDocument } from '../types';
 import { collections } from '../config/mongodb';
 
 export class UserModel {
@@ -15,11 +15,11 @@ export class UserModel {
     return collections.users;
   }
 
-  static async create(userData: Partial<UserDocument> & { password: string }): Promise<User> {
+  static async create(userData: Partial<UserDocument> & { password: string }): Promise<UserType> {
     const now = new Date();
     const userDoc: UserDocument = {
       email: userData.email!,
-      displayName: userData.displayName || userData.username || 'User',
+      displayName: userData.displayName || 'User',
       password: userData.password,
       role: userData.role || 'student',
       points: userData.points || 0,
@@ -27,8 +27,7 @@ export class UserModel {
       children: userData.children || [],
       avatar: userData.avatar,
       createdAt: now,
-      updatedAt: now,
-      ...userData
+      updatedAt: now
     };
 
     const result = await this.collection().insertOne(userDoc);
@@ -39,7 +38,7 @@ export class UserModel {
     };
   }
 
-  static async findById(id: string): Promise<User | null> {
+  static async findById(id: string): Promise<UserType | null> {
     const doc = await this.collection().findOne({ _id: new ObjectId(id) });
     if (!doc) return null;
     
@@ -49,7 +48,7 @@ export class UserModel {
     };
   }
 
-  static async findByEmail(email: string): Promise<User | null> {
+  static async findByEmail(email: string): Promise<UserType | null> {
     const doc = await this.collection().findOne({ email });
     if (!doc) return null;
     
@@ -59,7 +58,7 @@ export class UserModel {
     };
   }
 
-  static async updateById(id: string, updates: Partial<UserDocument>): Promise<User | null> {
+  static async updateById(id: string, updates: Partial<UserDocument>): Promise<UserType | null> {
     const result = await this.collection().findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: { ...updates, updatedAt: new Date() } },
@@ -84,7 +83,7 @@ export class UserModel {
     return result.deletedCount;
   }
 
-  static async findMany(filter: any = {}, limit?: number): Promise<User[]> {
+  static async findMany(filter: any = {}, limit?: number): Promise<UserType[]> {
     const cursor = this.collection().find(filter);
     if (limit) cursor.limit(limit);
     
@@ -98,6 +97,11 @@ export class UserModel {
   // 测试辅助方法
   static async countDocuments(filter: any = {}): Promise<number> {
     return this.collection().countDocuments(filter);
+  }
+
+  // 获取原始文档（包含密码字段，仅用于测试）
+  static async findRawDocument(filter: any): Promise<UserDocument | null> {
+    return this.collection().findOne(filter);
   }
 }
 
