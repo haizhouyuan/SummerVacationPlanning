@@ -785,23 +785,13 @@ export const getPendingApprovalTasks = async (req: AuthRequest, res: Response) =
     }
 
     // Find daily tasks that are completed but need approval
-    // Tasks need approval if they have evidence and are from children
+    // ALL completed tasks need approval, regardless of evidence
     const pendingTasks = await collections.dailyTasks.find({
       userId: { $in: childrenIds },
       status: 'completed',
-      $and: [
-        {
-          $or: [
-            { evidenceText: { $exists: true, $ne: '' } },
-            { evidenceMedia: { $exists: true, $not: { $size: 0 } } }
-          ]
-        },
-        {
-          $or: [
-            { approvalStatus: { $exists: false } },
-            { approvalStatus: 'pending' }
-          ]
-        }
+      $or: [
+        { approvalStatus: { $exists: false } },
+        { approvalStatus: 'pending' }
       ]
     }).toArray();
 
@@ -986,37 +976,33 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
               bonusPoints: bonusPointsValue
             });
 
-            // Use transaction to ensure atomic operations
-            const session = mongodb['client'].startSession();
+            // Use sequential operations for data consistency (no transactions needed)
             try {
-              await session.withTransaction(async () => {
-                const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
-                
-                // Update user points limit
-                await collections.userPointsLimits.updateOne(
-                  { userId: dailyTask.userId, date: today },
-                  {
-                    $set: {
-                      [`activityPoints.${activity}`]: currentActivityPoints + actualPointsAwarded,
-                      totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + actualPointsAwarded,
-                      updatedAt: new Date(),
-                    }
-                  },
-                  { session }
-                );
-                
-                // Update user's total points
-                await collections.users.updateOne(
-                  { _id: toObjectId(dailyTask.userId) },
-                  { 
-                    $inc: { points: actualPointsAwarded },
-                    $set: { updatedAt: new Date() }
-                  },
-                  { session }
-                );
-              });
-            } finally {
-              await session.endSession();
+              const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
+              
+              // Update user points limit first
+              await collections.userPointsLimits.updateOne(
+                { userId: dailyTask.userId, date: today },
+                {
+                  $set: {
+                    [`activityPoints.${activity}`]: currentActivityPoints + actualPointsAwarded,
+                    totalDailyPoints: (userPointsLimit.totalDailyPoints || 0) + actualPointsAwarded,
+                    updatedAt: new Date(),
+                  }
+                }
+              );
+              
+              // Update user's total points
+              await collections.users.updateOne(
+                { _id: toObjectId(dailyTask.userId) },
+                { 
+                  $inc: { points: actualPointsAwarded },
+                  $set: { updatedAt: new Date() }
+                }
+              );
+            } catch (dbError: any) {
+              console.error('Database update error during approval:', dbError);
+              throw new Error('Failed to update points and limits');
             }
           }
 
@@ -1088,51 +1074,47 @@ export const approveTask = async (req: AuthRequest, res: Response) => {
           reason: 'Task rejected by parent',
           approvalNotes
         });
-        // Use transaction to ensure atomic operations for clawback
-        const session = mongodb['client'].startSession();
+        // Use sequential operations for points clawback (no transactions needed)
         try {
-          await session.withTransaction(async () => {
-            const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
-            const activity = task?.activity || 'general';
-            const today = new Date().toISOString().split('T')[0];
-            
-            // Get user points limit record
-            const userPointsLimit = await collections.userPointsLimits.findOne({
-              userId: dailyTask.userId,
-              date: today,
-            });
-
-            if (userPointsLimit) {
-              const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
-              const newActivityPoints = Math.max(0, currentActivityPoints - currentPointsEarned);
-              const newTotalDailyPoints = Math.max(0, (userPointsLimit.totalDailyPoints || 0) - currentPointsEarned);
-
-              // Update user points limit
-              await collections.userPointsLimits.updateOne(
-                { userId: dailyTask.userId, date: today },
-                {
-                  $set: {
-                    [`activityPoints.${activity}`]: newActivityPoints,
-                    totalDailyPoints: newTotalDailyPoints,
-                    updatedAt: new Date(),
-                  }
-                },
-                { session }
-              );
-            }
-            
-            // Deduct points from user's total
-            await collections.users.updateOne(
-              { _id: toObjectId(dailyTask.userId) },
-              { 
-                $inc: { points: -currentPointsEarned },
-                $set: { updatedAt: new Date() }
-              },
-              { session }
-            );
+          const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
+          const activity = task?.activity || 'general';
+          const today = new Date().toISOString().split('T')[0];
+          
+          // Get user points limit record
+          const userPointsLimit = await collections.userPointsLimits.findOne({
+            userId: dailyTask.userId,
+            date: today,
           });
-        } finally {
-          await session.endSession();
+
+          if (userPointsLimit) {
+            const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
+            const newActivityPoints = Math.max(0, currentActivityPoints - currentPointsEarned);
+            const newTotalDailyPoints = Math.max(0, (userPointsLimit.totalDailyPoints || 0) - currentPointsEarned);
+
+            // Update user points limit first
+            await collections.userPointsLimits.updateOne(
+              { userId: dailyTask.userId, date: today },
+              {
+                $set: {
+                  [`activityPoints.${activity}`]: newActivityPoints,
+                  totalDailyPoints: newTotalDailyPoints,
+                  updatedAt: new Date(),
+                }
+              }
+            );
+          }
+          
+          // Deduct points from user's total
+          await collections.users.updateOne(
+            { _id: toObjectId(dailyTask.userId) },
+            { 
+              $inc: { points: -currentPointsEarned },
+              $set: { updatedAt: new Date() }
+            }
+          );
+        } catch (dbError: any) {
+          console.error('Database update error during rejection clawback:', dbError);
+          throw new Error('Failed to clawback points');
         }
         
         // Record the clawback in updates
@@ -1448,51 +1430,47 @@ export const batchApproveTask = async (req: AuthRequest, res: Response) => {
           const currentPointsEarned = dailyTask.pointsEarned || 0;
           
           if (currentPointsEarned > 0) {
-            // Use transaction to ensure atomic operations for clawback
-            const session = mongodb['client'].startSession();
+            // Use sequential operations for points clawback (no transactions needed)
             try {
-              await session.withTransaction(async () => {
-                const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
-                const activity = task?.activity || 'general';
-                const today = new Date().toISOString().split('T')[0];
-                
-                // Get user points limit record
-                const userPointsLimit = await collections.userPointsLimits.findOne({
-                  userId: dailyTask.userId,
-                  date: today,
-                });
-
-                if (userPointsLimit) {
-                  const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
-                  const newActivityPoints = Math.max(0, currentActivityPoints - currentPointsEarned);
-                  const newTotalDailyPoints = Math.max(0, (userPointsLimit.totalDailyPoints || 0) - currentPointsEarned);
-
-                  // Update user points limit
-                  await collections.userPointsLimits.updateOne(
-                    { userId: dailyTask.userId, date: today },
-                    {
-                      $set: {
-                        [`activityPoints.${activity}`]: newActivityPoints,
-                        totalDailyPoints: newTotalDailyPoints,
-                        updatedAt: new Date(),
-                      }
-                    },
-                    { session }
-                  );
-                }
-                
-                // Deduct points from user's total
-                await collections.users.updateOne(
-                  { _id: toObjectId(dailyTask.userId) },
-                  { 
-                    $inc: { points: -currentPointsEarned },
-                    $set: { updatedAt: new Date() }
-                  },
-                  { session }
-                );
+              const task = await collections.tasks.findOne({ _id: toObjectId(dailyTask.taskId) });
+              const activity = task?.activity || 'general';
+              const today = new Date().toISOString().split('T')[0];
+              
+              // Get user points limit record
+              const userPointsLimit = await collections.userPointsLimits.findOne({
+                userId: dailyTask.userId,
+                date: today,
               });
-            } finally {
-              await session.endSession();
+
+              if (userPointsLimit) {
+                const currentActivityPoints = userPointsLimit.activityPoints[activity] || 0;
+                const newActivityPoints = Math.max(0, currentActivityPoints - currentPointsEarned);
+                const newTotalDailyPoints = Math.max(0, (userPointsLimit.totalDailyPoints || 0) - currentPointsEarned);
+
+                // Update user points limit first
+                await collections.userPointsLimits.updateOne(
+                  { userId: dailyTask.userId, date: today },
+                  {
+                    $set: {
+                      [`activityPoints.${activity}`]: newActivityPoints,
+                      totalDailyPoints: newTotalDailyPoints,
+                      updatedAt: new Date(),
+                    }
+                  }
+                );
+              }
+              
+              // Deduct points from user's total
+              await collections.users.updateOne(
+                { _id: toObjectId(dailyTask.userId) },
+                { 
+                  $inc: { points: -currentPointsEarned },
+                  $set: { updatedAt: new Date() }
+                }
+              );
+            } catch (dbError: any) {
+              console.error('Database update error during batch rejection clawback:', dbError);
+              throw new Error('Failed to clawback points in batch operation');
             }
             
             // Record the clawback in updates
