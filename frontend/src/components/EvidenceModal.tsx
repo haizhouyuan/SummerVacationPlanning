@@ -146,9 +146,19 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({
                   }`}>
                     {dailyTask.status === 'completed' ? '✅ 已完成' : dailyTask.status}
                   </span>
-                  {dailyTask.pointsEarned > 0 && (
+                  {dailyTask.pointsEarned > 0 && dailyTask.approvalStatus === 'approved' && (
                     <span className="text-green-600 font-medium">
-                      🎉 获得 {dailyTask.pointsEarned} 积分
+                      🎉 已获得 {dailyTask.pointsEarned} 积分
+                    </span>
+                  )}
+                  {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'pending' && (
+                    <span className="text-yellow-600 font-medium">
+                      ⏳ 等待家长审批
+                    </span>
+                  )}
+                  {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'rejected' && (
+                    <span className="text-red-600 font-medium">
+                      ❌ 家长已拒绝
                     </span>
                   )}
                   {dailyTask.completedAt && (
@@ -297,8 +307,14 @@ const EvidenceModal: React.FC<EvidenceModalProps> = ({
               </h4>
               <div className="text-sm text-green-700 space-y-1">
                 <p>• 任务状态: <strong>{dailyTask.status === 'completed' ? '已完成' : '进行中'}</strong></p>
-                {dailyTask.pointsEarned > 0 && (
-                  <p>• 获得积分: <strong>{dailyTask.pointsEarned} 分</strong></p>
+                {dailyTask.pointsEarned > 0 && dailyTask.approvalStatus === 'approved' && (
+                  <p>• 已获得积分: <strong>{dailyTask.pointsEarned} 分</strong></p>
+                )}
+                {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'pending' && (
+                  <p>• 审批状态: <strong>等待家长审批</strong></p>
+                )}
+                {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'rejected' && (
+                  <p>• 审批状态: <strong>家长已拒绝</strong></p>
                 )}
                 {dailyTask.completedAt && (
                   <p>• 完成时间: <strong>{new Date(dailyTask.completedAt).toLocaleString('zh-CN')}</strong></p>

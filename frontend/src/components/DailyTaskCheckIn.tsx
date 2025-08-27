@@ -103,8 +103,8 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
 
       onTaskUpdate?.(updatedTask);
 
-      // Show points earned notification for completed tasks
-      if (newStatus === 'completed' && updatedTask.pointsEarned > 0) {
+      // Show points earned notification only for approved tasks
+      if (newStatus === 'completed' && updatedTask.pointsEarned > 0 && updatedTask.approvalStatus === 'approved') {
         showPointsNotification(updatedTask.pointsEarned);
       }
 
@@ -149,8 +149,8 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
       setShowEvidenceModal(false);
       setSelectedTask(null);
 
-      // Show points earned notification
-      if (updatedTask.pointsEarned > 0) {
+      // Show points earned notification only for approved tasks
+      if (updatedTask.pointsEarned > 0 && updatedTask.approvalStatus === 'approved') {
         showPointsNotification(updatedTask.pointsEarned);
       }
 
@@ -406,10 +406,22 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
                         <span className="mr-1">⏱️</span>
                         {dailyTask.task?.estimatedTime || 0} 分钟
                       </span>
-                      {dailyTask.pointsEarned > 0 && (
+                      {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'pending' && (
+                        <span className="flex items-center text-yellow-600 font-medium">
+                          <span className="mr-1">⏳</span>
+                          等待家长审批
+                        </span>
+                      )}
+                      {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'approved' && dailyTask.pointsEarned > 0 && (
                         <span className="flex items-center text-green-600 font-medium">
                           <span className="mr-1">🎉</span>
                           已获得 {dailyTask.pointsEarned} 积分
+                        </span>
+                      )}
+                      {dailyTask.status === 'completed' && dailyTask.approvalStatus === 'rejected' && (
+                        <span className="flex items-center text-red-600 font-medium">
+                          <span className="mr-1">❌</span>
+                          家长已拒绝
                         </span>
                       )}
                     </div>
