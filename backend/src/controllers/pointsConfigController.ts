@@ -288,7 +288,8 @@ export const calculateConfigurablePoints = async (
     wordCount?: number;
     quality?: string;
     difficulty?: string;
-  }
+  },
+  fallbackPoints?: number
 ): Promise<{ basePoints: number; bonusPoints: number; totalPoints: number }> => {
   try {
     // Find the matching points rule
@@ -299,11 +300,12 @@ export const calculateConfigurablePoints = async (
     });
 
     if (!pointsRule) {
-      // Fallback to default calculation if no rule found
+      // Fallback to task's original points if no rule found, otherwise default to 1
+      const points = fallbackPoints || 1;
       return {
-        basePoints: 1,
+        basePoints: points,
         bonusPoints: 0,
-        totalPoints: 1,
+        totalPoints: points,
       };
     }
 
@@ -360,10 +362,12 @@ export const calculateConfigurablePoints = async (
     };
   } catch (error) {
     console.error('Calculate configurable points error:', error);
+    // Fallback to task's original points if calculation fails, otherwise default to 1
+    const points = fallbackPoints || 1;
     return {
-      basePoints: 1,
+      basePoints: points,
       bonusPoints: 0,
-      totalPoints: 1,
+      totalPoints: points,
     };
   }
 };

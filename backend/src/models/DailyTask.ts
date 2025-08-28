@@ -4,20 +4,20 @@
  */
 
 import { Collection, ObjectId } from 'mongodb';
-import { DailyTask } from '../types';
+import { DailyTask as DailyTaskType } from '../types';
 import { collections } from '../config/mongodb';
 
 export class DailyTaskModel {
-  private static collection(): Collection<DailyTask> {
+  private static collection(): Collection<DailyTaskType> {
     if (!collections?.dailyTasks) {
       throw new Error('Database not connected. Please ensure MongoDB is initialized.');
     }
     return collections.dailyTasks;
   }
 
-  static async create(taskData: Partial<DailyTask>): Promise<DailyTask> {
+  static async create(taskData: Partial<DailyTaskType>): Promise<DailyTaskType> {
     const now = new Date();
-    const dailyTaskDoc: DailyTask = {
+    const dailyTaskDoc: DailyTaskType = {
       id: '', // Will be set after insert
       userId: taskData.userId!,
       taskId: taskData.taskId!,
@@ -55,7 +55,7 @@ export class DailyTaskModel {
     };
   }
 
-  static async findById(id: string): Promise<DailyTask | null> {
+  static async findById(id: string): Promise<DailyTaskType | null> {
     const doc = await this.collection().findOne({ _id: new ObjectId(id) });
     if (!doc) return null;
     
@@ -65,7 +65,7 @@ export class DailyTaskModel {
     };
   }
 
-  static async findByUserId(userId: string): Promise<DailyTask[]> {
+  static async findByUserId(userId: string): Promise<DailyTaskType[]> {
     const docs = await this.collection().find({ userId }).toArray();
     return docs.map(doc => ({
       ...doc,
@@ -73,7 +73,7 @@ export class DailyTaskModel {
     }));
   }
 
-  static async findByUserAndDate(userId: string, date: string): Promise<DailyTask[]> {
+  static async findByUserAndDate(userId: string, date: string): Promise<DailyTaskType[]> {
     const docs = await this.collection().find({ userId, date }).toArray();
     return docs.map(doc => ({
       ...doc,
@@ -81,7 +81,7 @@ export class DailyTaskModel {
     }));
   }
 
-  static async findByStatus(status: DailyTask['status']): Promise<DailyTask[]> {
+  static async findByStatus(status: DailyTaskType['status']): Promise<DailyTaskType[]> {
     const docs = await this.collection().find({ status }).toArray();
     return docs.map(doc => ({
       ...doc,
@@ -89,7 +89,7 @@ export class DailyTaskModel {
     }));
   }
 
-  static async updateById(id: string, updates: Partial<DailyTask>): Promise<DailyTask | null> {
+  static async updateById(id: string, updates: Partial<DailyTaskType>): Promise<DailyTaskType | null> {
     const result = await this.collection().findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: { ...updates, updatedAt: new Date() } },
@@ -114,7 +114,7 @@ export class DailyTaskModel {
     return result.deletedCount;
   }
 
-  static async findMany(filter: any = {}, limit?: number): Promise<DailyTask[]> {
+  static async findMany(filter: any = {}, limit?: number): Promise<DailyTaskType[]> {
     const cursor = this.collection().find(filter);
     if (limit) cursor.limit(limit);
     
@@ -125,7 +125,7 @@ export class DailyTaskModel {
     }));
   }
 
-  static async findPendingApproval(parentId: string): Promise<DailyTask[]> {
+  static async findPendingApproval(parentId: string): Promise<DailyTaskType[]> {
     // 这里需要根据实际的家长-孩子关系查询逻辑来实现
     // 暂时返回所有待审核的任务
     return this.findMany({ 
@@ -140,5 +140,4 @@ export class DailyTaskModel {
   }
 }
 
-// 导出为默认的DailyTask，兼容现有测试
-export const DailyTask = DailyTaskModel;
+// Export the DailyTaskModel class (remove conflicting DailyTask export)

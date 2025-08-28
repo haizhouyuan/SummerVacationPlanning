@@ -417,7 +417,8 @@ export const updateDailyTaskStatus = async (req: AuthRequest, res: Response) => 
           const pointsResult = await calculateConfigurablePoints(
             task.category,
             task.activity || 'general', // Use the standardized activity field
-            baseData
+            baseData,
+            task.points // Use task's original points as fallback if no rules exist
           );
           
           updates.pointsEarned = pointsResult.totalPoints;
