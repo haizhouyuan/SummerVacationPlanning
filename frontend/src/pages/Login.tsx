@@ -16,8 +16,8 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      // 跳转逻辑由AuthContext处理，不再硬编码
+      await login(email, password, navigate);
+      // 跳转逻辑由AuthContext处理，基于用户角色自动导航
     } catch (error: any) {
       setError(error.message || '登录失败');
     } finally {
