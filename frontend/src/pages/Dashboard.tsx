@@ -234,16 +234,17 @@ const Dashboard: React.FC = () => {
       const task = todayTasks.find(t => t.id === taskId);
       if (!task) return;
 
-      // Update task status locally
+      // Update task status locally for immediate UI feedback
       const updatedTasks = todayTasks.map(t => 
-        t.id === taskId ? { ...t, status: 'completed' as const } : t
+        t.id === taskId ? { ...t, status: 'completed' as const, approvalStatus: 'pending' as const } : t
       );
       setTodayTasks(updatedTasks);
 
-      // Show completion animation
+      // Show completion message without points (waiting for approval)
       setTaskCompleteData({
         title: task.task?.title || 'Task',
-        points: task.task?.points || 0
+        points: 0, // Don't show points until approved
+        message: '任务已提交，等待家长审批'
       });
       setShowTaskComplete(true);
 
@@ -318,6 +319,13 @@ const Dashboard: React.FC = () => {
       maxPoints: stats?.weeklyStats?.maxPoints || 0,
       ...stats?.weeklyStats
     },
+    todayStats: {
+      pointsEarned: stats?.todayStats?.pointsEarned || 0,
+      pointsPending: stats?.todayStats?.pointsPending || 0,
+      totalPointsToday: stats?.todayStats?.totalPointsToday || 0,
+      tasksAwaitingApproval: stats?.todayStats?.tasksAwaitingApproval || 0,
+      ...stats?.todayStats
+    },
     weeklyGoal: stats?.weeklyGoal || 10,
     achievements: stats?.achievements || [],
     ...stats
@@ -357,7 +365,7 @@ const Dashboard: React.FC = () => {
               points: currentUser.points
             }}
             userLevel={safeStats.user.level}
-            todayPoints={todayTasks.filter(t => t.status === 'completed').reduce((sum, t) => sum + (t.task?.points || 0), 0)}
+            todayPoints={safeStats.todayStats?.pointsEarned || 0}
             className="mb-6"
           />
         )}
