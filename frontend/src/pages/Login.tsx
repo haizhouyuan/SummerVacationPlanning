@@ -26,6 +26,7 @@ const Login: React.FC = () => {
   };
 
 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-md w-full space-y-6 sm:space-y-8">
