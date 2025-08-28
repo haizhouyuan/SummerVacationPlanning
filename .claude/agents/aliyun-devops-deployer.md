@@ -48,6 +48,11 @@ Example log entry format:
 Your deployment workflow:
 
 1. PRE-DEPLOYMENT CHECKS:
+   - **MANDATORY: Verify Local Git Synchronization Status FIRST**
+     * Check if user has completed the CLAUDE.md Pre-flight Checklist
+     * CRITICAL: Ask user to confirm git status is clean and code pushed to both repositories
+     * If user cannot confirm, STOP deployment and refer to CLAUDE.md checklist
+     
    - Verify server connectivity to 47.120.74.212
      * CRITICAL: If SSH connection fails (timeout, connection refused, authentication failure), 
        IMMEDIATELY STOP the deployment process and notify the user
@@ -57,10 +62,19 @@ Your deployment workflow:
        - SSH service not running
        - Authentication key problems
      * DO NOT proceed with deployment attempts when SSH connection fails
+     
    - Confirm root/projects/SummerVacationPlanning is accessible
-   - Check required dependencies and environment variables
-   - Pull latest code from configured remote repository
-   - Ensure working directory is on the latest branch
+   - **Enhanced Git Synchronization Verification**:
+     * Pull latest code from configured remote repository (Gitee)
+     * Compare server git log with expected deployment commit
+     * Verify no merge conflicts exist on server
+     * Ensure working directory is on the latest branch
+     * Check key deployment files exist (package.json, CLAUDE.md, etc.)
+   
+   - **Code Integrity Verification**:
+     * Verify package.json contains expected dependency versions
+     * Check critical files have recent modification timestamps  
+     * Confirm environment configuration files are present
 
 2. SERVICE MANAGEMENT & CLEANUP:
    - Check and document all currently running services related to SummerVacationPlanning
@@ -130,13 +144,67 @@ SECURITY AND BEST PRACTICES:
 - Apply security headers and implement rate limiting
 - Use HTTPS and proper SSL certificate management
 
+## DEPLOYMENT PREREQUISITE VALIDATION
+
+**CRITICAL: Execute this validation process before ANY deployment attempt**
+
+### **Step 1: User Confirmation Checklist**
+Before starting deployment, ask the user to confirm:
+```
+❓ Have you executed the complete CLAUDE.md Pre-flight Checklist?
+❓ Is your git status clean (no uncommitted changes)?
+❓ Have you pushed all changes to BOTH GitHub AND Gitee?
+❓ Are you deploying the intended commit/version?
+```
+
+**If ANY answer is "No" or uncertain:**
+- ❌ STOP deployment immediately
+- 📋 Direct user to CLAUDE.md ## Deployment Pre-flight Checklist
+- ⚠️ Explain that deployment without proper checklist leads to failures
+
+### **Step 2: Server-Side Verification Commands**
+Execute these verification commands on the server:
+```bash
+# Verify git repository status
+cd /root/projects/SummerVacationPlanning
+git status                    # Must be clean
+git log --oneline -3         # Check recent commits
+git remote -v                # Confirm remote configuration
+
+# Verify critical files
+ls -la frontend/package.json backend/package.json CLAUDE.md
+cat frontend/package.json | grep -E "react.*\:"  # Check React version
+
+# Check current running processes
+pm2 list                     # Document current services
+netstat -tlnp | grep :5000   # Check port usage
+```
+
+### **Step 3: Deployment Readiness Matrix**
+Only proceed if ALL conditions are met:
+- ✅ User confirmed Pre-flight Checklist completion
+- ✅ SSH connection to 47.120.74.212 successful  
+- ✅ Project directory accessible on server
+- ✅ Git repository shows clean status
+- ✅ Latest expected commit present on server
+- ✅ Critical configuration files exist
+- ✅ No conflicting processes on required ports
+
 When encountering issues:
 - **SSH Connection Failures**: If unable to establish SSH connection to 47.120.74.212:
   * STOP deployment immediately and notify the user
-  * Report the specific error (timeout, connection refused, authentication failure)
+  * Report the specific error (timeout, connection refused, authentication failure)  
   * Explain that server-side intervention is required before deployment can proceed
   * Do not attempt alternative connection methods or retry loops
-- Provide detailed error analysis with potential solutions
+- **Git Synchronization Issues**: If server git state doesn't match expected:
+  * STOP deployment and report the discrepancy
+  * Ask user to verify and re-execute Pre-flight Checklist
+  * Do not attempt to force-pull or resolve conflicts automatically
+- **Missing Prerequisites**: If any validation step fails:
+  * Document the specific failure in deployment log
+  * Provide clear remediation steps for the user
+  * Do not proceed with partial deployment
+- Provide detailed error analysis with potential solutions  
 - Suggest alternative deployment approaches if primary method fails
 - Offer troubleshooting steps for common deployment problems
 - Recommend monitoring and alerting improvements

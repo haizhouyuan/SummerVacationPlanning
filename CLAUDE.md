@@ -337,14 +337,319 @@ Tips: Don’t run all E2E tests unless necessary, as they may hit Claude’s tim
 
 Summary: Use MCP for fast, visual debugging, and /run-playwright for automated test specs. Avoid full-suite runs during development to save time. This workflow aligns with the project’s CLAUDE.md guidelines and ensures stable, efficient testing.
 
-Deployment
+## Deployment Pre-flight Checklist 🚀
+
+**CRITICAL**: Execute this checklist BEFORE any production deployment to prevent deployment failures.
+
+### **Step 1: Local Git Status Verification**
+```bash
+# 1. Check for uncommitted changes
+git status
+# Expected: "nothing to commit, working tree clean"
+# If modified files exist, commit them first
+
+# 2. Verify latest commits
+git log --oneline -5
+# Confirm your intended changes are in recent commits
+```
+
+### **Step 2: Code Synchronization (Dual Push)**
+```bash
+# 3. Push to GitHub (primary)
+git push origin master
+# Expected: "Everything up-to-date" or successful push
+
+# 4. Push to Gitee (deployment source)  
+git push gitee master
+# Expected: "Everything up-to-date" or successful push
+```
+
+### **Step 3: Pre-deployment Validation**
+```bash
+# 5. Final status check
+git status
+# MUST show: "Your branch is up to date with 'origin/master'"
+
+# 6. Verify no pending changes
+git diff HEAD
+# Expected: No output (no differences)
+```
+
+### **Step 4: Deployment Readiness Confirmation**
+- ✅ All intended code changes are committed
+- ✅ Working tree is clean (no unstaged changes)
+- ✅ Latest commits pushed to BOTH GitHub and Gitee
+- ✅ Local branch is synced with remote master
+- ✅ No merge conflicts exist
+
+**⚠️ DEPLOYMENT RULE: If ANY checklist item fails, STOP and resolve issues before proceeding.**
+
+---
+
+## Deployment
 Aliyun DevOps Deployer
 
 Use the aliyun-devops-deployer agent (see .claude/agents/aliyun-devops-deployer.md) to deploy this application to the Alibaba Cloud production server (IP: 47.120.74.212). This specialized agent automates building and deploying both the React frontend and the Node.js backend on the server.
 
-Deployment Process: Ensure all code changes are committed and pushed. Trigger the deployer agent, which will pull the latest code on the server, install dependencies, run the production builds, and restart the services. The backend runs under a process manager (e.g., PM2) and the frontend is served as static files (via Nginx or a similar web server).
+**Deployment Process**: **STRICTLY FOLLOW the Pre-flight Checklist above before deployment**. After completing all checklist verification steps, trigger the aliyun-devops-deployer agent, which will:
+
+1. **Verify code synchronization**: Confirm latest code is available on Gitee (deployment source)
+2. **Pull latest changes**: Fetch the most recent commit from the configured remote repository  
+3. **Install dependencies**: Update both frontend and backend package dependencies
+4. **Run production builds**: Compile TypeScript and build optimized React bundles
+5. **Restart services**: Deploy new builds and restart PM2-managed backend services
+
+**Critical Requirement**: The deployer agent assumes code synchronization is complete. If the Pre-flight Checklist is skipped, deployment may fail or deploy outdated code.
+
+**Infrastructure**: Backend runs under PM2 process manager, frontend served as static files via Nginx reverse proxy.
 
 Production Environment: The production environment is centralized on an Alibaba Cloud (Aliyun) ECS server. Environment variables (for database URI, JWT secrets, etc.) are configured on the server. (Security aspects such as HTTPS, CORS configuration, and secret management are handled in the server setup and deployment process.)
+
+## Deployment Troubleshooting 🔧
+
+### **Common Failure Patterns and Solutions**
+
+#### **1. Code Synchronization Failures**
+**Symptoms**: Deployed application doesn't reflect recent code changes
+**Root Cause**: Local modifications not committed/pushed to remote repository
+**Diagnostic Steps**:
+```bash
+# On local machine
+git status                    # Check for uncommitted changes
+git log --oneline -3         # Verify latest commits
+git remote -v                # Confirm remote repositories
+
+# On server (SSH to 47.120.74.212)
+cd /root/projects/SummerVacationPlanning
+git log --oneline -3         # Compare with local commits
+git status                   # Check server repository state
+```
+**Solution**: Execute complete Pre-flight Checklist before redeployment
+
+#### **2. React Version Compatibility Issues**
+**Symptoms**: Frontend buttons unresponsive, JavaScript events not triggering
+**Root Cause**: React version changes breaking event system compatibility
+**Diagnostic Commands**:
+```bash
+# Check current React version in build
+grep "react" frontend/package.json
+grep "react" frontend/build/static/js/main.*.js
+
+# Verify event listeners in browser
+# Browser console: check for React-related errors
+```
+**Solution**: Use stable React versions (18.x), test event binding after upgrades
+
+#### **3. Build Artifact Staleness**
+**Symptoms**: Old UI/functionality persists after deployment
+**Root Cause**: Build process using cached/old source files
+**Diagnostic Steps**:
+```bash
+# On server
+ls -la frontend/build/        # Check build timestamps
+ls -la backend/dist/          # Check compiled backend timestamps
+npm cache clean --force       # Clear npm cache
+```
+**Solution**: Force clean build with cache clearing
+
+### **Deployment Rollback Procedure**
+
+#### **Emergency Rollback Steps**
+```bash
+# 1. SSH to production server
+ssh root@47.120.74.212
+
+# 2. Stop current services
+pm2 stop summer-vacation-backend
+pm2 delete summer-vacation-backend
+
+# 3. Restore previous backup
+# (Requires backup created during deployment process)
+
+# 4. Restart with previous version
+pm2 start previous-ecosystem.config.js
+
+# 5. Verify rollback success
+curl http://localhost:5000/health
+```
+
+### **Prevention Measures**
+- ✅ Always execute Pre-flight Checklist completely
+- ✅ Test critical functionality after React/dependency upgrades
+- ✅ Maintain deployment backups for quick rollback
+- ✅ Use staging environment for high-risk changes
+- ✅ Document all deployment modifications in .logs/deploy-log.md
+
+---
+
+## Development-Deployment Best Practices 🏆
+
+### **The Four-Step Development Workflow**
+
+#### **1. MODIFY → 2. COMMIT → 3. PUSH → 4. DEPLOY**
+
+**Never skip or reorder these steps. Each step has mandatory validation.**
+
+```bash
+# Step 1: MODIFY (Local Development)
+# - Make code changes
+# - Test locally (npm test, npm start)
+# - Verify functionality works as expected
+
+# Step 2: COMMIT (Local Version Control)
+git add [modified-files]
+git commit -m "descriptive commit message"
+# - Document changes in commit message
+# - Reference issue numbers if applicable
+
+# Step 3: PUSH (Remote Synchronization) 
+git push origin master    # Primary repository (GitHub)
+git push gitee master     # Deployment source (Gitee)
+# - BOTH pushes must succeed
+# - Verify git status shows "up to date"
+
+# Step 4: DEPLOY (Production Release)
+# - Execute CLAUDE.md Pre-flight Checklist
+# - Use aliyun-devops-deployer agent
+# - Monitor deployment logs and health checks
+```
+
+### **Multi-Environment Code Management**
+
+#### **Environment Hierarchy**
+```
+LOCAL DEV → REMOTE STAGING → PRODUCTION
+    ↓           ↓               ↓
+Individual  Integration   Live Users
+Testing     Testing       Zero Downtime
+```
+
+#### **Branch Strategy**
+- **master**: Production-ready code only
+- **feature/***: Individual feature development
+- **staging**: Integration testing branch (optional)
+
+#### **Deployment Gates**
+- ✅ **Local Dev**: All tests pass, functionality verified
+- ✅ **Remote Staging**: Integration tests, performance validation  
+- ✅ **Production**: Full checklist, monitoring, rollback ready
+
+### **Framework Upgrade Risk Management**
+
+#### **React Version Upgrade Protocol**
+```bash
+# 1. Pre-upgrade Assessment
+npm outdated react react-dom @types/react @types/react-dom
+
+# 2. Create Backup Branch
+git checkout -b backup-before-react-upgrade
+git push origin backup-before-react-upgrade
+
+# 3. Upgrade in Controlled Steps
+# - Upgrade patch versions first (18.2.0 → 18.3.1)
+# - Test thoroughly before major upgrades (18.x → 19.x)
+# - Validate event binding, hooks, and lifecycle methods
+
+# 4. Validation Testing
+npm test -- --coverage
+npm run build
+# - Test login/registration functionality specifically
+# - Verify button event handlers work correctly
+# - Check browser console for errors
+
+# 5. Staged Deployment
+# - Deploy to staging first
+# - Run E2E tests against staging
+# - Monitor for 24-48 hours before production
+```
+
+#### **High-Risk Change Indicators**
+- 🔴 **Major version upgrades** (React 18→19, Node 16→18)
+- 🔴 **Event system changes** (onClick, onSubmit handlers)
+- 🔴 **Authentication system modifications**
+- 🔴 **Database schema changes**
+- 🔴 **API endpoint restructuring**
+
+**For high-risk changes: Use staging environment and extended testing periods**
+
+---
+
+## Deployment Failure Case Studies 📚
+
+### **Case Study 1: React 19 Event Binding Failure (2025-08-28)**
+
+#### **Incident Summary**
+**Problem**: Frontend login/registration buttons became unresponsive after deployment
+**Root Cause**: Local React 19→18 downgrade not committed/pushed before deployment
+**Impact**: User authentication completely non-functional
+
+#### **Failure Chain Analysis**
+```
+1. ❌ LOCAL: Modified package.json (React 19→18) + Login.tsx
+2. ❌ COMMIT: Changes not committed to git
+3. ❌ PUSH: Modifications not pushed to remote repositories  
+4. ❌ DEPLOY: Deployer used old React 19 code from server
+5. 🔥 RESULT: Production deployed with incompatible React version
+```
+
+#### **Technical Deep Dive**
+**Event System Incompatibility**:
+- React 19.1.0 event binding mechanism changed
+- `onClick` and `onSubmit` handlers not attaching to DOM
+- Browser testing revealed no event listeners on form elements
+- Manual `dispatchEvent` calls failed
+
+**Diagnostic Commands Used**:
+```javascript
+// Browser console diagnostics
+document.querySelector('form').onsubmit        // null (should have handler)
+document.querySelector('button').onclick      // null (should have handler)
+form.dispatchEvent(new Event('submit'))      // false (event blocked)
+```
+
+#### **Resolution Steps**
+1. ✅ **Root Cause Analysis**: Used MCP browser testing to identify event binding failure
+2. ✅ **Code Review**: Confirmed React version discrepancy between local/remote
+3. ✅ **Proper Fix Process**: 
+   - Commit React 18 downgrade locally
+   - Push to both GitHub and Gitee repositories  
+   - Redeploy using aliyun-devops-deployer
+   - Verify button event handlers working
+
+#### **Lessons Learned**
+- ✅ **Never skip Pre-flight Checklist**: Git status must be clean before deployment
+- ✅ **React major upgrades are high-risk**: Require extensive testing and staged rollout
+- ✅ **Event system testing critical**: Manual browser testing needed for UI interactions
+- ✅ **Deployer agent limitations**: Cannot fix source code issues, only deployment process
+
+#### **Prevention Measures Implemented**
+- 📋 **Enhanced CLAUDE.md Pre-flight Checklist** with strict validation
+- 🤖 **Deployer Agent Updates** with mandatory user confirmation
+- 📚 **Best Practices Documentation** for framework upgrades
+- 🔧 **Troubleshooting Guide** for common failure patterns
+
+### **Deployment Failure Prevention Matrix**
+
+| **Failure Type** | **Prevention** | **Detection** | **Recovery** |
+|------------------|----------------|---------------|--------------|
+| Code Sync Issues | Pre-flight Checklist | Git status comparison | Recommit and redeploy |
+| Framework Incompatibility | Staged upgrades, testing | Browser console errors | Version rollback |
+| Build Cache Problems | Clean builds | Timestamp verification | Cache clearing |
+| Service Conflicts | Port checks, PM2 status | Service monitoring | Process restart |
+| Configuration Errors | Environment validation | Health checks | Config rollback |
+
+### **ULTRATHINK Problem Analysis Framework**
+
+When deployment failures occur, use this systematic approach:
+
+1. **🔍 SURFACE SYMPTOMS**: What is the user-visible problem?
+2. **🏗️ INFRASTRUCTURE LAYER**: Are servers, databases, networks working?
+3. **🔄 PROCESS LAYER**: Was the deployment workflow followed correctly?
+4. **💾 CODE LAYER**: Are the deployed artifacts correct and current?
+5. **🧠 ROOT CAUSE**: What is the underlying architectural or process issue?
+6. **🛠️ FIX + PREVENT**: Immediate resolution + systemic prevention measures
+
+**This framework ensures deep analysis rather than surface-level fixes.**
 
 Development Notes
 Key Technologies
