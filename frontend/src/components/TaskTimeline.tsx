@@ -39,6 +39,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
 }) => {
   const [draggedTask, setDraggedTask] = useState<DailyTask | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [conflictInfo, setConflictInfo] = useState<ConflictInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
@@ -102,11 +103,19 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   };
 
 
+  // Handle drag enter
+  const handleDragEnter = (e: React.DragEvent, timeSlot: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🎯 TaskTimeline: Drag enter timeSlot:', timeSlot);
+    setIsDragging(true);
+  };
+
   // Handle drag over time slot
   const handleDragOver = (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🎯 TaskTimeline: Drag over timeSlot:', timeSlot);
+    console.log('🎯 TaskTimeline: Drag over timeSlot:', timeSlot, 'effectAllowed:', e.dataTransfer.effectAllowed);
     setDragOverSlot(timeSlot);
     
     // Set dropEffect based on effectAllowed (safer than accessing getData in dragOver)
@@ -118,18 +127,51 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   };
 
   // Handle drag leave
-  const handleDragLeave = () => {
-    setDragOverSlot(null);
-    setConflictInfo(null);
+  const handleDragLeave = (e: React.DragEvent) => {
+    console.log('🎯 TaskTimeline: Drag leave event triggered, isDragging:', isDragging);
+    
+    // More robust check for browser compatibility
+    try {
+      // Check if the related target is still within the drop zone
+      const relatedTarget = e.relatedTarget as Node;
+      if (relatedTarget && e.currentTarget.contains(relatedTarget)) {
+        console.log('🎯 TaskTimeline: Still within drop zone, keeping state');
+        return;
+      }
+    } catch (error) {
+      console.log('🎯 TaskTimeline: Drag leave check error (browser compatibility):', error);
+    }
+    
+    // Use a small delay to prevent premature state clearing when transitioning between drop zones
+    setTimeout(() => {
+      console.log('🎯 TaskTimeline: Delayed drag leave - clearing state');
+      setDragOverSlot(null);
+      setIsDragging(false);
+      setConflictInfo(null);
+    }, 50);
   };
 
   // Handle drop on time slot
   const handleDrop = async (e: React.DragEvent, timeSlot: string) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragOverSlot(null);
     
     console.log('🎯 TaskTimeline: Drop event triggered on timeSlot:', timeSlot);
+    console.log('🎯 TaskTimeline: Drop event details:', {
+      dataTransfer: {
+        effectAllowed: e.dataTransfer.effectAllowed,
+        dropEffect: e.dataTransfer.dropEffect,
+        types: Array.from(e.dataTransfer.types)
+      },
+      currentTarget: e.currentTarget.className,
+      timeSlot: timeSlot,
+      isDragging: isDragging
+    });
+    
+    // Clear all drag states immediately
+    setDragOverSlot(null);
+    setIsDragging(false);
+    setConflictInfo(null);
     
     try {
       // Check if it's a new task from TaskPlanning sidebar or existing dailyTask
@@ -995,8 +1037,9 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                       className={`h-10 relative cursor-pointer transition-all duration-200 ${
                         dragOverSlot === slot.time ? 'bg-blue-100 border-blue-400 shadow-sm' : 'hover:bg-blue-50/50'
                       }`}
+                      onDragEnter={(e) => handleDragEnter(e, slot.time)}
                       onDragOver={(e) => handleDragOver(e, slot.time)}
-                      onDragLeave={handleDragLeave}
+                      onDragLeave={(e) => handleDragLeave(e)}
                       onDrop={(e) => handleDrop(e, slot.time)}
                       onClick={() => handleTimeSlotClick(slot.time)}
                       title={`点击创建任务 - ${slot.time}`}
