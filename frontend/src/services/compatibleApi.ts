@@ -1043,7 +1043,7 @@ const getCachedNetworkStatus = async (forceRefresh: boolean = false): Promise<{ 
 };
 
 /**
- * Enhanced API service detection with multiple fallback strategies
+ * Enhanced API service detection with environment-first approach
  */
 export const detectNetworkAndGetApiService = async (options: {
   forceRefresh?: boolean;
@@ -1052,25 +1052,73 @@ export const detectNetworkAndGetApiService = async (options: {
   const { forceRefresh = false } = options;
 
   try {
+    // 获取环境配置
+    const isProduction = process.env.REACT_APP_ENVIRONMENT === 'production';
+    const forceRealApi = process.env.REACT_APP_FORCE_REAL_API === 'true';
+    const disableFallback = process.env.REACT_APP_DISABLE_FALLBACK === 'true';
+    const forceCompatibleMode = process.env.REACT_APP_USE_COMPATIBLE_API === 'true';
+
     // 获取用户认证信息
     const authToken = localStorage.getItem('auth_token');
     const userEmail = localStorage.getItem('user_email');
     const isDemo = localStorage.getItem('isDemo');
     
-    console.log('🔍 API Service Detection Debug:', {
-      hasAuthToken: !!authToken,
-      tokenLength: authToken?.length,
-      tokenStart: authToken?.substring(0, 20) + '...',
-      userEmail: userEmail,
-      isDemo: isDemo,
-      isDemoToken: authToken?.startsWith('demo-token') || authToken?.includes('demo_jwt_token')
+    console.log('🔍 Enhanced API Service Detection:', {
+      environment: {
+        isProduction,
+        forceRealApi,
+        disableFallback,
+        forceCompatibleMode
+      },
+      user: {
+        hasAuthToken: !!authToken,
+        tokenLength: authToken?.length,
+        tokenStart: authToken?.substring(0, 20) + '...',
+        userEmail: userEmail,
+        isDemo: isDemo
+      }
     });
+
+    // 生产环境优先：强制使用真实API，禁止fallback
+    if (isProduction || forceRealApi) {
+      console.log(`🏭 Production mode detected - forcing real API service`);
+      
+      if (disableFallback) {
+        console.log(`🚫 Fallback disabled - real API is mandatory`);
+        localStorage.removeItem('api_mode');
+        return apiService;
+      }
+      
+      // 测试API连接性（仅在允许fallback时）
+      const networkStatus = await getCachedNetworkStatus(forceRefresh);
+      
+      if (networkStatus.isOnline && networkStatus.apiWorking) {
+        console.log(`✅ Production: Using real API service (confirmed working)`);
+        localStorage.removeItem('api_mode');
+        return apiService;
+      } else {
+        console.error(`❌ Production: Real API unavailable but required!`);
+        console.error(`📊 Status: online=${networkStatus.isOnline}, working=${networkStatus.apiWorking}`);
+        // 在生产环境中，即使API不可用也强制使用真实API，而不是fallback
+        return apiService;
+      }
+    }
+
+    // 显式强制兼容模式（主要用于开发/测试）
+    if (forceCompatibleMode) {
+      console.log(`🔄 Using compatible API service (explicitly forced by REACT_APP_USE_COMPATIBLE_API)`);
+      return compatibleApiService;
+    }
     
-    // 检查是否为确认的演示模式
+    // 检查是否为确认的演示模式（仅在非生产环境）
     const isConfirmedDemoMode = 
       isDemo === 'true' ||
-      ['爸爸', '妈妈'].includes(userEmail || '') || // 特定演示账号
-      userEmail?.includes('demo'); // demo email
+      (userEmail?.includes('demo') && !forceRealApi); // 生产环境忽略demo检测
+
+    if (isConfirmedDemoMode && !isProduction) {
+      console.log(`🔄 Using compatible API service (confirmed demo mode for: ${userEmail})`);
+      return compatibleApiService;
+    }
 
     // 检查是否有有效的真实JWT token
     const hasValidRealJWT = authToken && 
@@ -1079,97 +1127,111 @@ export const detectNetworkAndGetApiService = async (options: {
       authToken.length > 50 && // 真实JWT通常很长
       authToken.includes('.'); // JWT格式通常包含点号
     
-    // 如果确认是演示模式，使用兼容API
-    if (isConfirmedDemoMode) {
-      console.log(`🔄 Using compatible API service (confirmed demo mode for: ${userEmail})`);
-      return compatibleApiService;
+    // 如果有有效的真实JWT token，使用真实API
+    if (hasValidRealJWT && userEmail) {
+      console.log(`✅ Valid JWT detected for: ${userEmail} - using real API service`);
+      localStorage.removeItem('api_mode');
+      return apiService;
     }
-    
-    // 如果有有效的真实JWT token，尝试使用真实API
-    if (hasValidRealJWT && userEmail && !isConfirmedDemoMode) {
-      console.log(`✅ Attempting real API service (valid JWT for: ${userEmail})`);
-      
-      // 测试API连接性
+
+    // 开发环境的fallback逻辑（仅在非生产环境且未强制真实API时）
+    if (!isProduction && !forceRealApi) {
+      // 检查本地存储的fallback设置
+      const localFallback = localStorage.getItem('use_compatible_api') === 'true' ||
+                           localStorage.getItem('api_mode') === 'compatible';
+
+      if (localFallback) {
+        console.log(`🔄 Using compatible API service (localStorage fallback)`);
+        return compatibleApiService;
+      }
+
+      // 测试网络连接
       const networkStatus = await getCachedNetworkStatus(forceRefresh);
       
-      if (networkStatus.isOnline && networkStatus.apiWorking) {
-        console.log(`✅ Using real API service (API confirmed working)`);
-        localStorage.removeItem('api_mode'); 
-        return apiService;
-      } else {
-        console.warn(`⚠️ Real API unavailable (online: ${networkStatus.isOnline}, working: ${networkStatus.apiWorking})`);
-        console.warn(`🔄 Falling back to compatible mode for real user: ${userEmail}`);
+      if (!networkStatus.isOnline) {
+        console.log('🔄 Using compatible API service (offline)');
+        return compatibleApiService;
+      }
+
+      if (!networkStatus.apiWorking) {
+        console.log('🔄 Using compatible API service (API unreachable)');
         localStorage.setItem('api_mode', 'compatible');
         return compatibleApiService;
       }
     }
-    
-    // 如果有demo token但用户名不是demo用户，可能是认证失败的情况
-    if (authToken?.startsWith('demo-token') && userEmail && !isConfirmedDemoMode) {
-      console.warn(`⚠️ Demo token detected for non-demo user: ${userEmail}`);
-      console.warn(`🔄 This may indicate authentication failure - using compatible mode`);
-      return compatibleApiService;
-    }
 
-    // 检查强制兼容模式设置
-    const forceCompatibleMode = 
-      process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
-      localStorage.getItem('use_compatible_api') === 'true' ||
-      localStorage.getItem('api_mode') === 'compatible';
-
-    if (forceCompatibleMode) {
-      console.log(`🔄 Using compatible API service (forced by configuration)`);
-      return compatibleApiService;
-    }
-
-    // 默认情况：测试网络连接
-    const networkStatus = await getCachedNetworkStatus(forceRefresh);
-    
-    if (!networkStatus.isOnline) {
-      console.log('🔄 Using compatible API service (offline)');
-      return compatibleApiService;
-    }
-
-    if (!networkStatus.apiWorking) {
-      console.log('🔄 Using compatible API service (API unreachable)');
-      localStorage.setItem('api_mode', 'compatible');
-      return compatibleApiService;
-    }
-
-    // 网络正常但没有有效token，尝试使用真实API（可能是未登录状态）
-    console.log('✅ Using real API service (network available, no authentication constraints)');
+    // 默认使用真实API
+    console.log('✅ Using real API service (default choice)');
     localStorage.removeItem('api_mode');
     return apiService;
 
   } catch (error) {
-    console.warn('🔄 API service detection failed, falling back to compatible mode:', error);
+    console.error('❌ API service detection failed:', error);
+    
+    // 生产环境即使出错也使用真实API
+    if (isProduction || process.env.REACT_APP_FORCE_REAL_API === 'true') {
+      console.log('🏭 Production: Using real API despite detection error');
+      return apiService;
+    }
+    
+    console.warn('🔄 Falling back to compatible mode due to error');
     return compatibleApiService;
   }
 };
 
 /**
- * Synchronous version for cases where async detection isn't possible
+ * Synchronous version with environment-first approach
  */
 export const detectNetworkAndGetApiServiceSync = () => {
+  // 获取环境配置
+  const isProduction = process.env.REACT_APP_ENVIRONMENT === 'production';
+  const forceRealApi = process.env.REACT_APP_FORCE_REAL_API === 'true';
+  const disableFallback = process.env.REACT_APP_DISABLE_FALLBACK === 'true';
+  const forceCompatibleMode = process.env.REACT_APP_USE_COMPATIBLE_API === 'true';
+
   // 获取用户认证信息
   const authToken = localStorage.getItem('auth_token');
   const userEmail = localStorage.getItem('user_email');
   const isDemo = localStorage.getItem('isDemo');
   
-  console.log('🔍 API Service Detection Debug (Sync):', {
-    hasAuthToken: !!authToken,
-    tokenLength: authToken?.length,
-    tokenStart: authToken?.substring(0, 20) + '...',
-    userEmail: userEmail,
-    isDemo: isDemo,
-    isDemoToken: authToken?.startsWith('demo-token') || authToken?.includes('demo_jwt_token')
+  console.log('🔍 Enhanced API Service Detection (Sync):', {
+    environment: {
+      isProduction,
+      forceRealApi,
+      disableFallback,
+      forceCompatibleMode
+    },
+    user: {
+      hasAuthToken: !!authToken,
+      tokenLength: authToken?.length,
+      tokenStart: authToken?.substring(0, 20) + '...',
+      userEmail: userEmail,
+      isDemo: isDemo
+    }
   });
+
+  // 生产环境优先：强制使用真实API
+  if (isProduction || forceRealApi) {
+    console.log(`🏭 Production mode (sync) - forcing real API service`);
+    localStorage.removeItem('api_mode');
+    return apiService;
+  }
+
+  // 显式强制兼容模式（主要用于开发/测试）
+  if (forceCompatibleMode) {
+    console.log(`🔄 Using compatible API service (sync - explicitly forced by REACT_APP_USE_COMPATIBLE_API)`);
+    return compatibleApiService;
+  }
   
-  // 检查是否为确认的演示模式
+  // 检查是否为确认的演示模式（仅在非生产环境）
   const isConfirmedDemoMode = 
     isDemo === 'true' ||
-    ['爸爸', '妈妈'].includes(userEmail || '') || // 特定演示账号
-    userEmail?.includes('demo'); // demo email
+    (userEmail?.includes('demo') && !forceRealApi);
+
+  if (isConfirmedDemoMode && !isProduction) {
+    console.log(`🔄 Using compatible API service (sync - confirmed demo mode for: ${userEmail})`);
+    return compatibleApiService;
+  }
 
   // 检查是否有有效的真实JWT token
   const hasValidRealJWT = authToken && 
@@ -1178,53 +1240,43 @@ export const detectNetworkAndGetApiServiceSync = () => {
     authToken.length > 50 && // 真实JWT通常很长
     authToken.includes('.'); // JWT格式通常包含点号
   
-  // 如果确认是演示模式，使用兼容API
-  if (isConfirmedDemoMode) {
-    console.log(`🔄 Using compatible API service (sync - confirmed demo mode for: ${userEmail})`);
-    return compatibleApiService;
-  }
-  
   // 如果有有效的真实JWT token，使用真实API
-  if (hasValidRealJWT && userEmail && !isConfirmedDemoMode) {
-    console.log(`✅ Using real API service (sync - valid JWT for: ${userEmail})`);
+  if (hasValidRealJWT && userEmail) {
+    console.log(`✅ Valid JWT detected (sync) for: ${userEmail} - using real API service`);
+    localStorage.removeItem('api_mode');
     return apiService;
   }
-  
-  // 如果有demo token但用户名不是demo用户，可能是认证失败的情况
-  if (authToken?.startsWith('demo-token') && userEmail && !isConfirmedDemoMode) {
-    console.warn(`⚠️ Demo token detected for non-demo user (sync): ${userEmail}`);
-    console.warn(`🔄 This may indicate authentication failure - using compatible mode`);
-    return compatibleApiService;
-  }
 
-  // 检查强制兼容模式设置
-  const forceCompatibleMode = 
-    process.env.REACT_APP_USE_COMPATIBLE_API === 'true' || 
-    localStorage.getItem('use_compatible_api') === 'true' ||
-    localStorage.getItem('api_mode') === 'compatible';
+  // 开发环境的fallback逻辑（仅在非生产环境且未强制真实API时）
+  if (!isProduction && !forceRealApi) {
+    // 检查本地存储的fallback设置
+    const localFallback = localStorage.getItem('use_compatible_api') === 'true' ||
+                         localStorage.getItem('api_mode') === 'compatible';
 
-  if (forceCompatibleMode) {
-    console.log(`🔄 Using compatible API service (sync - forced by configuration)`);
-    return compatibleApiService;
-  }
-
-  // Check basic connectivity
-  if (!navigator.onLine) {
-    console.log('🔄 Using compatible API service (sync - offline)');
-    return compatibleApiService;
-  }
-
-  // Use cached network status if available
-  const now = Date.now();
-  if ((now - networkStatusCache.lastChecked) < NETWORK_CACHE_DURATION) {
-    if (!networkStatusCache.apiWorking) {
-      console.log('🔄 Using compatible API service (sync - cached API failure)');
+    if (localFallback) {
+      console.log(`🔄 Using compatible API service (sync - localStorage fallback)`);
       return compatibleApiService;
+    }
+
+    // 检查基本连接性
+    if (!navigator.onLine) {
+      console.log('🔄 Using compatible API service (sync - offline)');
+      return compatibleApiService;
+    }
+
+    // 使用缓存的网络状态
+    const now = Date.now();
+    if ((now - networkStatusCache.lastChecked) < NETWORK_CACHE_DURATION) {
+      if (!networkStatusCache.apiWorking) {
+        console.log('🔄 Using compatible API service (sync - cached API failure)');
+        return compatibleApiService;
+      }
     }
   }
 
-  // 默认使用真实API服务（同步调用）
-  console.log('✅ Using real API service (sync - network available)');
+  // 默认使用真实API服务
+  console.log('✅ Using real API service (sync - default choice)');
+  localStorage.removeItem('api_mode');
   return apiService;
 };
 
