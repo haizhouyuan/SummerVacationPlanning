@@ -3,12 +3,18 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 async function seedPresetUsers() {
-  const client = new MongoClient(process.env.MONGODB_URI);
+  // Ensure we connect to the same database as the main application
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/summer_app';
+  const client = new MongoClient(mongoUri);
   
   try {
     await client.connect();
-    const db = client.db();
+    // Explicitly specify database name to ensure consistency
+    const db = client.db('summer_app');
     const users = db.collection('users');
+    
+    console.log(`🔗 Connected to database: summer_app`);
+    console.log(`🔗 Using MongoDB URI: ${mongoUri}`);
     
     console.log('🔄 开始创建预设用户...');
     
