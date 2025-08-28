@@ -116,18 +116,16 @@ const TodayTaskList: React.FC<TodayTaskListProps> = ({
                     ⭐ {task.points} 积分
                   </span>
                   
-                  {task.status === 'completed' ? (
-                    <span className="text-xs text-cartoon-green flex items-center">
-                      ✓ 完成
-                    </span>
-                  ) : (
-                    <button 
-                      onClick={() => task.status === 'pending' ? onTaskComplete(task.id) : onTaskContinue(task.id)}
-                      className={`${statusConfig.buttonColor} text-white px-3 py-1 rounded-cartoon text-xs transition-colors`}
-                    >
-                      {statusConfig.buttonText}
-                    </button>
-                  )}
+                  <span className={`text-xs flex items-center ${
+                    task.status === 'completed' 
+                      ? 'text-cartoon-green' 
+                      : task.status === 'in_progress' 
+                        ? 'text-cartoon-orange' 
+                        : 'text-gray-500'
+                  }`}>
+                    {task.status === 'completed' ? '✓ 完成' : 
+                     task.status === 'in_progress' ? '进行中' : '待开始'}
+                  </span>
                 </div>
               </div>
             );

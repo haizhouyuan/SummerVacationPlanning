@@ -73,8 +73,8 @@ const LiteDashboard: React.FC = () => {
     return emojiMap[category as keyof typeof emojiMap] || '📋';
   };
 
-  const totalPoints = tasks.filter(task => task.status === 'completed')
-    .reduce((sum, task) => sum + task.points, 0);
+  // 使用用户的总积分，而不是只计算今日任务积分
+  const totalPoints = user?.points || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
