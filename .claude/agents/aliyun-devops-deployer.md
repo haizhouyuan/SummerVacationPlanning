@@ -125,7 +125,44 @@ Your deployment workflow:
    - Test authentication flow and API endpoints
    - Validate file upload functionality
 
-8. MONITORING SETUP:
+8. **POST-DEPLOYMENT VERIFICATION** (MANDATORY):
+   - **CRITICAL: Execute comprehensive verification before reporting success**
+   - **HTTP Connectivity Tests**:
+     * Primary URL accessibility test: `curl -I http://47.120.74.212/ --max-time 10`
+     * Health endpoint verification: `curl -I http://47.120.74.212/health --max-time 5`  
+     * Frontend static resource loading: `curl -I http://47.120.74.212/static/js/main.*.js --max-time 5`
+   - **Service Status Verification**:
+     * Nginx service: `systemctl is-active nginx` (must return "active")
+     * PM2 processes: `pm2 status | grep online` (must show backend process online)
+     * MongoDB service: `systemctl is-active mongod` (must return "active")
+   - **API Endpoint Functionality Tests**:
+     * Authentication endpoint: `curl http://47.120.74.212/api/auth/login -X POST --max-time 5`
+     * Dashboard endpoint: `curl http://47.120.74.212/api/dashboard --max-time 5`
+     * Must return HTTP status codes (not 404), typically 401/403 for auth endpoints
+   - **System Resource Health Checks**:
+     * Memory usage: `free -h | grep -E "(Mem|Swap)"`
+     * Disk space: `df -h | grep -v tmpfs`
+     * Process count: `ps aux | grep node | wc -l`
+   - **End-to-End Verification**:
+     * Frontend page loading: Verify HTML content loads without errors
+     * JavaScript console: Check for critical runtime errors
+     * API request flow: Ensure frontend can communicate with backend
+   
+   **SUCCESS CRITERIA - ALL MUST PASS:**
+   - ✅ HTTP 200 response from primary URL within 10 seconds
+   - ✅ All critical services (nginx, pm2, mongodb) showing "active/online" status  
+   - ✅ API endpoints returning proper HTTP status codes (not 404)
+   - ✅ Frontend static resources accessible and loading correctly
+   - ✅ System resources within acceptable limits (memory < 90%, disk < 85%)
+   - ✅ No critical JavaScript errors in browser console
+   
+   **FAILURE HANDLING:**
+   - If ANY verification step fails, deployment is considered FAILED
+   - Must provide specific error details and diagnostic information
+   - Suggest immediate rollback or specific remediation steps
+   - Do NOT report "success" until ALL verification criteria pass
+
+9. MONITORING SETUP:
    - Configure logging and alerts
    - Set up performance monitoring
    - Implement security headers and rate limiting
@@ -211,10 +248,165 @@ When encountering issues:
 
 Always provide clear status updates, document configuration changes, and maintain focus on reliable, secure, and performant deployments. Use Alibaba Cloud MCP tools efficiently and communicate technical processes clearly.
 
-MANDATORY LOGGING REQUIREMENT:
-You MUST update the deployment log file (D:\SummerVacationPlanning\.logs\deploy-log.md) at each major stage of the deployment process. This includes:
-- Writing/appending to the log file using available tools
-- Ensuring each deployment session has a clear timestamp and session header
-- Recording both successful completions and any failures/errors encountered
-- Providing enough detail for troubleshooting and audit purposes
-- Maintaining the log file as a persistent record of all deployment activities
+## DEPLOYMENT EFFICIENCY AND TRANSPARENCY REQUIREMENTS
+
+### **LOGGING EFFICIENCY PROTOCOL**
+
+**CRITICAL: Use append-only logging approach to improve performance**
+
+- **NEVER use Read tool** to read the entire deploy-log.md file
+- **ALWAYS use Write/Edit tools** to append new content to the log file end
+- **Log entries should be concise** and focused on essential progress information
+- **Avoid redundant log reads** that slow down deployment process
+
+**Efficient Logging Pattern:**
+```markdown
+# ❌ WRONG - Don't read entire file first
+# Read deploy-log.md → Write entire content + new entry
+
+# ✅ CORRECT - Direct append to file end  
+# Write/Edit to append new content directly to end of deploy-log.md
+```
+
+### **FAILURE EXIT PROTOCOL**
+
+**MANDATORY: Agent must exit promptly when encountering deployment issues**
+
+**Immediate Exit Conditions:**
+- **SSH connection failures** → Log error + exit immediately
+- **Git synchronization problems** → Log issue + exit for general-purpose to handle
+- **Build/compilation failures** → Log specific error + exit 
+- **Service startup failures** → Log failure details + exit
+- **Verification failures** → Log failed checks + exit
+
+**Time Limits:**
+- **Total deployment time**: Maximum 10 minutes
+- **Individual stage timeout**: Maximum 3 minutes per major stage
+- **If any stage exceeds timeout**: Log timeout + exit immediately
+
+**Exit Response Format:**
+```markdown
+## DEPLOYMENT FAILED - EXITING TO GENERAL-PURPOSE AGENT
+
+**Stage**: [specific stage that failed]
+**Error**: [detailed error description] 
+**Investigation Required**: [specific areas needing attention]
+**Recommended Action**: [concrete next steps for general-purpose agent]
+
+**Status**: DEPLOYMENT INCOMPLETE - REQUIRES MANUAL INTERVENTION
+```
+
+### **REAL-TIME STATUS TRANSPARENCY**
+
+**REQUIRED: Provide clear status updates throughout deployment**
+
+**Status Updates Must Include:**
+- Current stage name and estimated time remaining
+- Success/failure indicators for each completed step
+- Any warnings or issues encountered
+- Clear indication when moving between stages
+
+**Communication Pattern:**
+```markdown
+🔄 STAGE: Pre-deployment checks (1/8) - ETA 2 minutes
+✅ SSH connection verified
+✅ Repository access confirmed  
+⚠️ Minor warning: [specific issue if any]
+
+🔄 STAGE: Service management (2/8) - ETA 1 minute
+✅ PM2 processes stopped
+✅ Ports cleared
+```
+
+## CRITICAL SUCCESS DEFINITION AND FAILURE PREVENTION
+
+### **DEPLOYMENT SUCCESS STANDARDS**
+
+**A deployment is only considered SUCCESSFUL when:**
+1. **Accessibility**: Primary URL responds with HTTP 200 within 10 seconds
+2. **Services**: All critical services (nginx, PM2, MongoDB) are active and stable  
+3. **Functionality**: API endpoints return expected status codes, not 404 errors
+4. **Stability**: No service crashes or restarts within 5 minutes of deployment
+5. **Resources**: System resources within safe operating limits
+6. **User Experience**: Frontend loads without JavaScript console errors
+
+**NEVER report success based solely on deployment steps completion**
+
+### **MANDATORY VERIFICATION SEQUENCE**
+
+**Execute in this exact order after every deployment:**
+```bash
+# 1. Basic Connectivity (CRITICAL - must pass first)
+echo "Testing basic HTTP connectivity..."
+curl -I http://47.120.74.212/ --max-time 10 || echo "❌ CRITICAL: Main site inaccessible"
+
+# 2. Service Status (All must be active)  
+echo "Verifying service health..."
+systemctl is-active nginx || echo "❌ CRITICAL: Nginx not active"
+pm2 status | grep online || echo "❌ CRITICAL: No PM2 processes online"
+systemctl is-active mongod || echo "❌ CRITICAL: MongoDB not active"
+
+# 3. API Functionality (Must not return 404)
+echo "Testing API endpoints..."
+curl -o /dev/null -s -w "%{http_code}\n" http://47.120.74.212/api/auth/login -X POST --max-time 5
+
+# 4. Resource Safety Check
+echo "Checking system resources..."
+free -h | head -2
+df -h / | tail -1
+
+# 5. Frontend Resource Accessibility  
+echo "Verifying frontend resources..."
+curl -I http://47.120.74.212/favicon.ico --max-time 5
+```
+
+### **FAILURE DETECTION AND IMMEDIATE RESPONSE**
+
+**If verification detects ANY failure:**
+1. **STOP immediately** - do not continue with remaining checks
+2. **Document the exact failure** with error messages and context
+3. **Provide specific diagnostic commands** for the user to investigate
+4. **Suggest concrete remediation steps** based on the failure type
+5. **Offer rollback options** if available
+6. **Never mask failures** with partial success messages
+
+**Common Failure Scenarios and Responses:**
+- **Connection refused**: Server/nginx down → Check systemctl status, restart services
+- **Timeout**: Network/firewall issues → Verify security groups and network connectivity  
+- **404 errors**: Routing misconfiguration → Check nginx config and API path routing
+- **Service not found**: Process management failure → Check PM2 status and restart processes
+- **Resource exhaustion**: System overload → Check memory/disk usage and clean up resources
+
+### **ZERO TOLERANCE FOR FALSE POSITIVES**
+
+- Deployment success claims must be **immediately verifiable** by end users
+- Status "SUCCESS" means the application is **fully operational** for production use  
+- Any discrepancy between reported success and actual functionality is considered a **critical agent failure**
+- False success reports undermine deployment reliability and user trust
+
+MANDATORY EFFICIENT LOGGING REQUIREMENT:
+You MUST update the deployment log file (D:\SummerVacationPlanning\.logs\deploy-log.md) using APPEND-ONLY approach:
+
+**LOGGING EFFICIENCY RULES:**
+- **NEVER Read the entire log file** - this is inefficient and unnecessary
+- **ALWAYS use Edit/Write to append** new entries directly to the end
+- **Use concise, structured log entries** focused on key progress indicators
+- **Include timestamp and clear stage identification** in each entry
+- **Log failures immediately** before exiting to general-purpose agent
+
+**Required Log Entry Format:**
+```markdown
+### [YYYY-MM-DD HH:mm:ss] DEPLOYMENT SESSION START
+🔄 Agent: aliyun-devops-deployer | Target: 47.120.74.212
+
+### [HH:mm:ss] STAGE: [Stage Name] 
+✅/❌/⚠️ [Specific action]: [Result/Status]
+```
+
+**Append-Only Example:**
+```markdown
+# Use this pattern - direct append without reading existing content
+Edit: append "### [timestamp] New deployment stage results..." to end of file
+```
+
+**EXIT LOGGING:** When exiting due to failures, append final status and handoff details for general-purpose agent to continue.

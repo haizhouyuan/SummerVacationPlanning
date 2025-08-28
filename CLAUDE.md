@@ -403,6 +403,52 @@ Use the aliyun-devops-deployer agent (see .claude/agents/aliyun-devops-deployer.
 
 **Infrastructure**: Backend runs under PM2 process manager, frontend served as static files via Nginx reverse proxy.
 
+## Agent Responsibility Matrix and Failure Escalation
+
+### **Standard Deployment Workflow**
+```
+1. 本地修改代码 (Local Code Changes)
+2. 完成Pre-flight Checklist验证 (Complete Pre-flight Checklist)  
+3. 双推送到远程 (Push to GitHub + Gitee)  
+4. aliyun-devops-deployer agent执行部署 (Agent Deploy)
+   ├─ 成功：执行POST-DEPLOYMENT VERIFICATION并报告
+   └─ 失败：记录到deploy-log.md并退出 → general-purpose处理
+```
+
+### **Agent Responsibility Boundaries**
+
+**aliyun-devops-deployer Agent职责范围:**
+- ✅ 执行标准部署步骤 (pull, build, deploy, verify)
+- ✅ 基础服务管理 (PM2, Nginx restart)  
+- ✅ 执行POST-DEPLOYMENT VERIFICATION检查
+- ✅ 高效append-only日志记录 (禁止读取整个deploy-log.md)
+- ✅ **遇到问题及时退出** (总时长≤10分钟，单阶段≤3分钟)
+
+**agent禁止执行的操作:**
+- ❌ 复杂调试和故障排除 
+- ❌ 多轮troubleshooting或长时间silent工作
+- ❌ 架构更改或配置决策
+- ❌ 基于部署分析的代码修改
+
+### **部署失败升级机制 (Escalation Protocol)**
+
+**agent遇到部署失败时必须:**
+1. **立即记录**: 向deploy-log.md追加具体失败详情 (不读取文件)
+2. **结构化退出**: 返回明确错误报告:
+   ```markdown
+   ## DEPLOYMENT FAILED - EXITING TO GENERAL-PURPOSE AGENT
+   **Stage**: [失败阶段] | **Error**: [详细错误]
+   **Recommended Action**: [general-purpose的具体下一步]
+   ```
+3. **控制权移交**: 交回general-purpose agent进行复杂问题解决
+
+**general-purpose Agent负责:**
+- 🔧 复杂调试和根因分析
+- 🔧 配置更改和架构决策  
+- 🔧 基于部署失败的代码修改
+- 🔧 多步骤troubleshooting和调查
+- 🔧 修复问题后重新触发部署
+
 Production Environment: The production environment is centralized on an Alibaba Cloud (Aliyun) ECS server. Environment variables (for database URI, JWT secrets, etc.) are configured on the server. (Security aspects such as HTTPS, CORS configuration, and secret management are handled in the server setup and deployment process.)
 
 ## Deployment Troubleshooting 🔧
