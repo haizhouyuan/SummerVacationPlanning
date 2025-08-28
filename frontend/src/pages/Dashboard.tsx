@@ -378,7 +378,13 @@ const Dashboard: React.FC = () => {
             description: t.task?.description || '',
             points: t.task?.points || 0,
             status: t.status === 'planned' ? 'pending' : t.status === 'in_progress' ? 'in_progress' : 'completed',
-            category: t.task?.category || 'other'
+            category: t.task?.category || 'other',
+            // 添加审批状态相关信息
+            approvalStatus: t.approvalStatus,
+            approvedBy: t.approvedBy,
+            approvedAt: t.approvedAt,
+            approvalNotes: t.approvalNotes,
+            bonusPoints: t.bonusPoints
           }))}
           onTaskComplete={handleTaskComplete}
           onTaskContinue={handleTaskContinue}
