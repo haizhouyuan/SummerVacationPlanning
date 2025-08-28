@@ -1051,12 +1051,13 @@ export const detectNetworkAndGetApiService = async (options: {
 } = {}) => {
   const { forceRefresh = false } = options;
 
+  // 获取环境配置（提升到函数顶部，确保catch块也能访问）
+  const isProduction = process.env.REACT_APP_ENVIRONMENT === 'production';
+  const forceRealApi = process.env.REACT_APP_FORCE_REAL_API === 'true';
+  const disableFallback = process.env.REACT_APP_DISABLE_FALLBACK === 'true';
+  const forceCompatibleMode = process.env.REACT_APP_USE_COMPATIBLE_API === 'true';
+
   try {
-    // 获取环境配置
-    const isProduction = process.env.REACT_APP_ENVIRONMENT === 'production';
-    const forceRealApi = process.env.REACT_APP_FORCE_REAL_API === 'true';
-    const disableFallback = process.env.REACT_APP_DISABLE_FALLBACK === 'true';
-    const forceCompatibleMode = process.env.REACT_APP_USE_COMPATIBLE_API === 'true';
 
     // 获取用户认证信息
     const authToken = localStorage.getItem('auth_token');

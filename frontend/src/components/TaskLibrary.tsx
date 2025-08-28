@@ -44,6 +44,7 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
     title: '',
     description: '',
     category: 'learning' as Task['category'],
+    activity: 'homework', // 必需的activity字段，默认为学习类的作业
     difficulty: 'medium' as Task['difficulty'],
     estimatedTime: 30,
     points: 10,
@@ -302,11 +303,25 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
     }
   };
 
+  // 映射category到默认activity
+  const getDefaultActivityForCategory = (category: Task['category']): string => {
+    const activityMap: Record<Task['category'], string> = {
+      reading: 'textbook_reading',
+      learning: 'homework',
+      exercise: 'running',
+      creativity: 'art_creation',
+      chores: 'cleaning',
+      other: 'general_task'
+    };
+    return activityMap[category] || 'general_task';
+  };
+
   const resetCreateForm = () => {
     setNewTask({
       title: '',
       description: '',
       category: 'learning',
+      activity: 'homework', // 必需的activity字段，默认为学习类的作业
       difficulty: 'medium',
       estimatedTime: 30,
       points: 10,
@@ -717,7 +732,14 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
                   <label className="block text-sm font-medium text-gray-700 mb-2">分类</label>
                   <select
                     value={newTask.category}
-                    onChange={(e) => setNewTask(prev => ({ ...prev, category: e.target.value as Task['category'] }))}
+                    onChange={(e) => {
+                      const newCategory = e.target.value as Task['category'];
+                      setNewTask(prev => ({
+                        ...prev,
+                        category: newCategory,
+                        activity: getDefaultActivityForCategory(newCategory) // 自动更新对应的activity
+                      }));
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="reading">语文阅读</option>

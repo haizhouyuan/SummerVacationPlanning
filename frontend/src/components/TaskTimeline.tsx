@@ -554,6 +554,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         title: quickTaskTitle,
         description: `快速创建的任务：${quickTaskTitle}`,
         category: 'other' as const,
+        activity: 'general_task', // 必需的activity字段，对应'other'类别的通用任务
         difficulty: 'medium' as const,
         estimatedTime: quickTaskDuration,
         requiresEvidence: false,
