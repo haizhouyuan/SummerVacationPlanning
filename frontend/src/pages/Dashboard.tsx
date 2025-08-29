@@ -77,7 +77,7 @@ const Dashboard: React.FC = () => {
           throw new Error(response.error || '加载统计数据失败');
         }
         
-        setStats(response.data);
+        setStats(response.data.stats);
       }
     } catch (error: any) {
       console.error('Error loading dashboard stats:', error);
