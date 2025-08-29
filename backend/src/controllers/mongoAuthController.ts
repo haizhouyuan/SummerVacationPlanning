@@ -141,8 +141,21 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Find user by email
-    const user = await collections.users.findOne({ email });
+    // EMERGENCY FIX: Direct MongoDB connection to bypass collections initialization issue
+    let user;
+    if (!collections || !collections.users) {
+      console.log('🚨 EMERGENCY: Collections not available, using direct MongoDB connection');
+      const { MongoClient } = require('mongodb');
+      const client = new MongoClient(process.env.MONGODB_URI);
+      await client.connect();
+      const db = client.db();
+      user = await db.collection('users').findOne({ email });
+      await client.close();
+      console.log('🚨 EMERGENCY: Direct MongoDB query completed');
+    } else {
+      // Find user by email using collections
+      user = await collections.users.findOne({ email });
+    }
 
     if (!user) {
       return res.status(401).json({

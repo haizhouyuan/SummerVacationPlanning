@@ -43,6 +43,58 @@ router.post('/debug-login', (req: Request, res: Response) => {
   });
 });
 
+// Debug collections initialization
+router.get('/debug-collections', async (req: Request, res: Response) => {
+  console.log('🐛 DEBUG COLLECTIONS route hit');
+  try {
+    const { collections } = await import('../config/mongodb');
+    console.log('Collections available:', Object.keys(collections || {}));
+    
+    if (!collections) {
+      return res.json({
+        success: false,
+        error: 'Collections object is null/undefined',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    if (!collections.users) {
+      return res.json({
+        success: false,
+        error: 'collections.users is not available',
+        collectionsKeys: Object.keys(collections || {}),
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Try to find the demo user
+    const user = await collections.users.findOne({ displayName: '袁绍宸' });
+    
+    res.json({
+      success: true,
+      message: 'Collections are working',
+      collectionsKeys: Object.keys(collections || {}),
+      userFound: !!user,
+      userData: user ? {
+        displayName: user.displayName,
+        email: user.email,
+        role: user.role,
+        hasPassword: !!user.password
+      } : null,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error: any) {
+    console.error('🚨 DEBUG COLLECTIONS ERROR:', error);
+    res.json({
+      success: false,
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 router.post('/login', async (req: Request, res: Response, next: NextFunction) => {
   console.log('🚀 Login route hit:', req.body);
   console.log('🔍 Route handler: About to call login function');

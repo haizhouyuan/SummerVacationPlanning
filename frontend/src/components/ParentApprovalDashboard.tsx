@@ -69,7 +69,7 @@ const ParentApprovalDashboard: React.FC = () => {
       
       const response = await fetch('/api/daily-tasks/pending-approval', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
 
@@ -129,7 +129,7 @@ const ParentApprovalDashboard: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({
           action,
@@ -163,7 +163,7 @@ const ParentApprovalDashboard: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
         body: JSON.stringify({
           dailyTaskIds: Array.from(selectedTasks),

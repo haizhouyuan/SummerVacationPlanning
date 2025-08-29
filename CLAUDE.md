@@ -421,7 +421,7 @@ Use the aliyun-devops-deployer agent (see .claude/agents/aliyun-devops-deployer.
 - ✅ 执行标准部署步骤 (pull, build, deploy, verify)
 - ✅ 基础服务管理 (PM2, Nginx restart)  
 - ✅ 执行POST-DEPLOYMENT VERIFICATION检查
-- ✅ 高效append-only日志记录 (禁止读取整个deploy-log.md)
+- ✅ **双日志记录系统** (deploy-log.md append-only + deploy-log-latest.md实时状态)
 - ✅ **遇到问题及时退出** (总时长≤10分钟，单阶段≤3分钟)
 
 **agent禁止执行的操作:**
@@ -429,6 +429,7 @@ Use the aliyun-devops-deployer agent (see .claude/agents/aliyun-devops-deployer.
 - ❌ 多轮troubleshooting或长时间silent工作
 - ❌ 架构更改或配置决策
 - ❌ 基于部署分析的代码修改
+- ❌ **读取历史部署日志** (deploy-log.md禁止读取)
 
 ### **部署失败升级机制 (Escalation Protocol)**
 
@@ -448,6 +449,57 @@ Use the aliyun-devops-deployer agent (see .claude/agents/aliyun-devops-deployer.
 - 🔧 基于部署失败的代码修改
 - 🔧 多步骤troubleshooting和调查
 - 🔧 修复问题后重新触发部署
+
+## Agent交互协议和状态文件管理
+
+### **双日志系统架构**
+
+**主日志文件 (.logs/deploy-log.md):**
+- 📚 **用途**: 历史部署记录归档
+- 🔒 **访问**: aliyun-devops-deployer仅可append，禁止读取
+- 👀 **读取者**: general-purpose agent可读取完整历史
+- 📝 **内容**: 简洁的部署会话摘要和结果
+
+**实时状态文件 (.logs/deploy-log-latest.md):**
+- ⚡ **用途**: 当前部署会话的实时状态
+- 🔄 **更新**: aliyun-devops-deployer实时更新
+- 📊 **大小限制**: 最大5KB，确保快速读取
+- 🎯 **目标读者**: general-purpose agent进行failure分析
+
+### **Agent切换工作流程**
+
+**正常部署流程:**
+```
+User → aliyun-devops-deployer → 成功部署 → 更新latest文件 → append主日志 → 完成
+```
+
+**失败升级流程:**
+```
+User → aliyun-devops-deployer → 遇到问题 → 更新latest文件(failure详情) → append主日志(summary) → 退出
+     ↓
+general-purpose agent → 读取latest文件 → 分析问题 → 修复 → 重新触发deployer
+```
+
+### **General-Purpose Agent使用指南**
+
+**当接收到部署失败移交时:**
+
+1. **读取实时状态**: 首先读取 `.logs/deploy-log-latest.md` 获取完整failure context
+2. **分析失败原因**: 基于latest文件中的诊断信息进行根因分析  
+3. **执行修复操作**: 根据建议采取配置更改、代码修复等操作
+4. **验证修复效果**: 确认问题已解决
+5. **重新触发部署**: 使用aliyun-devops-deployer重新部署
+
+**状态文件读取优先级:**
+- 🥇 **优先**: `.logs/deploy-log-latest.md` (最新session详情)
+- 🥈 **补充**: `.logs/deploy-log.md` (历史context，如需要)
+
+**交互最佳实践:**
+- ✅ 总是先检查latest文件了解当前状态
+- ✅ 基于failure details中的建议行动
+- ✅ 修复问题后清晰记录所做的更改
+- ✅ 重新部署前确认Pre-flight Checklist完成
+- ❌ 避免重复deployer已执行的基础检查
 
 Production Environment: The production environment is centralized on an Alibaba Cloud (Aliyun) ECS server. Environment variables (for database URI, JWT secrets, etc.) are configured on the server. (Security aspects such as HTTPS, CORS configuration, and secret management are handled in the server setup and deployment process.)
 
