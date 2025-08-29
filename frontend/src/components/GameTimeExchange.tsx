@@ -78,10 +78,6 @@ const GameTimeExchange: React.FC<GameTimeExchangeProps> = ({ onExchangeSuccess }
         <PointsDisplay
           points={user.points}
           size="sm"
-          currentStreak={user.currentStreak}
-          medals={user.medals}
-          showMedalMultiplier={false}
-          showStreak={false}
         />
       </div>
 

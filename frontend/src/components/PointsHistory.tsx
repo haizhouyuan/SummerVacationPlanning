@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
-import PointsDisplay from './PointsDisplay';
+// import PointsDisplay from './PointsDisplay';
 import { getStatsPeriod, formatPoints } from '../utils/statisticsService';
 
 interface PointsTransaction {
@@ -36,7 +36,7 @@ const PointsHistory: React.FC<PointsHistoryProps> = ({
   displayMode = 'modal',
   className = ''
 }) => {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [transactions, setTransactions] = useState<PointsTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../components/NotificationSystem';
 import TopNavigation from '../components/TopNavigation';
-import PointsDisplay from '../components/PointsDisplay';
+// import PointsDisplay from '../components/PointsDisplay';
 import PointsHistory from '../components/PointsHistory';
 import GameTimeExchange from '../components/GameTimeExchange';
 import SpecialRewardRequest from '../components/SpecialRewardRequest';
@@ -28,15 +28,15 @@ interface RedemptionRecord {
 
 const RewardsCenter: React.FC = () => {
   const { user, logout } = useAuth();
-  const { showSuccess, showError } = useNotifications();
+  const { showSuccess: _showSuccess, showError: _showError } = useNotifications();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, _setLoading] = useState(false);
   const [pointsStats, setPointsStats] = useState<any>(null);
-  const [gameTimeStats, setGameTimeStats] = useState<any>(null);
+  const [_gameTimeStats, setGameTimeStats] = useState<any>(null);
   const [taskRecords, setTaskRecords] = useState<TaskCompletionRecord[]>([]);
   const [redemptionHistory, setRedemptionHistory] = useState<RedemptionRecord[]>([]);
-  const [error, setError] = useState<string>('');
+  const [_error, _setError] = useState<string>('');
 
   // 加载积分统计
   const loadPointsStats = async () => {
@@ -98,7 +98,7 @@ const RewardsCenter: React.FC = () => {
     loadRedemptionHistory();
   }, []);
 
-  const handleLogout = async () => {
+  const _handleLogout = async () => {
     try {
       await logout();
       navigate('/login');

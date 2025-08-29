@@ -574,6 +574,21 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     }
   };
 
+  // Delete task completely
+  const handleDeleteTask = async (task: DailyTask) => {
+    if (window.confirm(`确定要彻底删除任务"${task.task?.title}"吗？`)) {
+      try {
+        const apiService = detectNetworkAndGetApiServiceSync();
+        await apiService.deleteDailyTask(task.id);
+        onRefresh?.();
+        alert('✅ 任务已删除');
+      } catch (error) {
+        console.error('Error deleting daily task:', error);
+        alert(`❌ 删除失败：${(error as any)?.message || '未知错误'}`);
+      }
+    }
+  };
+
   // Handle time slot click to create new task
   const handleTimeSlotClick = (timeSlot: string) => {
     setQuickCreateTime(timeSlot);
@@ -935,9 +950,18 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                               e.stopPropagation();
                               handleRemoveFromTimeline(task);
                             }}
-                            className="text-xs px-3 py-1 bg-red-50 text-red-600 rounded-full border border-red-200 hover:bg-red-100 transition-colors"
+                            className="text-xs px-3 py-1 bg-yellow-50 text-yellow-600 rounded-full border border-yellow-200 hover:bg-yellow-100 transition-colors"
                           >
                             移除
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTask(task);
+                            }}
+                            className="text-xs px-3 py-1 bg-red-50 text-red-600 rounded-full border border-red-200 hover:bg-red-100 transition-colors"
+                          >
+                            删除
                           </button>
                         </div>
                       </div>
@@ -1117,16 +1141,28 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                             <div className={`text-xs ${priorityInfo.color}`} title={priorityInfo.text}>
                               {priorityInfo.emoji}
                             </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRemoveFromTimeline(task);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 transition-all text-sm p-1 rounded hover:bg-red-50"
-                              title="移除任务安排"
-                            >
-                              ✕
-                            </button>
+                            <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-1 transition-all">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveFromTimeline(task);
+                                }}
+                                className="text-yellow-500 hover:text-yellow-700 transition-all text-sm p-1 rounded hover:bg-yellow-50"
+                                title="移除任务安排"
+                              >
+                                ⦵️
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTask(task);
+                                }}
+                                className="text-red-500 hover:text-red-700 transition-all text-sm p-1 rounded hover:bg-red-50"
+                                title="删除任务"
+                              >
+                                🗑️
+                              </button>
+                            </div>
                           </div>
                         </div>
                         

@@ -6,8 +6,6 @@ import TopNavigation from '../components/TopNavigation';
 // import TaskCard from '../components/TaskCard';
 import TaskTimeline from '../components/TaskTimeline';
 import TaskCreationForm from '../components/TaskCreationForm';
-import ApiDebugPanel from '../components/ApiDebugPanel';
-import ApiTestPanel from '../components/ApiTestPanel';
 
 const TaskPlanning: React.FC = () => {
   const { user } = useAuth();
@@ -107,6 +105,20 @@ const TaskPlanning: React.FC = () => {
     
     // Close the form
     setShowCreateForm(false);
+  };
+
+  const handleDeleteTask = async (taskId: string, taskTitle: string) => {
+    if (window.confirm(`确定要删除任务"${taskTitle}"吗？`)) {
+      try {
+        const apiService = detectNetworkAndGetApiServiceSync();
+        await apiService.deleteTask(taskId);
+        await loadTasks(); // 刷新任务列表
+        alert(`✅ 任务"${taskTitle}"已删除`);
+      } catch (error) {
+        console.error('Error deleting task:', error);
+        alert(`❌ 删除失败：${(error as any)?.message || '未知错误'}`);
+      }
+    }
   };
 
   if (!user) {
@@ -271,9 +283,22 @@ const TaskPlanning: React.FC = () => {
                               <span className="text-xs text-gray-500">
                                 {task.estimatedTime}分钟
                               </span>
-                              <span className="text-xs font-medium text-primary-600">
-                                {task.points}分
-                              </span>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-xs font-medium text-primary-600">
+                                  {task.points}分
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    handleDeleteTask(task.id, task.title);
+                                  }}
+                                  className="text-red-500 hover:text-red-700 transition-colors text-xs p-1 rounded hover:bg-red-50"
+                                  title="删除任务"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -479,28 +504,41 @@ const TaskPlanning: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          <button
-                            onClick={async () => {
-                              try {
-                                const apiService = detectNetworkAndGetApiServiceSync();
-                                await apiService.createDailyTask({
-                                  taskId: task.id,
-                                  date: selectedDate,
-                                  // Don't set plannedTime so it appears as unscheduled
-                                });
-                                await loadDailyTasks();
-                                // Show success message briefly
-                                const successMessage = `✅ "${task.title}" 已添加到今日任务`;
-                                alert(successMessage);
-                              } catch (error) {
-                                console.error('Error adding task to daily tasks:', error);
-                                alert(`❌ 添加任务失败：${(error as any)?.message || '未知错误'}`);
-                              }
-                            }}
-                            className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-primary-700 transition-colors"
-                          >
-                            添加
-                          </button>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const apiService = detectNetworkAndGetApiServiceSync();
+                                  await apiService.createDailyTask({
+                                    taskId: task.id,
+                                    date: selectedDate,
+                                    // Don't set plannedTime so it appears as unscheduled
+                                  });
+                                  await loadDailyTasks();
+                                  // Show success message briefly
+                                  const successMessage = `✅ "${task.title}" 已添加到今日任务`;
+                                  alert(successMessage);
+                                } catch (error) {
+                                  console.error('Error adding task to daily tasks:', error);
+                                  alert(`❌ 添加任务失败：${(error as any)?.message || '未知错误'}`);
+                                }
+                              }}
+                              className="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-medium hover:bg-primary-700 transition-colors"
+                            >
+                              添加
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleDeleteTask(task.id, task.title);
+                              }}
+                              className="text-red-500 hover:text-red-700 transition-colors text-xs p-2 rounded-full hover:bg-red-50"
+                              title="删除任务"
+                            >
+                              🗑️
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -525,11 +563,6 @@ const TaskPlanning: React.FC = () => {
         </div>
       )}
       
-      {/* API Debug Panel */}
-      <ApiDebugPanel />
-      
-      {/* API Test Panel */}
-      <ApiTestPanel />
       </div>
     </div>
   );

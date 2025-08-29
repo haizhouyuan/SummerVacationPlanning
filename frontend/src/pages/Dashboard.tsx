@@ -6,10 +6,11 @@ import PointsHistory from '../components/PointsHistory';
 import TopNavigation from '../components/TopNavigation';
 import { DailyTask } from '../types';
 import {
-  WelcomeBanner,
   TodayTaskList,
   FeedbackAnimations
 } from '../components/dashboard';
+import WelcomeBannerMagic from '../components/WelcomeBanner';
+import ProgressCircle from '../components/ProgressCircle';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
@@ -358,45 +359,50 @@ const Dashboard: React.FC = () => {
         <TopNavigation />
       </div>
       
-      <div className="p-3 sm:p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
-        {/* Welcome Banner */}
+      {/* Main Container with Unified Spacing */}
+      <div className="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-8 py-4 space-y-6">
+        
+        {/* Top Section: Welcome Banner + Progress Circle */}
         {currentUser && (
-          <WelcomeBanner 
-            user={{
-              displayName: currentUser.displayName,
-              role: currentUser.role as 'student' | 'parent',
-              points: currentUser.points
-            }}
-            userLevel={safeStats.user.level}
-            todayPoints={stats?.todayStats?.pointsEarned || 0}
-            className="mb-6"
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-stretch">
+            {/* Left: Welcome Banner with Magic Effects */}
+            <div className="min-h-0">
+              <WelcomeBannerMagic 
+                title={`欢迎回来，${currentUser.displayName}！`}
+                subtitle={`今日已获得 ${stats?.todayStats?.pointsEarned || 0} 积分 • 连续学习 ${safeStats.user.currentStreak} 天`}
+              />
+            </div>
+            
+            {/* Right: Progress Circle */}
+            <div className="flex items-center justify-center lg:justify-end">
+              <ProgressCircle 
+                value={Math.min(1, (safeStats.weeklyStats.completed || 0) / (safeStats.weeklyGoal || 1))} 
+              />
+            </div>
+          </div>
         )}
 
         {/* Today's Tasks Section */}
-        <TodayTaskList
-          tasks={todayTasks.map(t => ({
-            id: t.id,
-            title: t.task?.title || 'Unknown Task',
-            description: t.task?.description || '',
-            points: t.task?.points || 0,
-            status: t.status === 'planned' ? 'pending' : t.status === 'in_progress' ? 'in_progress' : 'completed',
-            category: t.task?.category || 'other',
-            // 添加审批状态相关信息
-            approvalStatus: t.approvalStatus,
-            approvedBy: t.approvedBy,
-            approvedAt: t.approvedAt,
-            approvalNotes: t.approvalNotes,
-            bonusPoints: t.bonusPoints
-          }))}
-          onTaskComplete={handleTaskComplete}
-          onTaskContinue={handleTaskContinue}
-          onAddTask={handleAddTask}
-          className="mb-6"
-        />
-
-
+        <div className="w-full">
+          <TodayTaskList
+            tasks={todayTasks.map(t => ({
+              id: t.id,
+              title: t.task?.title || 'Unknown Task',
+              description: t.task?.description || '',
+              points: t.task?.points || 0,
+              status: t.status === 'planned' ? 'pending' : t.status === 'in_progress' ? 'in_progress' : 'completed',
+              category: t.task?.category || 'other',
+              // 添加审批状态相关信息
+              approvalStatus: t.approvalStatus,
+              approvedBy: t.approvedBy,
+              approvedAt: t.approvedAt,
+              approvalNotes: t.approvalNotes,
+              bonusPoints: t.bonusPoints
+            }))}
+            onTaskComplete={handleTaskComplete}
+            onTaskContinue={handleTaskContinue}
+            onAddTask={handleAddTask}
+          />
         </div>
       </div>
 

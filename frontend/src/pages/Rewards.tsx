@@ -4,6 +4,8 @@ import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import TopNavigation from '../components/TopNavigation';
 import PointsHistory from '../components/PointsHistory';
 import SpecialRewardRequest from '../components/SpecialRewardRequest';
+import WelcomeBannerMagic from '../components/WelcomeBanner';
+import PointsDisplay from '../components/PointsDisplay';
 
 const Rewards: React.FC = () => {
   const { user } = useAuth();
@@ -267,52 +269,28 @@ const Rewards: React.FC = () => {
       </div>
       
       <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
-      {/* Mobile Compact Header */}
-      <div className="bg-white shadow-sm">
-        <div className="px-4 py-4">
-          <div className="flex items-center justify-between">
-            {/* Left: Title and Icon */}
-            <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-lg sm:text-xl font-bold">🎁</span>
+        {/* Magic UI Welcome Banner */}
+        <div className="p-4 sm:max-w-7xl sm:mx-auto sm:px-4 lg:px-6 xl:px-8 pt-6">
+          <div className="mb-6">
+            <WelcomeBannerMagic 
+              title={`奖励中心 🎁`}
+              subtitle={`${user.displayName} • 当前积分: ${user.points} • 探索您的成就与奖励`}
+            />
+          </div>
+          
+          {/* Enhanced Points Display */}
+          <div className="flex justify-center mb-6">
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border border-white/20 flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
+                <span className="text-white text-2xl">💎</span>
               </div>
               <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">成长与奖励中心</h1>
-                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">展示徽章、积分和奖励</p>
-              </div>
-            </div>
-            
-            {/* Right: User Info - Compact */}
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-              <p className="text-xs sm:text-base font-bold text-primary-600">{user.points} 积分</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Header - Hidden on mobile */}
-      <div className="hidden sm:block bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
-          <div className="flex justify-between items-center py-4 sm:py-6">
-            <div className="flex items-center flex-1 min-w-0">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-lg sm:text-xl font-bold">🎁</span>
-              </div>
-              <div className="ml-3 sm:ml-4 min-w-0">
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">成长与奖励中心</h1>
-                <p className="text-sm text-gray-600 hidden sm:block">展示徽章、积分和奖励</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900 truncate max-w-[80px] sm:max-w-none hidden sm:block">{user.displayName}</p>
-                <p className="text-base sm:text-lg font-bold text-primary-600">{user.points} 积分</p>
+                <p className="text-gray-600 text-sm">当前积分</p>
+                <PointsDisplay points={user.points} size="lg" showLabel={false} animated />
               </div>
             </div>
           </div>
         </div>
-      </div>
 
       <div className="p-4 sm:max-w-7xl sm:mx-auto sm:px-4 lg:px-6 xl:px-8 sm:py-6 lg:py-8">
         {loading ? (

@@ -296,7 +296,8 @@
       "mcp__aliyun__ExitPlanMode",
       "WebSearch",
       "WebFetch(domain:gitee.com)",
-      "mcp__playwright__browser_wait_for"
+      "mcp__playwright__browser_wait_for",
+      "mcp__magicuidesign-mcp__getUIComponents"
     ],
     "deny": []
   }

@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@babel/parser": "^7.28.3",
+    "@magiclabs/ui": "^0.27.4",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -12,7 +13,9 @@
     "@types/node": "^16.18.126",
     "@types/react": "^18.2.79",
     "@types/react-dom": "^18.2.25",
+    "canvas-confetti": "^1.9.3",
     "firebase": "^11.10.0",
+    "framer-motion": "^12.23.12",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.8.1",
@@ -48,6 +51,7 @@
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.11",
+    "@types/canvas-confetti": "^1.9.0",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17"

@@ -1,8 +1,13 @@
 {
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "canvas-confetti": "^1.9.3",
+    "class-variance-authority": "^0.7.1",
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.542.0",
     "mongodb": "^6.18.0",
-    "playwright": "^1.54.2"
+    "playwright": "^1.54.2",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

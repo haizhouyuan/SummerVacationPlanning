@@ -6,6 +6,8 @@ import Layout from '../components/Layout';
 import TaskApprovalWorkflow from '../components/TaskApprovalWorkflow';
 import NotificationBadge from '../components/NotificationBadge';
 import { usePendingApprovalCount } from '../hooks/usePendingApprovalCount';
+import WelcomeBannerMagic from '../components/WelcomeBanner';
+import PointsDisplay from '../components/PointsDisplay';
 
 const TaskApprovalPage: React.FC = () => {
   const { user } = useAuth();
@@ -47,21 +49,35 @@ const TaskApprovalPage: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 mb-6 animate-bounce-in">
+        {/* Magic UI Welcome Banner */}
+        <div className="mb-6">
+          <WelcomeBannerMagic 
+            title={`家长审批中心 ✅`}
+            subtitle={`${pendingCount} 个任务等待您的审核 • 孩子们正在努力完成任务`}
+          />
+        </div>
+
+        {/* Header Actions */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-6 border border-white/20">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-cartoon-dark font-fun flex items-center">
-                ✅ 任务审批
-                <NotificationBadge count={pendingCount} size="md" className="ml-3" />
-              </h1>
-              <p className="text-cartoon-gray mt-2">审核和管理孩子提交的任务完成证据</p>
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl">
+                <span className="text-white text-2xl">📋</span>
+              </div>
+              <div>
+                <div className="flex items-center space-x-3">
+                  <h2 className="text-xl font-bold text-gray-900">审批管理</h2>
+                  <NotificationBadge count={pendingCount} size="md" />
+                </div>
+                <p className="text-gray-600 mt-1">审核和管理孩子提交的任务完成证据</p>
+              </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
+              <PointsDisplay points={user?.points || 0} size="sm" showLabel={false} animated />
               <button
                 onClick={refetch}
                 disabled={loading}
-                className="bg-gradient-to-r from-cartoon-blue to-primary-400 hover:from-primary-500 hover:to-primary-600 text-white px-4 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg disabled:opacity-50"
+                className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 neon-border"
               >
                 {loading ? '🔄 刷新中...' : '🔄 刷新'}
               </button>
@@ -85,49 +101,52 @@ const TaskApprovalPage: React.FC = () => {
           </div>
         )}
 
-        {/* Main Content */}
+        {/* Main Content - Magic UI Enhanced Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Quick Stats */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
-            <div className="text-center">
-              <div className="text-4xl mb-2 animate-float">⏳</div>
-              <h3 className="font-bold text-cartoon-dark font-fun">待审批任务</h3>
-              <div className="text-3xl font-bold text-cartoon-orange mt-2">
+          <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-orange-500/20 via-red-500/10 to-pink-500/10 border border-orange-400/40 neon-border">
+            <div className="relative z-10 text-center">
+              <div className="text-4xl mb-3">⏳</div>
+              <h3 className="font-bold text-white text-lg mb-2">待审批任务</h3>
+              <div className="text-4xl font-bold text-orange-300 mb-2">
                 {pendingCount}
               </div>
-              <p className="text-sm text-cartoon-gray mt-1">个任务等待审核</p>
+              <p className="text-white/80 text-sm">个任务等待审核</p>
             </div>
+            <span className="pointer-events-none absolute inset-0 before:absolute before:inset-y-0 before:w-1/3 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:animate-shine" />
           </div>
 
           {/* Quick Action Card */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
-            <div className="text-center">
-              <div className="text-4xl mb-2 animate-float">📋</div>
-              <h3 className="font-bold text-cartoon-dark font-fun">快速审批</h3>
-              <p className="text-sm text-cartoon-gray mt-2 mb-4">
+          <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-teal-500/10 border border-green-400/40 neon-border">
+            <div className="relative z-10 text-center">
+              <div className="text-4xl mb-3">📋</div>
+              <h3 className="font-bold text-white text-lg mb-2">快速审批</h3>
+              <p className="text-white/80 text-sm mb-4">
                 快速审核孩子提交的任务证据
               </p>
               <button
                 onClick={handleOpenApproval}
-                className="w-full bg-gradient-to-r from-cartoon-green to-success-400 hover:from-success-500 hover:to-success-600 text-white py-2 px-4 rounded-cartoon font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-3 px-4 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl neon-border"
               >
                 开始审批
               </button>
             </div>
+            <span className="pointer-events-none absolute inset-0 before:absolute before:inset-y-0 before:w-1/3 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:animate-shine" />
           </div>
 
           {/* Help Card */}
-          <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 animate-bounce-in">
-            <div className="text-center">
-              <div className="text-4xl mb-2 animate-float">💡</div>
-              <h3 className="font-bold text-cartoon-dark font-fun">审批提示</h3>
-              <div className="text-sm text-cartoon-gray mt-2 space-y-2 text-left">
+          <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-blue-500/20 via-indigo-500/10 to-purple-500/10 border border-blue-400/40 neon-border">
+            <div className="relative z-10 text-center">
+              <div className="text-4xl mb-3">💡</div>
+              <h3 className="font-bold text-white text-lg mb-3">审批提示</h3>
+              <div className="text-sm text-white/80 space-y-2 text-left">
                 <p>• 仔细查看孩子提交的证据</p>
                 <p>• 给予鼓励和建设性反馈</p>
                 <p>• 表现优秀可给予额外奖励</p>
                 <p>• 及时审批保持积极性</p>
               </div>
             </div>
+            <span className="pointer-events-none absolute inset-0 before:absolute before:inset-y-0 before:w-1/3 before:bg-gradient-to-r before:from-transparent before:via-white/30 before:to-transparent before:animate-shine" />
           </div>
         </div>
 

@@ -202,7 +202,22 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
       </div>
 
       {/* Bottom Navigation - Mobile Only */}
-      <BottomNav />
+      <BottomNav 
+        active={location.pathname}
+        onChange={(key) => {
+          switch(key) {
+            case 'dashboard':
+              navigate(user?.role === 'parent' ? '/parent-dashboard' : '/dashboard');
+              break;
+            case 'approve':
+              navigate('/task-approval');
+              break;
+            case 'family':
+              navigate('/family-management');
+              break;
+          }
+        }}
+      />
     </div>
   );
 };

@@ -5,10 +5,10 @@ import { useNotifications } from '../components/NotificationSystem';
 import { DailyTask } from '../types';
 import { apiService } from '../services/api';
 import DailyTaskCard from '../components/DailyTaskCard';
-import PointsDisplay from '../components/PointsDisplay';
+// import PointsDisplay from '../components/PointsDisplay';
 import GameTimeExchange from '../components/GameTimeExchange';
 import EvidenceModal from '../components/EvidenceModal';
-import WeatherWidget from '../components/WeatherWidget';
+// import WeatherWidget from '../components/WeatherWidget';
 
 const TodayTasks: React.FC = () => {
   const { user, refreshUser, logout } = useAuth();

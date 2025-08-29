@@ -899,6 +899,34 @@ export const compatibleApiService = {
     });
   },
 
+  // Delete task method
+  async deleteTask(taskId: string) {
+    console.log('Compatible API: Deleting task', taskId);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return Promise.resolve({
+      success: true,
+      data: {},
+      message: '任务已删除'
+    });
+  },
+
+  // Delete daily task method
+  async deleteDailyTask(dailyTaskId: string) {
+    console.log('Compatible API: Deleting daily task', dailyTaskId);
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return Promise.resolve({
+      success: true,
+      data: {},
+      message: '每日任务已删除'
+    });
+  },
+
   // Fallback method for any other API calls
   async makeRequest(endpoint: string, options: any = {}) {
     console.log(`Compatible API: Making request to ${endpoint}`, options);
