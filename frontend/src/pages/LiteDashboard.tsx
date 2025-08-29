@@ -94,7 +94,7 @@ const LiteDashboard: React.FC = () => {
             <div className="flex items-center space-x-3">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user?.displayName}</p>
-                <p className="text-sm text-blue-600 font-bold">{totalPoints} 积分</p>
+                <p className="text-sm text-primary-600 font-bold">{totalPoints} 积分</p>
               </div>
               <button
                 onClick={() => logout()}

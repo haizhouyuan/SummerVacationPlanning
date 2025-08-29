@@ -196,7 +196,7 @@ const PointsHistory: React.FC<PointsHistoryProps> = ({
         </div>
 
         {/* Stats Summary */}
-        <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-b border-cartoon-light">
+        <div className="p-6 bg-gradient-to-r from-primary-50 to-secondary-50 border-b border-cartoon-light">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">{formatPoints(stats.earned)}</div>

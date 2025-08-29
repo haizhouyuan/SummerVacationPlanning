@@ -178,8 +178,8 @@ const RewardsCenter: React.FC = () => {
                   <div className="text-sm text-gray-600">今日获得</div>
                 </div>
                 
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl lg:text-3xl font-bold text-blue-700">
+                <div className="text-center p-4 bg-primary-50 rounded-lg">
+                  <div className="text-2xl lg:text-3xl font-bold text-primary-700">
                     {(pointsStats?.stats?.weeklyStats?.totalPointsWeekly || 0)}
                     {(pointsStats?.stats?.weeklyStats?.totalPointsPending > 0) && (
                       <span className="text-xs text-orange-600 ml-1">
