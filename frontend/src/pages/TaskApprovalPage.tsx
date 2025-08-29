@@ -57,19 +57,13 @@ const TaskApprovalPage: React.FC = () => {
               </h1>
               <p className="text-cartoon-gray mt-2">审核和管理孩子提交的任务完成证据</p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center">
               <button
                 onClick={refetch}
                 disabled={loading}
                 className="bg-gradient-to-r from-cartoon-blue to-primary-400 hover:from-primary-500 hover:to-primary-600 text-white px-4 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg disabled:opacity-50"
               >
                 {loading ? '🔄 刷新中...' : '🔄 刷新'}
-              </button>
-              <button
-                onClick={handleOpenApproval}
-                className="bg-gradient-to-r from-cartoon-green to-success-400 hover:from-success-500 hover:to-success-600 text-white px-6 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
-              >
-                📋 打开审批面板
               </button>
             </div>
           </div>

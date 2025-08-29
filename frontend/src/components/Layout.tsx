@@ -27,39 +27,54 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
     }
   };
 
-  const navigationItems = [
-    { 
-      path: user?.role === 'parent' ? '/parent-dashboard' : '/dashboard', 
-      name: '仪表盘', 
-      icon: '🏠',
-      description: '总览和统计'
-    },
-    ...(user?.role === 'parent' ? [{
-      path: '/task-approval', 
-      name: '任务审批', 
-      icon: '✅',
-      description: '审核孩子提交的任务',
-      notificationCount: pendingCount
-    }] : []),
-    { 
-      path: '/planning', 
-      name: '任务规划', 
-      icon: '📅',
-      description: '制定和管理任务计划'
-    },
-    { 
-      path: '/rewards', 
-      name: '成长与奖励', 
-      icon: '🎁',
-      description: '展示徽章、积分和奖励'
-    },
-    { 
-      path: '/history', 
-      name: '任务历史', 
-      icon: '📚',
-      description: '查看历史任务记录'
-    },
-  ];
+  const navigationItems = user?.role === 'parent' 
+    ? [
+        { 
+          path: '/parent-dashboard', 
+          name: '仪表盘', 
+          icon: '🏠',
+          description: '总览和统计'
+        },
+        {
+          path: '/task-approval', 
+          name: '任务审批', 
+          icon: '✅',
+          description: '审核孩子提交的任务',
+          notificationCount: pendingCount
+        },
+        {
+          path: '/family-management', 
+          name: '家庭管理', 
+          icon: '👨‍👩‍👧‍👦',
+          description: '管理家庭成员和设置'
+        }
+      ]
+    : [
+        { 
+          path: '/dashboard', 
+          name: '仪表盘', 
+          icon: '🏠',
+          description: '总览和统计'
+        },
+        { 
+          path: '/planning', 
+          name: '任务规划', 
+          icon: '📅',
+          description: '制定和管理任务计划'
+        },
+        { 
+          path: '/rewards', 
+          name: '成长与奖励', 
+          icon: '🎁',
+          description: '展示徽章、积分和奖励'
+        },
+        { 
+          path: '/history', 
+          name: '任务历史', 
+          icon: '📚',
+          description: '查看历史任务记录'
+        }
+      ];
 
   const isCurrentPath = (path: string) => {
     return location.pathname === path;

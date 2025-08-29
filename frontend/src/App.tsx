@@ -18,6 +18,7 @@ import RewardsCenter from './pages/RewardsCenter';
 import RecurringTasksManagement from './pages/RecurringTasksManagement';
 import PointsRulesManagement from './pages/PointsRulesManagement';
 import TaskApprovalPage from './pages/TaskApprovalPage';
+import FamilyManagementPage from './pages/FamilyManagementPage';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -132,6 +133,14 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute>
             <TaskApprovalPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/family-management"
+        element={
+          <ProtectedRoute>
+            <FamilyManagementPage />
           </ProtectedRoute>
         }
       />

@@ -74,8 +74,15 @@ export const mongoAuthService = {
   async getProfile(): Promise<User> {
     try {
       const token = localStorage.getItem('auth_token');
+      const isDemo = localStorage.getItem('isDemo') === 'true';
+      
       if (!token) {
         throw new Error('No authentication token');
+      }
+
+      // Handle demo mode
+      if (isDemo && token.startsWith('demo-token')) {
+        return this.getDemoUser();
       }
 
       const response = await fetch(`${API_BASE_URL}/auth/profile`, {
@@ -127,13 +134,110 @@ export const mongoAuthService = {
     }
   },
 
-  // Check if user is authenticated
+  // Check if user is authenticated (including demo mode)
   isAuthenticated(): boolean {
-    return !!localStorage.getItem('auth_token');
+    const token = localStorage.getItem('auth_token');
+    const isDemo = localStorage.getItem('isDemo') === 'true';
+    
+    // Support demo mode authentication
+    if (isDemo && token && token.startsWith('demo-token')) {
+      return true;
+    }
+    
+    // Standard authentication
+    return !!token;
   },
 
   // Get stored token
   getToken(): string | null {
     return localStorage.getItem('auth_token');
+  },
+
+  // Get demo user information from localStorage
+  getDemoUser(): User {
+    const demoUserData = localStorage.getItem('demo_user');
+    const userRole = localStorage.getItem('user_role');
+    const userEmail = localStorage.getItem('user_email');
+    const userDisplayName = localStorage.getItem('user_displayName');
+
+    // Try to parse stored demo user data first
+    if (demoUserData) {
+      try {
+        return JSON.parse(demoUserData) as User;
+      } catch (error) {
+        console.warn('Failed to parse demo_user data:', error);
+      }
+    }
+
+    // Fallback to individual localStorage items
+    if (userRole && userEmail && userDisplayName) {
+      return {
+        id: userRole === 'parent' ? 'demo-parent-id' : 'demo-student-id',
+        email: userEmail,
+        displayName: userDisplayName,
+        role: userRole as 'student' | 'parent',
+        points: userRole === 'student' ? 100 : 0,
+        currentStreak: 0,
+        medals: {
+          bronze: false,
+          silver: false,
+          gold: false,
+          diamond: false
+        },
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userDisplayName}`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+
+    // Default fallback demo user
+    return {
+      id: 'demo-student-id',
+      email: 'demo@example.com',
+      displayName: '演示用户',
+      role: 'student',
+      points: 100,
+      currentStreak: 0,
+      medals: {
+        bronze: false,
+        silver: false,
+        gold: false,
+        diamond: false
+      },
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+  },
+
+  // Setup demo mode authentication
+  setupDemoAuth(userType: 'parent' | 'student'): User {
+    const demoUser: User = {
+      id: userType === 'parent' ? 'demo-parent-id' : 'demo-student-id',
+      email: `demo-${userType}@example.com`,
+      displayName: userType === 'parent' ? '演示家长' : '演示学生',
+      role: userType,
+      points: userType === 'student' ? 100 : 0,
+      currentStreak: 0,
+      medals: {
+        bronze: false,
+        silver: false,
+        gold: false,
+        diamond: false
+      },
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userType}`,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Set demo mode in localStorage
+    localStorage.setItem('isDemo', 'true');
+    localStorage.setItem('auth_token', `demo-token-${userType}-123`);
+    localStorage.setItem('user_role', userType);
+    localStorage.setItem('user_email', demoUser.email);
+    localStorage.setItem('user_displayName', demoUser.displayName);
+    localStorage.setItem('demo_user', JSON.stringify(demoUser));
+
+    return demoUser;
   },
 };
