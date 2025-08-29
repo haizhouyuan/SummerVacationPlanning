@@ -324,6 +324,10 @@ const Dashboard: React.FC = () => {
       pointsPending: stats?.todayStats?.pointsPending || 0,
       totalPointsToday: stats?.todayStats?.totalPointsToday || 0,
       tasksAwaitingApproval: stats?.todayStats?.tasksAwaitingApproval || 0,
+      completed: stats?.todayStats?.completed || 0,
+      planned: stats?.todayStats?.planned || 0,
+      inProgress: stats?.todayStats?.inProgress || 0,
+      total: stats?.todayStats?.total || 0,
       ...stats?.todayStats
     },
     weeklyGoal: stats?.weeklyGoal || 10,
@@ -365,7 +369,7 @@ const Dashboard: React.FC = () => {
               points: currentUser.points
             }}
             userLevel={safeStats.user.level}
-            todayPoints={safeStats.todayStats?.pointsEarned || 0}
+            todayPoints={stats?.todayStats?.pointsEarned || 0}
             className="mb-6"
           />
         )}
