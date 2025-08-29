@@ -71,7 +71,7 @@ const TopNavigation: React.FC = () => {
   };
 
   return (
-    <div className="bg-white border-b border-cartoon-light shadow-sm sticky top-0 z-40">
+    <div className="bg-white border-b border-cartoon-light shadow-sm sticky top-0 z-40 pt-safe">
       <div className="max-w-7xl mx-auto">
         {/* 顶部标题栏 - 仅在移动端显示 */}
         <div className="flex items-center justify-between py-2 md:hidden">
