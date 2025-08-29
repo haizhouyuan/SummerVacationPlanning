@@ -293,7 +293,10 @@
       "mcp__playwright__browser_drag",
       "mcp__playwright__browser_network_requests",
       "mcp__playwright__browser_tabs",
-      "mcp__aliyun__ExitPlanMode"
+      "mcp__aliyun__ExitPlanMode",
+      "WebSearch",
+      "WebFetch(domain:gitee.com)",
+      "mcp__playwright__browser_wait_for"
     ],
     "deny": []
   }

@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">3.41% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>4/117</span>
+                <span class='fraction'>0/117</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">2.38% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>1/42</span>
+                <span class='fraction'>0/40</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">3.41% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>4/117</span>
+                <span class='fraction'>0/117</span>
             </div>
         
             
@@ -362,10 +362,10 @@
 <a name='L297'></a><a href='#L297'>297</a>
 <a name='L298'></a><a href='#L298'>298</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -376,7 +376,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -628,7 +628,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -659,10 +659,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { User, ApiResponse } from '../types';
 &nbsp;
-const API_BASE_URL = process.env.REACT_APP_API_URL || <span class="branch-1 cbranch-no" title="branch not covered" >'http://localhost:5001/api';</span>
+const API_BASE_URL = <span class="cstat-no" title="statement not covered" >'http://localhost:5000/api';</span>
 &nbsp;
 // 安全移除DOM元素的工具函数
-const safeRemoveElement = <span class="fstat-no" title="function not covered" >(e</span>lement: Element | null | undefined) =&gt; {
+const safeRemoveElement = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>lement: Element | null | undefined) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  if (element &amp;&amp; element.parentNode) {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      element.parentNode.removeChild(element);</span>
@@ -673,7 +673,7 @@ const safeRemoveElement = <span class="fstat-no" title="function not covered" >(
 };
 &nbsp;
 // 网络兼容的认证服务 - 使用iframe和表单提交绕过fetch限制
-export const compatibleAuthService = {
+export const compatibleAuthService = <span class="cstat-no" title="statement not covered" >{</span>
   // 使用表单提交的方式进行登录
 <span class="fstat-no" title="function not covered" >  as</span>ync login(email: string, password: string): Promise&lt;{ user: User; token: string }&gt; {
 <span class="cstat-no" title="statement not covered" >    return new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve, reject) =&gt; {</span>
@@ -925,7 +925,7 @@ export const compatibleAuthService = {
 };
 &nbsp;
 // 检测网络环境并选择合适的认证服务
-export const detectNetworkAndGetAuthService = <span class="fstat-no" title="function not covered" >()</span> =&gt; {
+export const detectNetworkAndGetAuthService = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
   // 检测是否支持fetch
   const supportsFetch = <span class="cstat-no" title="statement not covered" >typeof fetch !== 'undefined';</span>
   
@@ -961,7 +961,7 @@ export const detectNetworkAndGetAuthService = <span class="fstat-no" title="func
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-26T08:00:13.756Z
+                at 2025-08-27T10:12:52.279Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

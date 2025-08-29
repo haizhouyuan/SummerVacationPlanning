@@ -1,0 +1,6 @@
+Host gitee.com
+    HostName gitee.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_gitee
+    IdentitiesOnly yes
+    PubkeyAuthentication yes

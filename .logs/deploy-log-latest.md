@@ -1,62 +1,60 @@
-# DEPLOYMENT SESSION - 2025-08-28 16:20:00
-**Agent**: aliyun-devops-deployer | **Target**: 47.120.74.212 | **Status**: INITIALIZING
+# Latest Deployment Status - Data Path Fix (2025-08-29)
 
-## CURRENT STAGE: DATABASE CLEANUP OPERATION
-### 1. PRE-OPERATION CHECKS
-- ✅ Server connectivity verified (47.120.74.212)
-- ✅ Project directory access confirmed (/root/projects/SummerVacationPlanning)
-- ✅ Backup file verified (backup_20250828_161538.tar.gz)
-- ✅ Cleanup script verified (clearAllTasksAndResetPoints.js)
-- **Status**: COMPLETED
+## ✅ DATA PATH FIX DEPLOYMENT COMPLETED
 
-### 2. BACKUP VERIFICATION
-- ✅ Backup file exists in backend/backups/backup_20250828_161538.tar.gz
-- ✅ Backup report found (backup-report.json)
-- **Status**: COMPLETED
+**Deployment Type**: Critical data path fix for Dashboard stats  
+**Deployed Commit**: 47a35e6b - "fix: 🔧 修复数据路径问题 - 正确设置Dashboard stats状态"  
+**Deployment Time**: 2025-08-29 14:30 CST  
+**Completion Time**: 2025-08-29 14:44 CST  
+**Status**: ✅ SUCCESSFUL
 
-### 3. DATABASE CLEANUP EXECUTION
-- ✅ Database cleanup script executed successfully
-- ✅ Cleared 29 daily task instances → 0
-- ✅ Reset 31 user points from 92 → 0
-- ✅ Cleared 12 points transactions → 0
-- ✅ Preserved 31 user accounts and 21 task templates
-- ✅ Cleared 1 game time exchange → 0
-- ✅ Post-cleanup verification passed
-- **Status**: COMPLETED
+### 📋 Deployment Summary
 
-### 4. POST-CLEANUP VERIFICATION
-- ✅ Database verification completed successfully
-  - Users: 31 (preserved)
-  - Task Templates: 21 (preserved)  
-  - Daily Tasks: 0 ✓ (cleanup target achieved)
-  - Total Points: 0 ✓ (reset target achieved)
-- ✅ Application services running (PM2: 2 online processes)
-- ✅ System services active (Nginx: active, MongoDB: active)
-- ✅ Frontend accessible (HTTP 200 response)
-- ✅ API endpoints responding correctly
-- **Status**: COMPLETED
+**ROOT CAUSE FIXED**: 
+- Dashboard component using wrong data path: `setStats(response.data)` 
+- Fixed to correct path: `setStats(response.data.stats)`
+- API structure: `response.data.stats.todayStats.pointsEarned`
+- Expected result: Today's points displays **11** instead of **0**
 
-## OPERATION RESULT: SUCCESS
-**Database cleanup operation completed successfully at 2025-08-28 16:25:00**
+**ACTIONS TAKEN**:
 
-### CLEANUP SUMMARY:
-- ✅ 29 daily task instances → 0 (cleared)
-- ✅ 92 total user points → 0 (reset)  
-- ✅ 12 points transactions → 0 (cleared)
-- ✅ 1 game time exchange → 0 (cleared)
-- ✅ 31 user accounts preserved
-- ✅ 21 task templates preserved
-- ✅ Full backup available: backup_20250828_161538.tar.gz
+✅ **Stage 1 - PRE-CHECK**: 
+- SSH connectivity verified  
+- Code synchronized: 2d62e90b → 47a35e6b
+- Critical Dashboard.tsx fix confirmed on server
 
-### SYSTEM STATUS:
-- 🟢 Production application fully operational
-- 🟢 All services running normally  
-- 🟢 Database ready for fresh data input
-- 🔒 Backup protection ensures data recovery capability
+✅ **Stage 2 - BUILD**: 
+- Dependencies up to date (frontend & backend)
+- Frontend built: `main.bbf4d3de.js` (new hash confirming fix)
+- Backend TypeScript compiled successfully
 
-## NOTES
-- Production database cleanup operation in progress
-- Backup completed before cleanup operation
-- Irreversible operation with backup protection
+✅ **Stage 3 - DEPLOY**:
+- Backend services restarted (2 PM2 instances)
+- Frontend static files deployed with new build
+- All services running properly
 
-## OPERATION TYPE: PRODUCTION DATABASE CLEANUP
+✅ **Stage 4 - VERIFICATION**:
+- HTTP 200 response confirmed
+- Nginx active with no-cache headers
+- Backend PM2 processes online
+
+### 🎯 DEPLOYMENT RESULT
+
+**Infrastructure Status**: ✅ ALL SYSTEMS OPERATIONAL
+- **Frontend**: Deployed with fix (`main.bbf4d3de.js`)
+- **Backend**: 2 PM2 instances running (PIDs: 205053, 205060)  
+- **Nginx**: Active serving static files with no-cache headers
+
+**Fix Applied**:
+```typescript
+// Before: setStats(response.data) - wrong data structure  
+// After: setStats(response.data.stats) - correct API path
+```
+
+**Next Steps**: Test the fix by visiting http://47.120.74.212 and verify today's points show **11** instead of **0**
+
+**Deployment Status**: ✅ COMPLETED - Infrastructure deployed and operational
+
+### 🔍 Verification Required
+
+**Manual Testing**: Visit http://47.120.74.212 and verify today's points display shows **11** instead of **0**

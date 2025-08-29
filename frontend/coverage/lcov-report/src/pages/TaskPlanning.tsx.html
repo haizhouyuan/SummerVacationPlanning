@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/77</span>
+                <span class='fraction'>0/85</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/75</span>
+                <span class='fraction'>0/83</span>
             </div>
         
             
@@ -584,7 +584,23 @@
 <a name='L519'></a><a href='#L519'>519</a>
 <a name='L520'></a><a href='#L520'>520</a>
 <a name='L521'></a><a href='#L521'>521</a>
-<a name='L522'></a><a href='#L522'>522</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L522'></a><a href='#L522'>522</a>
+<a name='L523'></a><a href='#L523'>523</a>
+<a name='L524'></a><a href='#L524'>524</a>
+<a name='L525'></a><a href='#L525'>525</a>
+<a name='L526'></a><a href='#L526'>526</a>
+<a name='L527'></a><a href='#L527'>527</a>
+<a name='L528'></a><a href='#L528'>528</a>
+<a name='L529'></a><a href='#L529'>529</a>
+<a name='L530'></a><a href='#L530'>530</a>
+<a name='L531'></a><a href='#L531'>531</a>
+<a name='L532'></a><a href='#L532'>532</a>
+<a name='L533'></a><a href='#L533'>533</a>
+<a name='L534'></a><a href='#L534'>534</a>
+<a name='L535'></a><a href='#L535'>535</a>
+<a name='L536'></a><a href='#L536'>536</a>
+<a name='L537'></a><a href='#L537'>537</a>
+<a name='L538'></a><a href='#L538'>538</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -593,6 +609,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -635,11 +653,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -828,8 +850,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1094,6 +1120,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1113,6 +1145,8 @@ import TopNavigation from '../components/TopNavigation';
 // import TaskCard from '../components/TaskCard';
 import TaskTimeline from '../components/TaskTimeline';
 import TaskCreationForm from '../components/TaskCreationForm';
+import ApiDebugPanel from '../components/ApiDebugPanel';
+import ApiTestPanel from '../components/ApiTestPanel';
 &nbsp;
 const TaskPlanning: React.FC = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
   const { user } = <span class="cstat-no" title="statement not covered" >useAuth();</span>
@@ -1158,9 +1192,13 @@ const TaskPlanning: React.FC = <span class="cstat-no" title="statement not cover
 &nbsp;
   const loadDailyTasks = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
+<span class="cstat-no" title="statement not covered" >      console.log('📥 TaskPlanning: Loading daily tasks for date:', selectedDate);</span>
       const apiService = <span class="cstat-no" title="statement not covered" >detectNetworkAndGetApiServiceSync();</span>
       const response = <span class="cstat-no" title="statement not covered" >await apiService.getDailyTasks({ date: selectedDate });</span>
-<span class="cstat-no" title="statement not covered" >      setDailyTasks((response as any).data.dailyTasks);</span>
+<span class="cstat-no" title="statement not covered" >      console.log('📥 TaskPlanning: Daily tasks response:', response);</span>
+      const dailyTasksList = <span class="cstat-no" title="statement not covered" >(response as any).data.dailyTasks;</span>
+<span class="cstat-no" title="statement not covered" >      console.log('📥 TaskPlanning: Setting daily tasks:', dailyTasksList);</span>
+<span class="cstat-no" title="statement not covered" >      setDailyTasks(dailyTasksList);</span>
     } catch (error: any) {
 <span class="cstat-no" title="statement not covered" >      console.error('Error loading daily tasks:', error);</span>
 <span class="cstat-no" title="statement not covered" >      console.error('Failed to load daily tasks:', error);</span>
@@ -1349,8 +1387,12 @@ const TaskPlanning: React.FC = <span class="cstat-no" title="statement not cover
                         key={task.id}
                         draggable={true}
                         onDragStart={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; {
-<span class="cstat-no" title="statement not covered" >                          e.dataTransfer.setData('application/json', JSON.stringify(task));</span>
+<span class="cstat-no" title="statement not covered" >                          console.log('🚀 TaskPlanning: Drag started for task:', task);</span>
+                          const taskData = <span class="cstat-no" title="statement not covered" >JSON.stringify(task);</span>
+<span class="cstat-no" title="statement not covered" >                          console.log('📦 TaskPlanning: Setting drag data:', taskData);</span>
+<span class="cstat-no" title="statement not covered" >                          e.dataTransfer.setData('application/json', taskData);</span>
 <span class="cstat-no" title="statement not covered" >                          e.dataTransfer.effectAllowed = 'copy';</span>
+<span class="cstat-no" title="statement not covered" >                          console.log('✅ TaskPlanning: Drag data set successfully');</span>
                         }}
                         onDragEnd={<span class="fstat-no" title="function not covered" >(e</span>) =&gt; {
                         }}
@@ -1621,6 +1663,12 @@ const TaskPlanning: React.FC = <span class="cstat-no" title="statement not cover
           &lt;/div&gt;
         &lt;/div&gt;
       )}
+      
+      {/* API Debug Panel */}
+      &lt;ApiDebugPanel /&gt;
+      
+      {/* API Test Panel */}
+      &lt;ApiTestPanel /&gt;
       &lt;/div&gt;
     &lt;/div&gt;
   );
@@ -1633,7 +1681,7 @@ export default TaskPlanning;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-26T08:00:13.756Z
+                at 2025-08-27T10:12:52.279Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

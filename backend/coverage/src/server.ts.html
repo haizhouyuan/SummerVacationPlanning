@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/82</span>
+                <span class='fraction'>0/85</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/82</span>
+                <span class='fraction'>0/85</span>
             </div>
         
             
@@ -217,7 +217,10 @@
 <a name='L152'></a><a href='#L152'>152</a>
 <a name='L153'></a><a href='#L153'>153</a>
 <a name='L154'></a><a href='#L154'>154</a>
-<a name='L155'></a><a href='#L155'>155</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -290,23 +293,26 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -443,6 +449,7 @@ const app = <span class="cstat-no" title="statement not covered" >express();</sp
 <span class="cstat-no" title="statement not covered" >import rewardsRoutes from './routes/rewardsRoutes';</span>
 <span class="cstat-no" title="statement not covered" >import pointsConfigRoutes from './routes/pointsConfigRoutes';</span>
 <span class="cstat-no" title="statement not covered" >import recurringTaskRoutes from './routes/recurringTaskRoutes';</span>
+<span class="cstat-no" title="statement not covered" >import rewardsCenterRoutes from './routes/rewardsCenterRoutes';</span>
 <span class="cstat-no" title="statement not covered" >import path from 'path';</span>
 &nbsp;
 // Debug middleware for all API routes
@@ -459,6 +466,7 @@ const app = <span class="cstat-no" title="statement not covered" >express();</sp
 <span class="cstat-no" title="statement not covered" >app.use('/api/rewards', rewardsRoutes);</span>
 <span class="cstat-no" title="statement not covered" >app.use('/api/points-config', pointsConfigRoutes);</span>
 <span class="cstat-no" title="statement not covered" >app.use('/api/recurring-tasks', recurringTaskRoutes);</span>
+<span class="cstat-no" title="statement not covered" >app.use('/api/rewards-center', rewardsCenterRoutes);</span>
 &nbsp;
 // 🚨 EMERGENCY: Add routes without /api prefix for compatibility
 <span class="cstat-no" title="statement not covered" >console.log('🚨 EMERGENCY: Adding routes without /api prefix for compatibility');</span>
@@ -469,6 +477,7 @@ const app = <span class="cstat-no" title="statement not covered" >express();</sp
 <span class="cstat-no" title="statement not covered" >app.use('/rewards', rewardsRoutes);</span>
 <span class="cstat-no" title="statement not covered" >app.use('/points-config', pointsConfigRoutes);</span>
 <span class="cstat-no" title="statement not covered" >app.use('/recurring-tasks', recurringTaskRoutes);</span>
+<span class="cstat-no" title="statement not covered" >app.use('/rewards-center', rewardsCenterRoutes);</span>
 &nbsp;
 // 静态资源服务，开放 /uploads 目录
 <span class="cstat-no" title="statement not covered" >app.use('/uploads', express.static(path.join(__dirname, '../uploads')));</span>
@@ -532,7 +541,7 @@ const startServer = <span class="cstat-no" title="statement not covered" ><span 
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-26T08:00:56.381Z
+                at 2025-08-27T10:14:41.534Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">33.33% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>2/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/6</span>
+                <span class='fraction'>6/6</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -105,24 +105,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -138,24 +138,24 @@ interface CardProps {
   animate?: boolean;
 }
 &nbsp;
-const Card: React.FC&lt;CardProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({ </span></span>
+const Card: React.FC&lt;CardProps&gt; = ({ 
   children, 
   className = <span class="branch-0 cbranch-no" title="branch not covered" >'', </span>
   onClick,
   animate = <span class="branch-0 cbranch-no" title="branch not covered" >false </span>
 }) =&gt; {
-  const baseClasses = <span class="cstat-no" title="statement not covered" >'bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6';</span>
-  const animateClass = <span class="cstat-no" title="statement not covered" >animate ? 'animate-bounce-in' : '';</span>
-  const clickableClass = <span class="cstat-no" title="statement not covered" >onClick ? 'cursor-pointer hover:shadow-cartoon-lg transition-shadow' : '';</span>
+  const baseClasses = 'bg-white rounded-cartoon-lg shadow-cartoon p-4 sm:p-6';
+  const animateClass = animate ? 'animate-bounce-in' : <span class="branch-1 cbranch-no" title="branch not covered" >'';</span>
+  const clickableClass = onClick ? <span class="branch-0 cbranch-no" title="branch not covered" >'cursor-pointer hover:shadow-cartoon-lg transition-shadow' </span>: '';
   
-  const combinedClasses = <span class="cstat-no" title="statement not covered" >[</span>
+  const combinedClasses = [
     baseClasses,
     animateClass,
     clickableClass,
     className
   ].filter(Boolean).join(' ');
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;div className={combinedClasses} onClick={onClick}&gt;
       {children}
     &lt;/div&gt;
@@ -169,7 +169,7 @@ export default Card;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-26T08:00:13.756Z
+                at 2025-08-27T10:12:52.279Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

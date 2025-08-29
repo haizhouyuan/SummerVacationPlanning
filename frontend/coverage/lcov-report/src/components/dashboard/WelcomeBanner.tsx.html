@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">88.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/9</span>
+                <span class='fraction'>8/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">60% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>6/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/7</span>
+                <span class='fraction'>7/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -141,21 +141,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -204,21 +204,21 @@ interface WelcomeBannerProps {
   className?: string;
 }
 &nbsp;
-const WelcomeBanner: React.FC&lt;WelcomeBannerProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span></span>
+const WelcomeBanner: React.FC&lt;WelcomeBannerProps&gt; = ({
   user,
   userLevel,
   todayPoints = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
   className = <span class="branch-0 cbranch-no" title="branch not covered" >''</span>
 }) =&gt; {
   // Get time-based greeting
-  const getTimeGreeting = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-    const hour = <span class="cstat-no" title="statement not covered" >new Date().getHours();</span>
-<span class="cstat-no" title="statement not covered" >    if (hour &lt; 12) <span class="cstat-no" title="statement not covered" >return '🌅 早上好！新的一天，新的开始！';</span></span>
-<span class="cstat-no" title="statement not covered" >    if (hour &lt; 18) <span class="cstat-no" title="statement not covered" >return '☀️ 下午好！继续保持优秀！';</span></span>
-<span class="cstat-no" title="statement not covered" >    return '🌙 晚上好！今天辛苦了！';</span>
+  const getTimeGreeting = () =&gt; {
+    const hour = new Date().getHours();
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (hour &lt; 12) <span class="cstat-no" title="statement not covered" >return '🌅 早上好！新的一天，新的开始！';</span>
+    if (hour &lt; 18) return '☀️ 下午好！继续保持优秀！';
+    return '🌙 晚上好！今天辛苦了！';
   };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;Card className={`col-span-full ${className}`} animate={true}&gt;
       &lt;div className="text-center"&gt;
         {/* Main Icon */}
@@ -239,7 +239,7 @@ const WelcomeBanner: React.FC&lt;WelcomeBannerProps&gt; = <span class="cstat-no"
         {/* Points Overview */}
         &lt;div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-3 sm:space-x-4 mb-3 sm:mb-4"&gt;
           &lt;div className="bg-gradient-to-r from-cartoon-green to-success-400 rounded-cartoon-lg px-3 sm:px-6 py-1.5 sm:py-3 animate-pop"&gt;
-            &lt;PointsDisplay points={user?.points || 0} size="md" /&gt;
+            &lt;PointsDisplay points={user?.points || <span class="branch-1 cbranch-no" title="branch not covered" >0}</span> size="md" /&gt;
           &lt;/div&gt;
           &lt;div className="bg-gradient-to-r from-cartoon-purple to-primary-400 rounded-cartoon-lg px-3 sm:px-6 py-1.5 sm:py-3 text-white animate-pop"&gt;
             &lt;span className="font-bold text-sm sm:text-base"&gt;
@@ -259,7 +259,7 @@ export default WelcomeBanner;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-26T08:00:13.756Z
+                at 2025-08-27T10:12:52.279Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

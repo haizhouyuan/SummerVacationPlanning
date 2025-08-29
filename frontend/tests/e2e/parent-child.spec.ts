@@ -36,7 +36,7 @@ test.describe('Parent-Child Interaction Workflow', () => {
     await parentPage.click('[data-testid="register-button"]');
     
     // 建立家庭关系
-    await this.establishFamilyRelationship(parentPage, studentPage, studentEmail);
+    await establishFamilyRelationship(parentPage, studentPage, studentEmail);
   });
 
   test.afterEach(async () => {
@@ -45,7 +45,7 @@ test.describe('Parent-Child Interaction Workflow', () => {
   });
 
   // 建立家庭关系的辅助方法
-  async establishFamilyRelationship(parentPage: any, studentPage: any, studentEmail: string) {
+  async function establishFamilyRelationship(parentPage: any, studentPage: any, studentEmail: string) {
     // 家长发送邀请
     await parentPage.click('[data-testid="nav-family"]');
     await parentPage.click('[data-testid="add-child-button"]');

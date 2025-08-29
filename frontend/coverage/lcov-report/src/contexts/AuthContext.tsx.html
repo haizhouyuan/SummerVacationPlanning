@@ -214,9 +214,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">2x</span>
@@ -228,7 +228,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -359,7 +359,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, AuthContextType } from '../types';
-import { compatibleAuthService } from '../services/compatibleAuth';
+import { mongoAuthService } from '../services/mongoAuth';
 &nbsp;
 export const AuthContext = createContext&lt;AuthContextType | undefined&gt;(undefined);
 &nbsp;
@@ -382,8 +382,8 @@ export const AuthProvider: React.FC&lt;AuthProviderProps&gt; = <span class="fsta
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     const initializeAuth = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >      try {</span>
-<span class="cstat-no" title="statement not covered" >        if (compatibleAuthService.isAuthenticated()) {</span>
-          const userProfile = <span class="cstat-no" title="statement not covered" >await compatibleAuthService.getProfile();</span>
+<span class="cstat-no" title="statement not covered" >        if (mongoAuthService.isAuthenticated()) {</span>
+          const userProfile = <span class="cstat-no" title="statement not covered" >await mongoAuthService.getProfile();</span>
 <span class="cstat-no" title="statement not covered" >          setUser(userProfile);</span>
           
           // Hide the static homepage content when user is authenticated
@@ -408,7 +408,7 @@ export const AuthProvider: React.FC&lt;AuthProviderProps&gt; = <span class="fsta
 &nbsp;
   const login = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (email: string, password: string, navigate?: any) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      const result = <span class="cstat-no" title="statement not covered" >await compatibleAuthService.login(email, password);</span>
+      const result = <span class="cstat-no" title="statement not covered" >await mongoAuthService.login(email, password);</span>
 <span class="cstat-no" title="statement not covered" >      setUser(result.user);</span>
       
       // 根据角色自动跳转
@@ -438,7 +438,7 @@ export const AuthProvider: React.FC&lt;AuthProviderProps&gt; = <span class="fsta
     parentEmail?: string
   ) =&gt; {
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      const result = <span class="cstat-no" title="statement not covered" >await compatibleAuthService.register(email, password, displayName, role, parentEmail);</span>
+      const result = <span class="cstat-no" title="statement not covered" >await mongoAuthService.register(email, password, displayName, role, parentEmail);</span>
 <span class="cstat-no" title="statement not covered" >      setUser(result.user);</span>
       
       // Hide the static homepage content when user registers
@@ -453,7 +453,7 @@ export const AuthProvider: React.FC&lt;AuthProviderProps&gt; = <span class="fsta
 &nbsp;
   const logout = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      await compatibleAuthService.logout();</span>
+<span class="cstat-no" title="statement not covered" >      await mongoAuthService.logout();</span>
 <span class="cstat-no" title="statement not covered" >      setUser(null);</span>
       
       // Show the static homepage content when user logs out
@@ -468,7 +468,7 @@ export const AuthProvider: React.FC&lt;AuthProviderProps&gt; = <span class="fsta
 &nbsp;
   const updateProfile = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (displayName?: string, avatar?: string) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      const updatedUser = <span class="cstat-no" title="statement not covered" >await compatibleAuthService.updateProfile(displayName, avatar);</span>
+      const updatedUser = <span class="cstat-no" title="statement not covered" >await mongoAuthService.updateProfile(displayName, avatar);</span>
 <span class="cstat-no" title="statement not covered" >      setUser(updatedUser);</span>
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      throw error;</span>
@@ -477,8 +477,8 @@ export const AuthProvider: React.FC&lt;AuthProviderProps&gt; = <span class="fsta
 &nbsp;
   const refreshUser = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      if (compatibleAuthService.isAuthenticated()) {</span>
-        const userProfile = <span class="cstat-no" title="statement not covered" >await compatibleAuthService.getProfile();</span>
+<span class="cstat-no" title="statement not covered" >      if (mongoAuthService.isAuthenticated()) {</span>
+        const userProfile = <span class="cstat-no" title="statement not covered" >await mongoAuthService.getProfile();</span>
 <span class="cstat-no" title="statement not covered" >        setUser(userProfile);</span>
       }
     } catch (error) {
@@ -511,7 +511,7 @@ export const AuthProvider: React.FC&lt;AuthProviderProps&gt; = <span class="fsta
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-26T08:00:13.756Z
+                at 2025-08-27T10:12:52.279Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
