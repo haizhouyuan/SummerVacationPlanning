@@ -270,6 +270,35 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
     }
   };
 
+  const handleDeleteTask = async (task: Task) => {
+    if (!user || user.role !== 'parent') {
+      setError('只有家长可以删除任务');
+      return;
+    }
+
+    if (!window.confirm(`确定要删除任务"${task.title}"吗？此操作不可撤销。`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const apiService = detectNetworkAndGetApiServiceSync();
+      await apiService.deleteTask(task.id);
+      
+      // 从本地任务列表中移除
+      setTasks(prevTasks => prevTasks.filter(t => t.id !== task.id));
+      
+      // 如果任务在选中列表中，也移除
+      if (isTaskSelected(task) && onTaskSelect) {
+        onTaskSelect(task);
+      }
+    } catch (error: any) {
+      setError(error.message || '删除任务失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCreateTask = async () => {
     if (!newTask.title.trim() || !newTask.description.trim()) {
       setError('请填写任务标题和描述');
@@ -654,6 +683,7 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
                 key={task.id}
                 task={task}
                 onSelect={handleTaskClick}
+                onDelete={user?.role === 'parent' ? handleDeleteTask : undefined}
                 isSelected={isTaskSelected(task)}
                 showActions={!showSelectionMode}
                 className={`${

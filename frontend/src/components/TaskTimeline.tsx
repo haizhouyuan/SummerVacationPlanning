@@ -580,6 +580,9 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
       try {
         const apiService = detectNetworkAndGetApiServiceSync();
         await apiService.deleteDailyTask(task.id);
+        
+        // Local state updates removed - rely on onRefresh to update data
+        
         onRefresh?.();
         alert('✅ 任务已删除');
       } catch (error) {
