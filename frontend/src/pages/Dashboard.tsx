@@ -348,10 +348,17 @@ const Dashboard: React.FC = () => {
 
   return (
     <>
-      {/* 统一的 Top Navigation（组件内部已做响应式处理） */}
-      <TopNavigation />
+      {/* Top Navigation - 仅在移动端显示 */}
+      <div className="md:hidden">
+        <TopNavigation />
+      </div>
       
-      <div className="p-3 sm:p-4 md:p-6 pt-safe pb-safe">
+      {/* Desktop Top Navigation - 仅在桌面端显示 */}
+      <div className="hidden md:block">
+        <TopNavigation />
+      </div>
+      
+      <div className="p-3 sm:p-4 md:p-6">
         <div className="max-w-7xl mx-auto">
         {/* Welcome Banner */}
         {currentUser && (
