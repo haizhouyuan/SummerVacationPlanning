@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import PointsDisplay from '../components/PointsDisplay';
+import Layout from '../components/Layout';
 import ProgressBar from '../components/ProgressBar';
 import CelebrationModal from '../components/CelebrationModal';
 import TaskCategoryIcon from '../components/TaskCategoryIcon';
@@ -10,8 +11,8 @@ import DailyTaskCard from '../components/DailyTaskCard';
 import FamilyManagement from '../components/FamilyManagement';
 import TaskApprovalWorkflow from '../components/TaskApprovalWorkflow';
 import FamilyLeaderboard from '../components/FamilyLeaderboard';
-import NotificationBadge from '../components/NotificationBadge';
-import { usePendingApprovalCount } from '../hooks/usePendingApprovalCount';
+// import NotificationBadge from '../components/NotificationBadge';
+// import { usePendingApprovalCount } from '../hooks/usePendingApprovalCount';
 
 interface Child {
   id: string;
@@ -47,7 +48,6 @@ const ParentDashboard: React.FC = () => {
   const [showTaskApproval, setShowTaskApproval] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>('');
-  const { pendingCount } = usePendingApprovalCount();
 
 
   const [children, setChildren] = useState<Child[]>([]);
@@ -116,14 +116,14 @@ const ParentDashboard: React.FC = () => {
     }
   }, [children, selectedChild]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  // const handleLogout = async () => {
+  //   try {
+  //     await logout();
+  //     navigate('/login');
+  //   } catch (error) {
+  //     console.error('Logout error:', error);
+  //   }
+  // };
 
   const getCurrentChildData = () => {
     return children.find(child => child.id === selectedChild);
@@ -144,13 +144,15 @@ const ParentDashboard: React.FC = () => {
 
   if (!user || user.role !== 'parent') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-cartoon-light via-primary-50 to-secondary-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🚫</div>
-          <h2 className="text-2xl font-bold text-cartoon-dark mb-2">访问受限</h2>
-          <p className="text-cartoon-gray">此页面仅供家长用户访问</p>
+      <Layout>
+        <div className="min-h-screen bg-gradient-to-br from-cartoon-light via-primary-50 to-secondary-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4">🚫</div>
+            <h2 className="text-2xl font-bold text-cartoon-dark mb-2">访问受限</h2>
+            <p className="text-cartoon-gray">此页面仅供家长用户访问</p>
+          </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
@@ -158,55 +160,20 @@ const ParentDashboard: React.FC = () => {
   const currentStats = getCurrentChildStats();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cartoon-light via-primary-50 to-secondary-50">
-      {/* Header */}
-      <div className="bg-white shadow-cartoon">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center">
-              <div className="h-12 w-12 bg-gradient-to-br from-cartoon-purple to-primary-400 rounded-cartoon flex items-center justify-center animate-float">
-                <span className="text-white text-xl font-bold">👨‍👩‍👧‍👦</span>
-              </div>
-              <div className="ml-4">
-                <h1 className="text-2xl font-bold text-cartoon-dark font-fun">家长控制台</h1>
-                <p className="text-sm text-cartoon-gray">监控孩子的学习进展 📊</p>
-              </div>
+    <Layout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Page Title */}
+        <div className="bg-white rounded-cartoon-lg shadow-cartoon p-6 mb-6 animate-bounce-in">
+          <div className="flex items-center">
+            <div className="h-12 w-12 bg-gradient-to-br from-cartoon-purple to-primary-400 rounded-cartoon flex items-center justify-center animate-float">
+              <span className="text-white text-xl font-bold">👨‍👩‍👧‍👦</span>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Management Actions */}
-              <div className="flex space-x-2">
-                <NotificationBadge count={pendingCount} size="sm">
-                  <button
-                    onClick={() => navigate('/task-approval')}
-                    className="bg-gradient-to-r from-cartoon-orange to-secondary-400 hover:from-secondary-500 hover:to-secondary-600 text-white px-3 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
-                  >
-                    ✅ 任务审批
-                  </button>
-                </NotificationBadge>
-                <button
-                  onClick={() => setShowFamilyManagement(true)}
-                  className="bg-gradient-to-r from-cartoon-purple to-primary-400 hover:from-primary-500 hover:to-primary-600 text-white px-3 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
-                >
-                  👨‍👩‍👧‍👦 家庭管理
-                </button>
-              </div>
-              
-              <div className="text-right">
-                <p className="text-sm font-medium text-cartoon-dark">{user.displayName}</p>
-                <p className="text-xs text-cartoon-gray">👨‍👩‍👧‍👦 家长账户</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-gradient-to-r from-cartoon-red to-danger-500 hover:from-cartoon-red hover:to-danger-600 text-white px-4 py-2 rounded-cartoon text-sm font-medium transition-all duration-200 shadow-cartoon hover:shadow-cartoon-lg"
-              >
-                退出登录
-              </button>
+            <div className="ml-4">
+              <h1 className="text-2xl font-bold text-cartoon-dark font-fun">家长控制台</h1>
+              <p className="text-sm text-cartoon-gray">监控孩子的学习进展 📊</p>
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Error State */}
         {error && (
           <div className="mb-6 bg-danger-50 border border-danger-200 rounded-cartoon-lg p-4">
@@ -418,28 +385,28 @@ const ParentDashboard: React.FC = () => {
             </div>
           </>
         )}
+        
+        {/* Modals */}
+        <CelebrationModal
+          isOpen={showCelebration}
+          onClose={() => setShowCelebration(false)}
+          type="achievement"
+          title="孩子完成了新成就！"
+          message="恭喜您的孩子达成新的里程碑！"
+          emoji="🎊"
+        />
+
+        <FamilyManagement
+          isOpen={showFamilyManagement}
+          onClose={() => setShowFamilyManagement(false)}
+        />
+
+        <TaskApprovalWorkflow
+          isOpen={showTaskApproval}
+          onClose={() => setShowTaskApproval(false)}
+        />
       </div>
-
-      {/* Modals */}
-      <CelebrationModal
-        isOpen={showCelebration}
-        onClose={() => setShowCelebration(false)}
-        type="achievement"
-        title="孩子完成了新成就！"
-        message="恭喜您的孩子达成新的里程碑！"
-        emoji="🎊"
-      />
-
-      <FamilyManagement
-        isOpen={showFamilyManagement}
-        onClose={() => setShowFamilyManagement(false)}
-      />
-
-      <TaskApprovalWorkflow
-        isOpen={showTaskApproval}
-        onClose={() => setShowTaskApproval(false)}
-      />
-    </div>
+    </Layout>
   );
 };
 

@@ -7,7 +7,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginDemo } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,6 +20,19 @@ const Login: React.FC = () => {
       // 跳转逻辑由AuthContext处理，基于用户角色自动导航
     } catch (error: any) {
       setError(error.message || '登录失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async (userType: 'parent' | 'student') => {
+    setError('');
+    setLoading(true);
+
+    try {
+      await loginDemo(userType, navigate);
+    } catch (error: any) {
+      setError(error.message || '演示登录失败');
     } finally {
       setLoading(false);
     }
@@ -114,6 +127,44 @@ const Login: React.FC = () => {
             </button>
           </div>
 
+          {/* 演示登录分隔线 */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gradient-to-br from-primary-100 to-secondary-100 text-gray-500">或使用演示账号</span>
+            </div>
+          </div>
+
+          {/* 演示登录按钮 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('student')}
+              disabled={loading}
+              className="group relative flex justify-center py-3 px-4 border border-primary-300 text-sm font-medium rounded-md text-primary-700 bg-primary-50 hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              data-testid="demo-student-login"
+            >
+              <span className="flex items-center">
+                <span className="mr-2">👦</span>
+                学生演示
+              </span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => handleDemoLogin('parent')}
+              disabled={loading}
+              className="group relative flex justify-center py-3 px-4 border border-secondary-300 text-sm font-medium rounded-md text-secondary-700 bg-secondary-50 hover:bg-secondary-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              data-testid="demo-parent-login"
+            >
+              <span className="flex items-center">
+                <span className="mr-2">👨‍👩‍👧‍👦</span>
+                家长演示
+              </span>
+            </button>
+          </div>
 
         </form>
       </div>

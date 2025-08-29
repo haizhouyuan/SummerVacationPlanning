@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import PointsDisplay from './PointsDisplay';
-import TaskCategoryIcon from './TaskCategoryIcon';
+// import TaskCategoryIcon from './TaskCategoryIcon';
 
 interface FamilyMember {
   id: string;
@@ -19,9 +19,10 @@ interface FamilyMember {
 interface FamilyManagementProps {
   isOpen: boolean;
   onClose: () => void;
+  pageMode?: boolean;
 }
 
-const FamilyManagement: React.FC<FamilyManagementProps> = ({ isOpen, onClose }) => {
+const FamilyManagement: React.FC<FamilyManagementProps> = ({ isOpen, onClose, pageMode = false }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'settings'>('members');
   const [showAddMember, setShowAddMember] = useState(false);
@@ -124,10 +125,10 @@ const FamilyManagement: React.FC<FamilyManagementProps> = ({ isOpen, onClose }) 
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-cartoon-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-cartoon-lg">
-        {/* Header */}
+  const content = (
+    <div className={pageMode ? "w-full" : "bg-white rounded-cartoon-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-cartoon-lg"}>
+      {/* Header */}
+      {!pageMode && (
         <div className="p-6 border-b border-cartoon-light">
           <div className="flex justify-between items-center">
             <div>
@@ -142,9 +143,10 @@ const FamilyManagement: React.FC<FamilyManagementProps> = ({ isOpen, onClose }) 
             </button>
           </div>
         </div>
+      )}
 
-        {/* Tab Navigation */}
-        <div className="px-6 py-4 border-b border-cartoon-light">
+      {/* Tab Navigation */}
+      <div className={pageMode ? "px-0 py-4 border-b border-cartoon-light" : "px-6 py-4 border-b border-cartoon-light"}>
           <div className="flex space-x-1">
             {[
               { id: 'members', label: '👥 成员管理', icon: '👥' },
@@ -168,8 +170,8 @@ const FamilyManagement: React.FC<FamilyManagementProps> = ({ isOpen, onClose }) 
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-6">
+      {/* Content */}
+      <div className={pageMode ? "px-0 py-6" : "p-6"}>
           {/* Members Tab */}
           {activeTab === 'members' && (
             <div className="space-y-4">
@@ -443,8 +445,17 @@ const FamilyManagement: React.FC<FamilyManagementProps> = ({ isOpen, onClose }) 
               </div>
             </div>
           )}
-        </div>
       </div>
+    </div>
+  );
+
+  if (pageMode) {
+    return content;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {content}
     </div>
   );
 };
