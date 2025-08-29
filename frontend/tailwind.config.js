@@ -6,30 +6,30 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Duolingo-inspired cartoon color palette
+        // Refined brand palette: Indigo primary, Amber secondary
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e'
+          50: '#EEF2FF',
+          100: '#E0E7FF',
+          200: '#C7D2FE',
+          300: '#A5B4FC',
+          400: '#818CF8',
+          500: '#6366F1',
+          600: '#4F46E5',
+          700: '#4338CA',
+          800: '#3730A3',
+          900: '#312E81'
         },
         secondary: {
-          50: '#fefce8',
-          100: '#fef9c3',
-          200: '#fef08a',
-          300: '#fde047',
-          400: '#facc15',
-          500: '#eab308',
-          600: '#ca8a04',
-          700: '#a16207',
-          800: '#854d0e',
-          900: '#713f12'
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          200: '#FDE68A',
+          300: '#FCD34D',
+          400: '#FBBF24',
+          500: '#F59E0B',
+          600: '#D97706',
+          700: '#B45309',
+          800: '#92400E',
+          900: '#78350F'
         },
         success: {
           50: '#f0fdf4',
@@ -63,8 +63,9 @@ module.exports = {
         'cartoon-pink': '#FF69B4',
         'cartoon-red': '#FF4B4B',
         'cartoon-yellow': '#FFC800',
-        'cartoon-gray': '#777777',
-        'cartoon-light': '#F7F7F7',
+        // Neutral tweaks for clearer borders/text
+        'cartoon-gray': '#6B7280',
+        'cartoon-light': '#E5E7EB',
         'cartoon-dark': '#37464F'
       },
       fontFamily: {

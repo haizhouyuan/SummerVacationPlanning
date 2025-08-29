@@ -69,12 +69,12 @@ const TaskLibrary: React.FC<TaskLibraryProps> = ({
 
   const categories = [
     { key: 'all', label: '全部', emoji: '📋', color: 'bg-gray-100 text-gray-700' },
-    { key: 'reading', label: '语文阅读', emoji: '📚', color: 'bg-blue-100 text-blue-700' },
+    { key: 'reading', label: '语文阅读', emoji: '📚', color: 'bg-primary-100 text-primary-700' },
     { key: 'learning', label: '学习', emoji: '🧠', color: 'bg-purple-100 text-purple-700' },
     { key: 'exercise', label: '运动', emoji: '🏃‍♂️', color: 'bg-green-100 text-green-700' },
     { key: 'creativity', label: '创意', emoji: '🎨', color: 'bg-pink-100 text-pink-700' },
     { key: 'chores', label: '家务', emoji: '🧹', color: 'bg-yellow-100 text-yellow-700' },
-    { key: 'other', label: '其他', emoji: '⭐', color: 'bg-indigo-100 text-indigo-700' },
+    { key: 'other', label: '其他', emoji: '⭐', color: 'bg-primary-50 text-primary-700' },
   ];
 
   const difficulties = [

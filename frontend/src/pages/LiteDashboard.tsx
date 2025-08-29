@@ -77,13 +77,13 @@ const LiteDashboard: React.FC = () => {
   const totalPoints = user?.points || 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <div className="h-10 w-10 bg-blue-500 rounded-lg flex items-center justify-center">
+              <div className="h-10 w-10 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white text-xl">🏖️</span>
               </div>
               <div className="ml-3">
@@ -94,7 +94,7 @@ const LiteDashboard: React.FC = () => {
             <div className="flex items-center space-x-3">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user?.displayName}</p>
-                <p className="text-sm text-blue-600 font-bold">{totalPoints} 积分</p>
+                <p className="text-sm text-primary-600 font-bold">{totalPoints} 积分</p>
               </div>
               <button
                 onClick={() => logout()}
@@ -124,12 +124,12 @@ const LiteDashboard: React.FC = () => {
                   placeholder="输入新任务..."
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                   onKeyPress={(e) => e.key === 'Enter' && addTask()}
                 />
                 <button
                   onClick={addTask}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                  className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   添加
                 </button>
@@ -145,7 +145,7 @@ const LiteDashboard: React.FC = () => {
                     <span className="font-medium text-gray-900">{task.title}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-blue-600 font-medium">{task.points}分</span>
+                    <span className="text-sm text-primary-600 font-medium">{task.points}分</span>
                     <button
                       onClick={() => completeTask(task.id)}
                       className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors"
@@ -174,16 +174,16 @@ const LiteDashboard: React.FC = () => {
               </h2>
               
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">{totalPoints}</div>
+                <div className="text-3xl font-bold text-primary-600 mb-2">{totalPoints}</div>
                 <div className="text-sm text-gray-600 mb-4">今日累计积分</div>
                 
                 {/* Simple Redemption Options */}
                 <div className="space-y-2">
-                  <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
+                  <div className="flex justify-between items-center p-2 bg-primary-50 rounded">
                     <span className="text-sm">🎮 游戏时间 (10分钟)</span>
                     <button 
                       disabled={totalPoints < 5}
-                      className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white px-3 py-1 rounded text-sm transition-colors"
+                      className="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white px-3 py-1 rounded text-sm transition-colors"
                     >
                       5积分
                     </button>

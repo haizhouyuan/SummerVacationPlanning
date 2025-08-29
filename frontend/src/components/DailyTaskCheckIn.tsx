@@ -32,7 +32,7 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
 
   const statusOptions = [
     { key: 'all', label: '全部', emoji: '📋', color: 'bg-gray-100 text-gray-700' },
-    { key: 'planned', label: '计划中', emoji: '📅', color: 'bg-blue-100 text-blue-700' },
+    { key: 'planned', label: '计划中', emoji: '📅', color: 'bg-primary-100 text-primary-700' },
     { key: 'in_progress', label: '进行中', emoji: '🏃‍♂️', color: 'bg-yellow-100 text-yellow-700' },
     { key: 'completed', label: '已完成', emoji: '✅', color: 'bg-green-100 text-green-700' },
     { key: 'skipped', label: '已跳过', emoji: '⏭️', color: 'bg-gray-100 text-gray-500' },
@@ -278,9 +278,9 @@ const DailyTaskCheckIn: React.FC<DailyTaskCheckInProps> = ({
           
           {/* Stats Cards */}
           <div className="flex space-x-4">
-            <div className="bg-blue-50 px-3 py-2 rounded-lg">
-              <div className="text-xs text-blue-600">总任务</div>
-              <div className="text-lg font-bold text-blue-700">{stats.total}</div>
+            <div className="bg-primary-50 px-3 py-2 rounded-lg">
+              <div className="text-xs text-primary-600">总任务</div>
+              <div className="text-lg font-bold text-primary-700">{stats.total}</div>
             </div>
             <div className="bg-green-50 px-3 py-2 rounded-lg">
               <div className="text-xs text-green-600">已完成</div>

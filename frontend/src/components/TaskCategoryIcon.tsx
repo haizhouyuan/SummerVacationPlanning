@@ -16,17 +16,17 @@ const TaskCategoryIcon: React.FC<TaskCategoryIconProps> = ({
   const getCategoryData = () => {
     const categoryMap: { [key: string]: { emoji: string; color: string; bgColor: string } } = {
       // Study categories
-      study: { emoji: '📚', color: 'text-cartoon-blue', bgColor: 'bg-blue-100' },
+      study: { emoji: '📚', color: 'text-primary-600', bgColor: 'bg-primary-100' },
       homework: { emoji: '✏️', color: 'text-cartoon-purple', bgColor: 'bg-purple-100' },
       reading: { emoji: '📖', color: 'text-cartoon-green', bgColor: 'bg-green-100' },
       math: { emoji: '🧮', color: 'text-cartoon-orange', bgColor: 'bg-orange-100' },
-      science: { emoji: '🔬', color: 'text-cartoon-blue', bgColor: 'bg-blue-100' },
+      science: { emoji: '🔬', color: 'text-primary-600', bgColor: 'bg-primary-100' },
       language: { emoji: '🗣️', color: 'text-cartoon-pink', bgColor: 'bg-pink-100' },
       
       // Physical activities
       exercise: { emoji: '🏃', color: 'text-cartoon-green', bgColor: 'bg-green-100' },
       sports: { emoji: '⚽', color: 'text-cartoon-orange', bgColor: 'bg-orange-100' },
-      swimming: { emoji: '🏊', color: 'text-cartoon-blue', bgColor: 'bg-blue-100' },
+      swimming: { emoji: '🏊', color: 'text-primary-600', bgColor: 'bg-primary-100' },
       cycling: { emoji: '🚴', color: 'text-cartoon-green', bgColor: 'bg-green-100' },
       walking: { emoji: '🚶', color: 'text-cartoon-purple', bgColor: 'bg-purple-100' },
       
@@ -35,7 +35,7 @@ const TaskCategoryIcon: React.FC<TaskCategoryIconProps> = ({
       music: { emoji: '🎵', color: 'text-cartoon-purple', bgColor: 'bg-purple-100' },
       drawing: { emoji: '✏️', color: 'text-cartoon-orange', bgColor: 'bg-orange-100' },
       crafts: { emoji: '🧸', color: 'text-cartoon-yellow', bgColor: 'bg-yellow-100' },
-      photography: { emoji: '📸', color: 'text-cartoon-blue', bgColor: 'bg-blue-100' },
+      photography: { emoji: '📸', color: 'text-primary-600', bgColor: 'bg-primary-100' },
       
       // Life skills
       cooking: { emoji: '👨‍🍳', color: 'text-cartoon-orange', bgColor: 'bg-orange-100' },
@@ -46,13 +46,13 @@ const TaskCategoryIcon: React.FC<TaskCategoryIconProps> = ({
       // Social activities
       family: { emoji: '👨‍👩‍👧‍👦', color: 'text-cartoon-pink', bgColor: 'bg-pink-100' },
       friends: { emoji: '👫', color: 'text-cartoon-yellow', bgColor: 'bg-yellow-100' },
-      community: { emoji: '🏘️', color: 'text-cartoon-blue', bgColor: 'bg-blue-100' },
+      community: { emoji: '🏘️', color: 'text-primary-600', bgColor: 'bg-primary-100' },
       volunteer: { emoji: '🤝', color: 'text-cartoon-green', bgColor: 'bg-green-100' },
       
       // Entertainment
       gaming: { emoji: '🎮', color: 'text-cartoon-purple', bgColor: 'bg-purple-100' },
       movies: { emoji: '🎬', color: 'text-cartoon-red', bgColor: 'bg-red-100' },
-      travel: { emoji: '✈️', color: 'text-cartoon-blue', bgColor: 'bg-blue-100' },
+      travel: { emoji: '✈️', color: 'text-primary-600', bgColor: 'bg-primary-100' },
       
       // Default/Other
       other: { emoji: '📋', color: 'text-cartoon-gray', bgColor: 'bg-gray-100' },
