@@ -6,30 +6,30 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Duolingo-inspired cartoon color palette
+        // Unified brand palette
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e'
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81'
         },
         secondary: {
-          50: '#fefce8',
-          100: '#fef9c3',
-          200: '#fef08a',
-          300: '#fde047',
-          400: '#facc15',
-          500: '#eab308',
-          600: '#ca8a04',
-          700: '#a16207',
-          800: '#854d0e',
-          900: '#713f12'
+          50: '#f0fdfa',
+          100: '#ccfbf1',
+          200: '#99f6e4',
+          300: '#5eead4',
+          400: '#2dd4bf',
+          500: '#14b8a6',
+          600: '#0d9488',
+          700: '#0f766e',
+          800: '#115e59',
+          900: '#134e4a'
         },
         success: {
           50: '#f0fdf4',
@@ -55,22 +55,22 @@ module.exports = {
           800: '#991b1b',
           900: '#7f1d1d'
         },
-        // Additional cartoon colors
-        'cartoon-blue': '#58CC02',
-        'cartoon-green': '#89E219',
-        'cartoon-orange': '#FF9600',
-        'cartoon-purple': '#CE82FF',
-        'cartoon-pink': '#FF69B4',
-        'cartoon-red': '#FF4B4B',
-        'cartoon-yellow': '#FFC800',
-        'cartoon-gray': '#777777',
-        'cartoon-light': '#F7F7F7',
-        'cartoon-dark': '#37464F'
+        // Map legacy cartoon tokens to brand-cohesive values
+        'cartoon-blue': '#6366f1',
+        'cartoon-green': '#22c55e',
+        'cartoon-orange': '#f59e0b',
+        'cartoon-purple': '#8b5cf6',
+        'cartoon-pink': '#ec4899',
+        'cartoon-red': '#ef4444',
+        'cartoon-yellow': '#fbbf24',
+        'cartoon-gray': '#64748b',
+        'cartoon-light': '#f8fafc',
+        'cartoon-dark': '#0f172a'
       },
       fontFamily: {
-        'cartoon': ['Comic Sans MS', 'cursive'],
-        'sans': ['Inter', 'system-ui', 'sans-serif'],
-        'fun': ['Nunito', 'Comic Sans MS', 'cursive']
+        'sans': ['Inter', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        'fun': ['Inter', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        'cartoon': ['Inter', 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'system-ui', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif']
       },
       animation: {
         'bounce-in': 'bounceIn 0.5s ease-in-out',
@@ -127,14 +127,14 @@ module.exports = {
         }
       },
       boxShadow: {
-        'cartoon': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 3px rgba(59, 130, 246, 0.1)',
-        'cartoon-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 3px rgba(59, 130, 246, 0.1)',
+        'cartoon': '0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06)',
+        'cartoon-lg': '0 2px 4px rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.08)',
         'success': '0 0 0 3px rgba(34, 197, 94, 0.2)',
         'danger': '0 0 0 3px rgba(239, 68, 68, 0.2)'
       },
       borderRadius: {
-        'cartoon': '20px',
-        'cartoon-lg': '30px'
+        'cartoon': '12px',
+        'cartoon-lg': '16px'
       }
     }
   },
