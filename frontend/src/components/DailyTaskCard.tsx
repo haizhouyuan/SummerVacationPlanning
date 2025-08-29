@@ -133,7 +133,7 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
                     </span>
                   )}
                   {dailyTask.isRecurring && (
-                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                    <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
                       🔄 重复任务
                     </span>
                   )}
@@ -267,7 +267,7 @@ const DailyTaskCard: React.FC<DailyTaskCardProps> = ({
           {/* Approval Status */}
           {dailyTask.status === 'completed' && (
             <div className="mb-3">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 rounded-lg border border-blue-200">
+              <div className="bg-gradient-to-r from-primary-50 to-secondary-50 p-3 rounded-lg border border-primary-200">
                 <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
                   <span className="mr-2">👨‍👩‍👧‍👦</span> 审批状态
                 </h4>

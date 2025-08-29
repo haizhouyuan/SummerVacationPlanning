@@ -78,7 +78,7 @@ const PointsRulesManagement: React.FC = () => {
   // Only allow parents to access this page
   if (!user || user.role !== 'parent') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-lg p-8 text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">访问被拒绝</h2>
           <p className="text-gray-700">只有家长可以访问积分规则管理界面。</p>
@@ -210,9 +210,9 @@ const PointsRulesManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">加载中...</p>
         </div>
       </div>
@@ -220,7 +220,7 @@ const PointsRulesManagement: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -306,7 +306,7 @@ const PointsRulesManagement: React.FC = () => {
             <h2 className="text-2xl font-bold text-gray-800">积分规则列表</h2>
             <button
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
             >
               {showCreateForm ? '取消' : '新增规则'}
             </button>
@@ -320,7 +320,7 @@ const PointsRulesManagement: React.FC = () => {
                 <select 
                   value={newRule.category}
                   onChange={(e) => setNewRule({...newRule, category: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">选择类别</option>
                   <option value="exercise">运动</option>
@@ -335,14 +335,14 @@ const PointsRulesManagement: React.FC = () => {
                   placeholder="活动名称"
                   value={newRule.activity}
                   onChange={(e) => setNewRule({...newRule, activity: e.target.value})}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 <input
                   type="number"
                   placeholder="基础积分"
                   value={newRule.basePoints}
                   onChange={(e) => setNewRule({...newRule, basePoints: parseInt(e.target.value) || 0})}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                   min="0"
                 />
               </div>
@@ -360,7 +360,7 @@ const PointsRulesManagement: React.FC = () => {
                     type="checkbox"
                     checked={newRule.isActive}
                     onChange={(e) => setNewRule({...newRule, isActive: e.target.checked})}
-                    className="rounded border-gray-300 focus:ring-indigo-500"
+                    className="rounded border-gray-300 focus:ring-primary-500"
                   />
                   <span className="text-sm text-gray-700">启用规则</span>
                 </label>
@@ -497,7 +497,7 @@ const PointsRulesManagement: React.FC = () => {
                       ) : (
                         <button
                           onClick={() => setEditingRule(rule)}
-                          className="text-indigo-600 hover:text-indigo-800 text-sm"
+                          className="text-primary-600 hover:text-primary-800 text-sm"
                         >
                           编辑
                         </button>
