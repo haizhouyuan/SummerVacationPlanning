@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../components/NotificationSystem';
-import TopNavigation from '../components/TopNavigation';
+import Layout from '../components/Layout';
 // import PointsDisplay from '../components/PointsDisplay';
 import PointsHistory from '../components/PointsHistory';
 import GameTimeExchange from '../components/GameTimeExchange';
@@ -112,9 +112,7 @@ const RewardsCenter: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
-      <TopNavigation />
-      
+    <Layout>
       {/* 优化页面头部布局 */}
       <div className="bg-white/50 backdrop-blur-sm border-b border-primary-200/50">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -332,7 +330,7 @@ const RewardsCenter: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </Layout>
   );
 };
 

@@ -1,8 +1,10 @@
+export type UserRole = 'student' | 'parent';
+
 export interface User {
   id: string;
   email: string;
   displayName: string;
-  role: 'student' | 'parent';
+  role: UserRole;
   parentId?: string;
   children?: string[];
   points: number;
@@ -125,7 +127,7 @@ export interface AuthContextType {
   loading: boolean;
   isDemo: boolean | null;
   login: (email: string, password: string, navigate?: any) => Promise<void>;
-  register: (email: string, password: string, displayName: string, role: 'student' | 'parent', parentEmail?: string) => Promise<void>;
+  register: (email: string, password: string, displayName: string, role: UserRole, parentEmail?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (displayName?: string, avatar?: string) => Promise<void>;
   refreshUser: () => Promise<void>;

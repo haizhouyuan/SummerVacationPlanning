@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
-import TopNavigation from '../components/TopNavigation';
+import Layout from '../components/Layout';
 import PointsHistory from '../components/PointsHistory';
 import SpecialRewardRequest from '../components/SpecialRewardRequest';
 import WelcomeBannerMagic from '../components/WelcomeBanner';
@@ -257,18 +257,7 @@ const Rewards: React.FC = () => {
   }
 
   return (
-    <>
-      {/* Top Navigation - 仅在移动端显示 */}
-      <div className="md:hidden">
-        <TopNavigation />
-      </div>
-      
-      {/* Desktop Top Navigation - 仅在桌面端显示 */}
-      <div className="hidden md:block">
-        <TopNavigation />
-      </div>
-      
-      <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
+    <Layout>
         {/* Magic UI Welcome Banner */}
         <div className="p-4 sm:max-w-7xl sm:mx-auto sm:px-4 lg:px-6 xl:px-8 pt-6">
           <div className="mb-6">
@@ -564,8 +553,7 @@ const Rewards: React.FC = () => {
           </div>
         )}
       </div>
-      </div>
-    </>
+    </Layout>
   );
 };
 

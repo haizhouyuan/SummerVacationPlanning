@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { pointsConfigService } from '../services/pointsConfigService';
+import Layout from '../components/Layout';
 
 interface PointsRule {
   id: string;
@@ -220,26 +221,14 @@ const PointsRulesManagement: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
+    <Layout>
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Page Header */}
         <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-start">
+          <div className="flex items-start">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-800 mb-2">积分规则管理</h1>
               <p className="text-gray-600">家长可以在这里调整各类任务的积分规则和每日上限设置</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-                <p className="text-xs text-gray-500">家长账户</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                退出登录
-              </button>
             </div>
           </div>
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -510,7 +499,7 @@ const PointsRulesManagement: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

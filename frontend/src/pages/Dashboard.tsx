@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { detectNetworkAndGetApiServiceSync } from '../services/compatibleApi';
 import PointsHistory from '../components/PointsHistory';
-import TopNavigation from '../components/TopNavigation';
+import Layout from '../components/Layout';
 import { DailyTask } from '../types';
 import {
   TodayTaskList,
@@ -348,17 +348,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <>
-      {/* Top Navigation - 仅在移动端显示 */}
-      <div className="md:hidden">
-        <TopNavigation />
-      </div>
-      
-      {/* Desktop Top Navigation - 仅在桌面端显示 */}
-      <div className="hidden md:block">
-        <TopNavigation />
-      </div>
-      
+    <Layout>
       {/* Main Container with Unified Spacing */}
       <div className="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-8 py-4 space-y-6">
         
@@ -420,7 +410,7 @@ const Dashboard: React.FC = () => {
         isOpen={showPointsHistory}
         onClose={() => setShowPointsHistory(false)}
       />
-    </>
+    </Layout>
   );
 };
 

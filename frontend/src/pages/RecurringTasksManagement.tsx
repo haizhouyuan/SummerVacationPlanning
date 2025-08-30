@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../components/NotificationSystem';
 import { apiService } from '../services/api';
+import Layout from '../components/Layout';
 
 const RecurringTasksManagement: React.FC = () => {
   const { user, logout } = useAuth();
@@ -101,11 +102,11 @@ const RecurringTasksManagement: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-100 to-secondary-100">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
+    <Layout>
+      {/* Page Header */}
+      <div className="bg-white shadow-sm mb-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="py-6">
             <div className="flex items-center">
               <div className="h-12 w-12 bg-primary-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xl font-bold">🔄</span>
@@ -114,18 +115,6 @@ const RecurringTasksManagement: React.FC = () => {
                 <h1 className="text-2xl font-bold text-gray-900">重复任务管理</h1>
                 <p className="text-sm text-gray-600">管理和生成重复任务</p>
               </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.displayName}</p>
-                <p className="text-xs text-gray-500">家长账户</p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                退出登录
-              </button>
             </div>
           </div>
         </div>
@@ -292,7 +281,7 @@ const RecurringTasksManagement: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

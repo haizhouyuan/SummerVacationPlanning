@@ -38,11 +38,11 @@ export default function ProgressCircle({ value }: { value: number }) {
           </linearGradient>
         </defs>
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-        <div className="text-2xl md:text-3xl font-bold">
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-cartoon-dark">
+        <div className="text-2xl md:text-3xl font-bold drop-shadow-sm">
           {Math.round(value * 100)}%
         </div>
-        <div className="text-xs md:text-sm text-white/70 mt-1">
+        <div className="text-xs md:text-sm text-cartoon-gray mt-1">
           本周进度
         </div>
       </div>
