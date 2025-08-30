@@ -7,7 +7,7 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, loginDemo } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,18 +25,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleDemoLogin = async (userType: 'parent' | 'student') => {
-    setError('');
-    setLoading(true);
-
-    try {
-      await loginDemo(userType, navigate);
-    } catch (error: any) {
-      setError(error.message || '演示登录失败');
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
 

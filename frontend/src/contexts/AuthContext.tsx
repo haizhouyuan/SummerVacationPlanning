@@ -127,29 +127,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const loginDemo = async (userType: 'parent' | 'student', navigate?: any) => {
-    try {
-      const demoUser = mongoAuthService.setupDemoAuth(userType);
-      setUser(demoUser);
-      
-      // 根据角色自动跳转
-      if (navigate) {
-        if (userType === 'parent') {
-          navigate('/parent-dashboard');
-        } else {
-          navigate('/dashboard');
-        }
-      }
-      
-      // Hide the static homepage content when user logs in
-      const homepageElement = document.getElementById('homepage');
-      if (homepageElement) {
-        homepageElement.style.display = 'none';
-      }
-    } catch (error) {
-      throw error;
-    }
-  };
 
 
   const value: AuthContextType = {
@@ -158,7 +135,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     isDemo: localStorage.getItem('isDemo') === 'true',
     login,
-    loginDemo,
     register,
     logout,
     updateProfile,
