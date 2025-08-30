@@ -45,7 +45,7 @@ const TopNavigation: React.FC = () => {
       shortName: '任务'
     },
     {
-      path: '/rewards',
+      path: '/rewards-center',
       name: '成长与奖励',
       icon: '🎁',
       shortName: '奖励'

@@ -63,7 +63,7 @@ const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) => {
           description: '制定和管理任务计划'
         },
         { 
-          path: '/rewards', 
+          path: '/rewards-center', 
           name: '成长与奖励', 
           icon: '🎁',
           description: '展示徽章、积分和奖励'
