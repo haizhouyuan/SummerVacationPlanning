@@ -172,16 +172,18 @@
   "active": "049ac027e96a03b6",
   "lastOpenFiles": [
     "frontend/build/asset-manifest.json",
-    "frontend/build/static/css/main.52394cd7.css.map",
-    "frontend/build/static/css/main.52394cd7.css",
-    "frontend/build/static/js/main.b6bfbb7d.js.map",
-    "frontend/build/static/js/main.b6bfbb7d.js",
-    "frontend/build/static/js/main.b6bfbb7d.js.LICENSE.txt",
-    "frontend/build/static/js/453.670e15c7.chunk.js",
+    "frontend/build/static/js/main.833ea613.js.map",
+    "frontend/build/static/js/main.833ea613.js.LICENSE.txt",
+    "frontend/build/static/js/main.833ea613.js",
     "frontend/build/static/js/453.670e15c7.chunk.js.map",
+    "frontend/build/static/css/main.f98a50cc.css",
+    "frontend/build/static/js/453.670e15c7.chunk.js",
+    "frontend/build/static/css/main.f98a50cc.css.map",
     "frontend/build/static/js",
     "frontend/build/static/css",
     "frontend/build/static",
+    "history/tests/testresults.md",
+    "history/image.png",
     "docs/export20250829.md",
     "docs/20250829UI调整.md",
     "frontend/node_modules/@types/canvas-confetti/README.md",
@@ -206,7 +208,6 @@
     "frontend/node_modules/@react-types/link/README.md",
     "frontend/node_modules/@react-types/grid/README.md",
     "frontend/node_modules/@react-types/calendar/README.md",
-    "frontend/node_modules/@react-types/dialog/README.md",
     "frontend/node_modules/bunyan/docs/img/bunyan.browserify.png",
     "parent-UI-optimize/history/backup/image.png",
     "parent-UI-optimize/history/image.png",
@@ -215,7 +216,6 @@
     "parent-UI-optimize/frontend/playwright-report/data/96c36f5d91f1700058191e22a0ee88cc3173ecc0.png",
     "parent-UI-optimize/frontend/coverage/lcov-report/favicon.png",
     "parent-UI-optimize/frontend/test-results/basic-01-login-page.png",
-    "parent-UI-optimize/frontend/src/logo.svg",
-    "parent-UI-optimize/frontend/public/logo512.png"
+    "parent-UI-optimize/frontend/src/logo.svg"
   ]
 }
