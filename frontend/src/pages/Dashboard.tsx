@@ -359,7 +359,7 @@ const Dashboard: React.FC = () => {
             <div className="min-h-0">
               <WelcomeBannerMagic 
                 title={`欢迎回来，${currentUser.displayName}！`}
-                subtitle={`今日已获得 ${stats?.todayStats?.pointsEarned || 0} 积分 • 连续学习 ${safeStats.user.currentStreak} 天`}
+                subtitle={`今日已获得 ${stats?.todayStats?.pointsEarned || 0} 积分 • 连续学习 ${safeStats.user.currentStreak || 0} 天`}
               />
             </div>
             
