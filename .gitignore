@@ -40,4 +40,60 @@ logs/
 # Debug files
 debug_routes.js
 test_*.js
-final_test.js 
+final_test.js
+
+# Coverage reports
+coverage/
+**/coverage/
+
+# Test results
+test-results/
+playwright-report/
+*.xml
+
+# Temporary images and screenshots  
+*.png
+!**/public/*.png
+!**/assets/*.png
+
+# Temporary documentation and scripts
+*-temp.md
+*-tmp.*
+*.tmp
+claude-*.bat
+fix-*.bat
+fix-*.ps1
+fix-*.sh
+setup-*.bat
+setup-*.ps1
+debug-*.js
+test-*.html
+*-test.html
+*-debug.html
+
+# Archive and backup files
+*.tar.gz
+*.zip
+*.backup
+*.bak
+backup/
+cleanup-backup/
+
+# Spec workflow history
+.specstory/
+.logs/
+
+# SSH keys and certificates
+*.pub
+id_*
+*.pem
+*.key
+
+# System files
+wgcf
+server.log
+*.log.gz
+
+# Temporary Python files
+fix_*.py
+test_*.py
