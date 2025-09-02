@@ -23,6 +23,9 @@ build/
 .env.test.local
 .env.production.local
 
+# MCP Configuration (contains API keys)
+.mcp.json
+
 # IDE files
 .vscode/
 .idea/
