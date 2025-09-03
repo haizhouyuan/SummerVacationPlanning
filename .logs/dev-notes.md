@@ -779,4 +779,14 @@
   ✅ **用户体验说明**: 向用户解释演示环境下的特殊行为
 
 - **Status**: ✅ COMPLETE - UI清理任务全部完成，代码已提交并准备部署
+### [2025-09-04 11:05] - 安装与配置三款 MCP Server（Playwright / Context7 / Zen）
+
+- **Context**: 需要在项目中安装并统一管理三款 MCP 服务器，便于本地或 Claude 客户端调用
+- **Key Actions**:
+  1. 在根目录添加开发依赖：`@playwright/mcp`、`@upstash/context7-mcp`、`@noodlea1/zen-mcp-server`
+  2. 在 `package.json` 增加脚本：`mcp:playwright`、`mcp:context7`、`mcp:zen`
+  3. 规范 `.mcp.json`：新增三项 server 配置，移除意外泄露的 `OPENROUTER_API_KEY`
+- **Notes**:
+  - 不在仓库中保存任何密钥，运行前请通过环境变量注入所需凭据（如 `OPENROUTER_API_KEY`）
+  - Claude Desktop 用户可参考 `mcp/claude_desktop_config.*.json` 样例进行本机配置
 
