@@ -111,7 +111,7 @@ const TaskHistory: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">已完成</span>;
+        return <span className="bg-primary-100 text-primary-700 px-2 py-1 rounded text-xs">已完成</span>;
       case 'approved':
         return <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">已批准</span>;
       case 'rejected':

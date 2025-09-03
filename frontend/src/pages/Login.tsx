@@ -43,10 +43,10 @@ const Login: React.FC = () => {
           </p>
           
           {/* 网络兼容模式提示 */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mt-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
             <div className="flex items-center">
-              <span className="text-blue-500 mr-2">🔧</span>
-              <div className="text-xs text-blue-700">
+              <span className="text-primary-500 mr-2">🔧</span>
+              <div className="text-xs text-primary-700">
                 <strong>网络兼容模式已启用</strong>
                 <br />适配受限网络环境，正常登录使用
               </div>

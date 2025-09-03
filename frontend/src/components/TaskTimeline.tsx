@@ -592,7 +592,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     // Priority colors (status takes precedence)
     const statusColorMap = {
       'completed': 'border-l-green-500 bg-green-50/80 shadow-green-100',
-      'in_progress': 'border-l-blue-500 bg-blue-50/80 shadow-blue-100',
+      'in_progress': 'border-l-primary-500 bg-primary-50/80 shadow-primary-100',
       'planned': 'border-l-gray-400 bg-gray-50/80 shadow-gray-100',
       'skipped': 'border-l-red-400 bg-red-50/80 shadow-red-100'
     };
@@ -616,12 +616,12 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   // Get category color for task type identification
   const getCategoryColor = (category: string) => {
     const categoryColors = {
-      'exercise': 'bg-emerald-100 text-emerald-700 border-emerald-200',     // 运动 - 翠绿色
-      'reading': 'bg-indigo-100 text-indigo-700 border-indigo-200',        // 阅读 - 靛蓝色
-      'learning': 'bg-amber-100 text-amber-700 border-amber-200',          // 学习 - 琥珀色
-      'creativity': 'bg-purple-100 text-purple-700 border-purple-200',     // 创意 - 紫色
-      'chores': 'bg-slate-100 text-slate-700 border-slate-200',           // 家务 - 石板色
-      'other': 'bg-cyan-100 text-cyan-700 border-cyan-200'                // 其他 - 青色
+      'exercise': 'bg-emerald-100 text-emerald-700 border-emerald-200',
+      'reading': 'bg-primary-100 text-primary-700 border-primary-200',
+      'learning': 'bg-amber-100 text-amber-700 border-amber-200',
+      'creativity': 'bg-purple-100 text-purple-700 border-purple-200',
+      'chores': 'bg-slate-100 text-slate-700 border-slate-200',
+      'other': 'bg-primary-50 text-primary-700 border-primary-200'
     };
     return categoryColors[category as keyof typeof categoryColors] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
@@ -630,7 +630,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
   const getStatusBadgeColor = (status: string) => {
     const statusBadgeColors = {
       'completed': 'bg-green-100 text-green-700 border-green-200',
-      'in_progress': 'bg-blue-100 text-blue-700 border-blue-200', 
+      'in_progress': 'bg-primary-100 text-primary-700 border-primary-200', 
       'planned': 'bg-gray-100 text-gray-600 border-gray-200',
       'skipped': 'bg-red-100 text-red-700 border-red-200'
     };
@@ -674,7 +674,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                   <span className="text-gray-600">已完成</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-blue-100 border-l-4 border-blue-500 rounded-sm"></div>
+                  <div className="w-3 h-3 bg-primary-100 border-l-4 border-primary-500 rounded-sm"></div>
                   <span className="text-gray-600">进行中</span>
                 </div>
                 <div className="flex items-center space-x-1">
@@ -786,7 +786,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                     <span className="text-gray-600">已完成</span>
                   </div>
                   <div className="flex items-center space-x-1">
-                    <div className="w-2 h-2 bg-blue-100 border-l-2 border-blue-500 rounded-sm"></div>
+                    <div className="w-2 h-2 bg-primary-100 border-l-2 border-primary-500 rounded-sm"></div>
                     <span className="text-gray-600">进行中</span>
                   </div>
                   <div className="flex items-center space-x-1">
@@ -866,7 +866,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                     <div
                       key={`drop-${slot.time}`}
                       className={`h-10 relative cursor-pointer transition-all duration-200 ${
-                        dragOverSlot === slot.time ? 'bg-blue-100 border-blue-400 shadow-sm' : 'hover:bg-blue-50/50'
+                        dragOverSlot === slot.time ? 'bg-primary-100 border-primary-400 shadow-sm' : 'hover:bg-primary-50/50'
                       }`}
                       onDragEnter={(e) => handleDragEnter(e, slot.time)}
                       onDragOver={(e) => handleDragOver(e, slot.time)}
@@ -894,11 +894,11 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                       
                       {/* Enhanced drop indicator */}
                       {dragOverSlot === slot.time && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-100 to-blue-50 border-2 border-blue-400 border-dashed rounded-md flex items-center justify-center shadow-md">
-                          <div className="text-center text-blue-700 font-medium text-sm flex items-center space-x-2">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary-100 to-primary-50 border-2 border-primary-400 border-dashed rounded-md flex items-center justify-center shadow-md">
+                          <div className="text-center text-primary-700 font-medium text-sm flex items-center space-x-2">
                             <span>📋</span>
                             <span>拖放任务到此时间段</span>
-                            <span className="text-xs bg-blue-200 px-2 py-1 rounded">{slot.time}</span>
+                            <span className="text-xs bg-primary-200 px-2 py-1 rounded">{slot.time}</span>
                           </div>
                         </div>
                       )}

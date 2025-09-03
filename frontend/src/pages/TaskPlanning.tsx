@@ -291,8 +291,8 @@ const TaskPlanning: React.FC = () => {
               </div>
 
               {/* Instructions */}
-              <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-                <div className="text-xs text-blue-800">
+              <div className="mt-6 p-3 bg-primary-50 rounded-lg">
+                <div className="text-xs text-primary-700">
                   <p className="font-medium mb-1">💡 使用提示：</p>
                   <p>• 拖拽任务到时间轴安排时间</p>
                   <p>• 点击时间槽快速创建新任务</p>
@@ -377,7 +377,7 @@ const TaskPlanning: React.FC = () => {
                           <div className="flex items-center gap-1 flex-wrap">
                             <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
                               task.status === 'completed' ? 'bg-green-100 text-green-700 border-green-200' :
-                              task.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                              task.status === 'in_progress' ? 'bg-primary-100 text-primary-700 border-primary-200' :
                               task.status === 'skipped' ? 'bg-red-100 text-red-700 border-red-200' :
                               'bg-gray-100 text-gray-600 border-gray-200'
                             }`}>
@@ -387,11 +387,11 @@ const TaskPlanning: React.FC = () => {
                             </div>
                             <div className={`text-xs px-1.5 py-0.5 rounded font-medium border ${
                               task.task?.category === 'exercise' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' :
-                              task.task?.category === 'reading' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
+                              task.task?.category === 'reading' ? 'bg-primary-100 text-primary-700 border-primary-200' :
                               task.task?.category === 'learning' ? 'bg-amber-100 text-amber-700 border-amber-200' :
                               task.task?.category === 'creativity' ? 'bg-purple-100 text-purple-700 border-purple-200' :
                               task.task?.category === 'chores' ? 'bg-slate-100 text-slate-700 border-slate-200' :
-                              'bg-cyan-100 text-cyan-700 border-cyan-200'
+                              'bg-primary-50 text-primary-700 border-primary-200'
                             }`}>
                               {task.task?.category === 'exercise' ? '🏃‍♂️' :
                                task.task?.category === 'reading' ? '📚' :

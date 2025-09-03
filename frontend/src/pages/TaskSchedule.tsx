@@ -101,7 +101,7 @@ const TaskSchedule: React.FC = () => {
       case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-primary-100 text-primary-700 border-primary-200';
       case 'skipped':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
@@ -148,9 +148,9 @@ const TaskSchedule: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">加载中...</p>
         </div>
       </div>
@@ -158,14 +158,14 @@ const TaskSchedule: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
       {/* Compact Header for mobile */}
       <div className="bg-white shadow-sm">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Left: Title and Icon */}
             <div className="flex items-center space-x-3">
-              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-indigo-500 rounded-full flex items-center justify-center">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-primary-600 rounded-full flex items-center justify-center">
                 <span className="text-white text-lg sm:text-xl font-bold">📅</span>
               </div>
               <div>
@@ -200,7 +200,7 @@ const TaskSchedule: React.FC = () => {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </div>
             
@@ -210,7 +210,7 @@ const TaskSchedule: React.FC = () => {
                 onClick={() => setView('timeline')}
                 className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
                   view === 'timeline'
-                    ? 'bg-white text-indigo-600 shadow-sm'
+                    ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -220,7 +220,7 @@ const TaskSchedule: React.FC = () => {
                 onClick={() => setView('calendar')}
                 className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
                   view === 'calendar'
-                    ? 'bg-white text-indigo-600 shadow-sm'
+                    ? 'bg-white text-primary-600 shadow-sm'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -269,7 +269,7 @@ const TaskSchedule: React.FC = () => {
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
                 
                 <div className="flex items-center space-x-3">
@@ -299,7 +299,7 @@ const TaskSchedule: React.FC = () => {
 
         {loading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-2 text-gray-600 text-sm">加载中...</p>
           </div>
         ) : view === 'timeline' ? (
@@ -465,7 +465,7 @@ const TaskSchedule: React.FC = () => {
                 return (
                   <div 
                     key={date} 
-                    className={`border-r border-gray-200 last:border-r-0 p-1 sm:p-2 ${isToday ? 'bg-blue-50' : ''}`}
+                    className={`border-r border-gray-200 last:border-r-0 p-1 sm:p-2 ${isToday ? 'bg-primary-50' : ''}`}
                   >
                     <div className="space-y-1">
                       {dayTasks.length === 0 ? (
